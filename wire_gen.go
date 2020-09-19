@@ -24,7 +24,10 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 		return nil, err
 	}
 	candlesCache := cache.New()
-	candlesService := service.New(candlesDynamo, candlesCache)
+	candlesService, err := service.New(candlesDynamo, candlesCache)
+	if err != nil {
+		return nil, err
+	}
 	candlesDriver := driver.New(candlesService)
 	return candlesDriver, nil
 }
