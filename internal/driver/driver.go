@@ -23,10 +23,14 @@ func New(service *service.CandlesService) *CandlesDriver {
 	return &CandlesDriver{svc: service}
 }
 
-func (*CandlesDriver) Run() {
+func (cd *CandlesDriver) Run() {
+
+	if err := cd.svc.Init(); err != nil {
+		panic(err)
+	}
 
 	for {
-		println("Adrian hates vim")
+		//Insert concurrent workload distribution here
 
 	}
 
