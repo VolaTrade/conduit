@@ -16,7 +16,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Creating config.env
-          command: sh createenv.sh
+          command: chmod +x create_env.sh && sh create_env.sh
       - run:
           name: Making sure docker image builds and tests pass within container
           command: make docker-build
@@ -40,7 +40,7 @@ jobs:
           command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com 'rm -rf candles && unzip -d candles candles.zip'
       - run:
           name: Build and run docker image in EC2
-          command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com 'cd /home/ec2-user/candles && sh createnv.sh && docker-compose up -d'
+          command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com 'cd /home/ec2-user/candles && chmod +x create_env.sh && sh create_env.sh && docker-compose up -d'
 
 
 workflows:
