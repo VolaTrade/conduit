@@ -30,7 +30,7 @@ type (
 	}
 
 	CandlesCache struct {
-		pairs map[string]Pair
+		Pairs map[string]*Pair
 	}
 )
 
@@ -71,18 +71,15 @@ func NewCandle(open string, close string, high string, low string, timestamp str
 
 func InitializePair() *Pair {
 
-	output := &Pair{}
-
-	output.Five = make([]*Candle, 3)
-	output.Fifteen = make([]*Candle, 2)
-	output.Thirty = make([]*Candle, 2)
-	output.Hour = make([]*Candle, 2)
-
-	return output
+	return &Pair{
+		five:    make([]*Candle, 3),
+		fifteen: make([]*Candle, 2),
+		thirty:  make([]*Candle, 2),
+		hour:    make([]*Candle, 2)}
 }
 
 func New() *CandlesCache {
 
-	return &CandlesCache{}
+	return &CandlesCache{Pairs: make(map[string]*Pair)}
 
 }

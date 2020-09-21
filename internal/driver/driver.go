@@ -25,7 +25,14 @@ func New(service *service.CandlesService) *CandlesDriver {
 	return &CandlesDriver{svc: service}
 }
 
-func (*CandlesDriver) Run() {
+func (cd *CandlesDriver) Run() {
+
+	if err := cd.svc.Init(); err != nil {
+		panic(err)
+	}
+	//Insert concurrent workload distribution here
+
+	// Test insertion
 	candle, err := cache.NewCandle("1234", "1245", "1245", "12455", "timestamp2")
 	if err != nil {
 		panic(err)
