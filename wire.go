@@ -6,6 +6,7 @@ import (
 	"github.com/google/wire"
 	"github.com/volatrade/candles/internal/binance"
 	"github.com/volatrade/candles/internal/cache"
+	"github.com/volatrade/candles/internal/client"
 	"github.com/volatrade/candles/internal/config"
 	"github.com/volatrade/candles/internal/driver"
 	"github.com/volatrade/candles/internal/dynamo"
@@ -44,5 +45,5 @@ var storageModule = wire.NewSet(
 
 var binanceModule = wire.NewSet(
 	binance.Module,
-	wire.Bind(new(binance.Client), new(*binance.BinanceClient)),
+	wire.Bind(new(client.Client), new(*client.ApiClient)),
 )
