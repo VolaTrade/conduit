@@ -19,7 +19,7 @@ type (
 	CandlesService struct {
 		cache *cache.CandlesCache
 		db    *dynamo.CandlesDynamo
-		exch  *binance.ApiClient
+		exch  *client.ApiClient
 	}
 )
 
@@ -30,7 +30,11 @@ func New(storage *dynamo.CandlesDynamo, ch *cache.CandlesCache, cl *client.ApiCl
 
 func (cs *CandlesService) Init() error {
 
-	tradingCryptosList := cs.exch.GetActiveBinanceExchangePairs()
+	tradingCryptosList, err := cs.exch.GetActiveBinanceExchangePairs()
+	if err != nil {
+		return err
+	}
+
 	for _, val := range tradingCryptosList {
 		temp := val.(map[string]interface{}) //type casting
 		id := temp["base"].(string) + temp["target"].(string)

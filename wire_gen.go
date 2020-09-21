@@ -7,8 +7,8 @@ package main
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/candles/internal/binance"
 	"github.com/volatrade/candles/internal/cache"
+	"github.com/volatrade/candles/internal/client"
 	"github.com/volatrade/candles/internal/config"
 	"github.com/volatrade/candles/internal/driver"
 	"github.com/volatrade/candles/internal/dynamo"
@@ -25,11 +25,11 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 		return nil, err
 	}
 	candlesCache := cache.New()
-	binanceClient, err := binance.New()
+	apiClient, err := client.New()
 	if err != nil {
 		return nil, err
 	}
-	candlesService := service.New(candlesDynamo, candlesCache, binanceClient)
+	candlesService := service.New(candlesDynamo, candlesCache, apiClient)
 	candlesDriver := driver.New(candlesService)
 	return candlesDriver, nil
 }
@@ -42,4 +42,4 @@ var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), 
 
 var storageModule = wire.NewSet(dynamo.Module, wire.Bind(new(dynamo.Dynamo), new(*dynamo.CandlesDynamo)))
 
-var binanceModule = wire.NewSet(binance.Module, wire.Bind(new(binance.Client), new(*binance.BinanceClient)))
+var apiClientModule = wire.NewSet(client.Module, wire.Bind(new(client.Client), new(*client.ApiClient)))

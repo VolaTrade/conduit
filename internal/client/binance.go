@@ -16,7 +16,7 @@ func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
 
 	resp, err := http.Get(endpoint)
 
-	bc.rl.IncrementRequestCount()
+	ac.rl.IncrementRequestCount()
 
 	if err != nil {
 		return err
