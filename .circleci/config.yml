@@ -1,0 +1,55 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@1.2.1
+
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.13
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-region: 'AWS_REGION'
+          aws-access-key-id: 'AWS_ACCESS_KEY_ID'
+          aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
+      - setup_remote_docker
+      - run:
+          name: Creating config.env
+          command: sh createenv.sh
+      - run:
+          name: Making sure docker image builds and tests pass within container
+          command: make docker-build
+  deploy:
+    docker:
+      - image: circleci/golang:1.13
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-region: 'AWS_REGION'
+          aws-access-key-id: 'AWS_ACCESS_KEY_ID'
+          aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
+      - run:
+          name: Zip files
+          command: zip -r candles.zip .
+      - run:
+          name: Copy files to EC2
+          command: "scp -o StrictHostKeyChecking=no candles.zip ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com:"
+      - run:
+          name: Unzip code
+          command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com 'rm -rf candles && unzip -d candles candles.zip'
+      - run:
+          name: Build and run docker image in EC2
+          command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com 'cd /home/ec2-user/candles && sh createnv.sh && docker-compose up -d'
+
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

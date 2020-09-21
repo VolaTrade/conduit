@@ -2,6 +2,8 @@ package driver
 
 import (
 	"github.com/google/wire"
+	"github.com/volatrade/candles/internal/cache"
+	"github.com/volatrade/candles/internal/dynamo"
 	"github.com/volatrade/candles/internal/service"
 )
 
@@ -24,10 +26,19 @@ func New(service *service.CandlesService) *CandlesDriver {
 }
 
 func (*CandlesDriver) Run() {
+	candle, err := cache.NewCandle("1234", "1245", "1245", "12455", "timestamp2")
+	if err != nil {
+		panic(err)
+	}
 
-	for {
-		println("Adrian hates vim")
+	dynamo, err := dynamo.New(&dynamo.Config{})
+	if err != nil {
+		panic(err)
+	}
 
+	err = dynamo.AddItem(candle, "candles")
+	if err != nil {
+		panic(err)
 	}
 
 }

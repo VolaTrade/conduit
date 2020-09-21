@@ -1,0 +1,11 @@
+version: "3.2"
+services: 
+    candles:
+        build: .
+        image: candles:latest
+        container_name: candles
+        restart: always
+        networks: 
+            - volatrade
+networks: 
+    volatrade:

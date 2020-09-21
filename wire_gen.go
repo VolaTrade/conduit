@@ -19,12 +19,12 @@ import (
 func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 	configConfig := config.NewConfig(cfg)
 	dynamoConfig := config.NewDBConfig(configConfig)
-	candlesDynamo, err := dynamo.New(dynamoConfig)
+	dynamoSession, err := dynamo.New(dynamoConfig)
 	if err != nil {
 		return nil, err
 	}
 	candlesCache := cache.New()
-	candlesService, err := service.New(candlesDynamo, candlesCache)
+	candlesService, err := service.New(dynamoSession, candlesCache)
 	if err != nil {
 		return nil, err
 	}
@@ -38,4 +38,4 @@ var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cac
 
 var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.CandlesService)))
 
-var storageModule = wire.NewSet(dynamo.Module, wire.Bind(new(dynamo.Dynamo), new(*dynamo.CandlesDynamo)))
+var storageModule = wire.NewSet(dynamo.Module, wire.Bind(new(dynamo.Dynamo), new(*dynamo.DynamoSession)))

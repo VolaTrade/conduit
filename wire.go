@@ -37,5 +37,5 @@ var serviceModule = wire.NewSet(
 
 var storageModule = wire.NewSet(
 	dynamo.Module,
-	wire.Bind(new(dynamo.Dynamo), new(*dynamo.CandlesDynamo)),
+	wire.Bind(new(dynamo.Dynamo), new(*dynamo.DynamoSession)),
 )

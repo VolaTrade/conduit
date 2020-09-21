@@ -17,18 +17,18 @@ type (
 
 	CandlesService struct {
 		cache *cache.CandlesCache
-		db    *dynamo.CandlesDynamo
-		rl *limiter.RateLimiter
+		db    *dynamo.DynamoSession
+		rl    *limiter.RateLimiter
 	}
 )
 
-func New(storage *dynamo.CandlesDynamo, ch *cache.CandlesCache) (*CandlesService, error) {
+func New(storage *dynamo.DynamoSession, ch *cache.CandlesCache) (*CandlesService, error) {
 
-	var tempLimiter *limiter.RateLimiter 
-	var err error 
+	var tempLimiter *limiter.RateLimiter
+	var err error
 
-	if tempLimiter, err = limiter.New(&limiter.Config{MaximumRequestPerInterval: 120, MinuteResetInterval: 1}); err != nil{
-		return nil, err 
+	if tempLimiter, err = limiter.New(&limiter.Config{MaximumRequestPerInterval: 120, MinuteResetInterval: 1}); err != nil {
+		return nil, err
 	}
-	return &CandlesService{cache: ch, db: storage, rl: tempLimiter}, nil 
+	return &CandlesService{cache: ch, db: storage, rl: tempLimiter}, nil
 }
