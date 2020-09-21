@@ -52,12 +52,9 @@ func (cs *CandlesService) Init() error {
 	}
 	dataPayLoad := result["tickers"].([]interface{})
 	for _, val := range dataPayLoad {
-		temp := val.(map[string]interface{})
-		coin_id := temp["base"].(string)
-		coin_pair_id := temp["target"].(string)
-		id := coin_id + coin_pair_id
-		pair := cache.InitializePair()
-		cs.cache.Pairs[id] = pair
+		temp := val.(map[string]interface{}) //type casting 
+		id := temp["base"].(string) + temp["target"].(string) 
+		cs.cache.Pairs[id] = cache.InitializePair()
 	}
 
 	for key, _ := range cs.cache.Pairs {
@@ -92,5 +89,6 @@ func (cs *CandlesService) fetchCandleStick(pair string) error {
 	}
 
 	//Append to five minute candle list here
+	//ie cs.cache.InsertCandle(pairKey string, candle Candle) error {}
 	return nil
 }

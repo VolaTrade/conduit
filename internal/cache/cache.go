@@ -71,7 +71,11 @@ func NewCandle(open string, close string, high string, low string, timestamp str
 
 func InitializePair() *Pair {
 
-	return &Pair{five: make([]*Candle, 3), fifteen: make([]*Candle, 2), thirty: make([]*Candle, 2), hour: make([]*Candle, 2)}
+	return &Pair{	
+			five: make([]*Candle, 3), 
+		     	fifteen: make([]*Candle, 2), 
+			thirty: make([]*Candle, 2), 
+			hour: make([]*Candle, 2)}
 }
 
 func New() *CandlesCache {
@@ -79,3 +83,4 @@ func New() *CandlesCache {
 	return &CandlesCache{Pairs: make(map[string]*Pair)}
 
 }
+
