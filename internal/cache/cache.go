@@ -23,10 +23,10 @@ type (
 	}
 
 	Pair struct {
-		Five    []*Candle // 3
-		Fifteen []*Candle // 2
-		Thirty  []*Candle // 2
-		Hour    []*Candle // 1
+		five    []*Candle // 3
+		fifteen []*Candle // 2
+		thirty  []*Candle // 2
+		hour    []*Candle // 1
 	}
 
 	CandlesCache struct {
