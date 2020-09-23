@@ -1,9 +1,12 @@
 package driver
 
 import (
+	"time"
+
 	"github.com/google/wire"
 	"github.com/volatrade/candles/internal/cache"
 	"github.com/volatrade/candles/internal/dynamo"
+	"github.com/volatrade/candles/internal/models"
 	"github.com/volatrade/candles/internal/service"
 )
 
@@ -38,12 +41,22 @@ func (cd *CandlesDriver) Run() {
 		panic(err)
 	}
 
-	dynamo, err := dynamo.New(&dynamo.Config{})
+	dynamo, err := dynamo.New(&dynamo.Config{TableName: "candles"})
 	if err != nil {
 		panic(err)
 	}
 
-	err = dynamo.AddItem(candle, "candles")
+	dynamoItem := &models.DynamoCandleItem{
+		Candle:    candle,
+		Pair:      "ETHUSDT",
+		Timestamp: time.Now().String(),
+	}
+
+	if dynamo.CreateCandlesTable(); err != nil {
+		panic(err)
+	}
+
+	err = dynamo.AddItem(dynamoItem)
 	if err != nil {
 		panic(err)
 	}

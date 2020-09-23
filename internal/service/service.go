@@ -35,6 +35,7 @@ func New(storage *dynamo.DynamoSession, ch *cache.CandlesCache) (*CandlesService
 	if tempLimiter, err = limiter.New(&limiter.Config{MaximumRequestPerInterval: 120, MinuteResetInterval: 1}); err != nil {
 		return nil, err
 	}
+
 	return &CandlesService{cache: ch, db: storage, rl: tempLimiter}, nil
 }
 

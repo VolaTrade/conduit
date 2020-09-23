@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/volatrade/candles/internal/dynamo"
 )
@@ -17,7 +19,9 @@ func NewConfig(fileName FilePath) *Config {
 		panic(err)
 	}
 
-	return &Config{}
+	return &Config{
+		DbConfig: dynamo.Config{TableName: os.Getenv("TABLE_NAME")},
+	}
 }
 
 func NewDBConfig(cfg *Config) *dynamo.Config {

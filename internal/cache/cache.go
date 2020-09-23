@@ -4,41 +4,25 @@ import (
 	"strconv"
 
 	"github.com/google/wire"
+	"github.com/volatrade/candles/internal/models"
 )
 
 var Module = wire.NewSet(
 	New,
 )
 
-type (
-	Cache interface {
-	}
+type Cache interface {
+}
 
-	Candle struct {
-		Open      float64 `json:"open"`
-		Close     float64 `json:"close"`
-		High      float64 `json:"high"`
-		Low       float64 `json:"low"`
-		Timestamp string  `json:"timestamp"`
-	}
-
-	Pair struct {
-		five    []*Candle // 3
-		fifteen []*Candle // 2
-		thirty  []*Candle // 2
-		hour    []*Candle // 1
-	}
-
-	CandlesCache struct {
-		Pairs map[string]*Pair
-	}
-)
+type CandlesCache struct {
+	Pairs map[string]*models.Pair
+}
 
 /**
  * NewCandle does stuff
  */
-func NewCandle(open string, close string, high string, low string, timestamp string) (*Candle, error) {
-	output := &Candle{}
+func NewCandle(open string, close string, high string, low string, timestamp string) (*models.Candle, error) {
+	output := &models.Candle{}
 
 	value, err := strconv.ParseFloat(open, 64)
 	if err != nil {
@@ -69,17 +53,17 @@ func NewCandle(open string, close string, high string, low string, timestamp str
 
 }
 
-func InitializePair() *Pair {
+func InitializePair() *models.Pair {
 
-	return &Pair{
-		five:    make([]*Candle, 3),
-		fifteen: make([]*Candle, 2),
-		thirty:  make([]*Candle, 2),
-		hour:    make([]*Candle, 2)}
+	return &models.Pair{
+		Five:    make([]*models.Candle, 3),
+		Fifteen: make([]*models.Candle, 2),
+		Thirty:  make([]*models.Candle, 2),
+		Hour:    make([]*models.Candle, 2)}
 }
 
 func New() *CandlesCache {
 
-	return &CandlesCache{Pairs: make(map[string]*Pair)}
+	return &CandlesCache{Pairs: make(map[string]*models.Pair)}
 
 }
