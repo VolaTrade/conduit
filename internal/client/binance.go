@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"fmt"
 )
 
 func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
@@ -15,13 +16,17 @@ func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
 	endpoint := "https://api.binance.com/api/v1/klines?symbol=" + pair + "&interval=5m&limit=1"
 
 	resp, err := http.Get(endpoint)
+	defer resp.Body.Close()
 
-	ac.rl.IncrementRequestCount()
-
-	if err != nil {
-		return err
+	if err != nil{
+		return err 
+	} 
+	
+	if resp.StatusCode != 200{
+		return errors.new(fmt.Sprintf("Response error \n Status Code: %d \n Message: %s", resp.StatusCode, resp.Body))
 	}
 
+	ac.rl.IncrementRequestCount()
 	decoder := json.NewDecoder(resp.Body)
 
 	var result []interface{}
@@ -29,6 +34,6 @@ func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
 		return err
 	}
 
-	//Implement the rest here
+        //marshal data into candle struct  
 	return nil
 }
