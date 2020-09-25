@@ -66,14 +66,12 @@ func (cd *CandlesDriver) Run() {
 		panic(err)
 	}
 
-	fmt.Println("HEALTH CHECK: ", isHealthy)
-
 	for isHealthy == false {
 		ms := time.Now().Nanosecond()
 		s := time.Now().Second()
 
-		// Every 5 seconds check table status
-		if s%5 == 0 && ms == 0 {
+		// Every second check table status
+		if s%1 == 0 && ms == 0 {
 			fmt.Printf("Table status: %+v\n", tableStatus)
 			isHealthy, err = dynamo.IsHealthy()
 			if err != nil {

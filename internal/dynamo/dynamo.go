@@ -87,11 +87,11 @@ func (c *DynamoSession) CreateCandlesTable() (string, error) {
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
-				AttributeName: aws.String("Timestamp"),
+				AttributeName: aws.String("PairName"),
 				KeyType:       aws.String("HASH"),
 			},
 			{
-				AttributeName: aws.String("PairName"),
+				AttributeName: aws.String("Timestamp"),
 				KeyType:       aws.String("RANGE"),
 			},
 		},
@@ -125,11 +125,12 @@ func (c *DynamoSession) AddItem(in interface{}) error {
 		TableName: aws.String(c.config.TableName),
 	}
 
-	_, err = c.ddb.PutItem(input)
+	output, err := c.ddb.PutItem(input)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println(output.GoString())
 	fmt.Printf("Successfully added %+v", in)
 	return nil
 }
