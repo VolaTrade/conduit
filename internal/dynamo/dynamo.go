@@ -3,8 +3,6 @@ package dynamo
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -26,7 +24,7 @@ type (
 
 	DynamoSession struct {
 		config *Config
-		svc    *dynamodb.DynamoDB
+		ddb    *dynamodb.DynamoDB
 	}
 )
 
@@ -39,19 +37,20 @@ func New(cfg *Config) (*DynamoSession, error) {
 		return nil, err
 	}
 
-	svc := dynamodb.New(sess)
+	ddb := dynamodb.New(sess)
 
-	return &DynamoSession{config: cfg, svc: svc}, nil
+	return &DynamoSession{config: cfg, ddb: ddb}, nil
 }
 
-// Returns true when table should be created, false otherwise
+// Returns true when tabled does not exist and should be created, false otherwise
 func (c *DynamoSession) shouldCreateTable() (bool, error) {
-	tables, err := c.DescribeTables()
+	input := &dynamodb.ListTablesInput{}
+	output, err := c.ddb.ListTables(input)
 	if err != nil {
 		return false, err
 	}
 
-	for _, v := range tables.TableNames {
+	for _, v := range output.TableNames {
 		if *v == c.config.TableName {
 			return false, nil
 		}
@@ -60,21 +59,20 @@ func (c *DynamoSession) shouldCreateTable() (bool, error) {
 	return true, nil
 }
 
-// CreateCandlesTable used to create the DynamoDB candles table
-func (c *DynamoSession) CreateCandlesTable() error {
-	var shouldCreate bool
-	var err error
-	fmt.Println(c.config.TableName)
-	if shouldCreate, err = c.shouldCreateTable(); err != nil {
-		return err
+// CreateCandlesTable used to create the DynamoDB candles table and returns a table status
+func (c *DynamoSession) CreateCandlesTable() (string, error) {
+
+	tableFailedMsg := "Create Table Failed"
+
+	shouldCreate, err := c.shouldCreateTable()
+	if err != nil {
+		return tableFailedMsg, err
 	}
 
-	if !shouldCreate {
-		fmt.Printf("%v table already exists, no need to make one", c.config.TableName)
-		return nil
+	if shouldCreate == false {
+		fmt.Printf("%+v table already exists, no need to make one\n", c.config.TableName)
+		return tableFailedMsg, nil
 	}
-
-	tableName := c.config.TableName
 
 	input := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
@@ -83,7 +81,7 @@ func (c *DynamoSession) CreateCandlesTable() error {
 				AttributeType: aws.String("S"),
 			},
 			{
-				AttributeName: aws.String("Pair"),
+				AttributeName: aws.String("PairName"),
 				AttributeType: aws.String("S"),
 			},
 		},
@@ -93,7 +91,7 @@ func (c *DynamoSession) CreateCandlesTable() error {
 				KeyType:       aws.String("HASH"),
 			},
 			{
-				AttributeName: aws.String("Pair"),
+				AttributeName: aws.String("PairName"),
 				KeyType:       aws.String("RANGE"),
 			},
 		},
@@ -101,17 +99,18 @@ func (c *DynamoSession) CreateCandlesTable() error {
 			ReadCapacityUnits:  aws.Int64(5),
 			WriteCapacityUnits: aws.Int64(5),
 		},
-		TableName: aws.String(tableName),
+		TableName: aws.String(c.config.TableName),
 	}
 
-	if _, err := c.svc.CreateTable(input); err != nil {
+	output, err := c.ddb.CreateTable(input)
+	if err != nil {
 		fmt.Println("Got error calling CreateTable")
 		fmt.Println(err.Error())
-		return err
+		return tableFailedMsg, err
 	}
 
-	fmt.Println("Created table: ", tableName)
-	return nil
+	fmt.Println("Created table: ", c.config.TableName)
+	return *output.TableDescription.TableStatus, nil
 }
 
 // AddItem creates an item in the table that corresponds with tableName
@@ -126,7 +125,7 @@ func (c *DynamoSession) AddItem(in interface{}) error {
 		TableName: aws.String(c.config.TableName),
 	}
 
-	_, err = c.svc.PutItem(input)
+	_, err = c.ddb.PutItem(input)
 	if err != nil {
 		return err
 	}
@@ -135,33 +134,18 @@ func (c *DynamoSession) AddItem(in interface{}) error {
 	return nil
 }
 
-// DescribeTables pings dynamodb and returns a list of currently active tables
-func (c *DynamoSession) DescribeTables() (*dynamodb.ListTablesOutput, error) {
-	input := &dynamodb.ListTablesInput{}
-	result, err := c.svc.ListTables(input)
+// IsHealthy returns true if the table connection is healthy, false otherwise
+func (c *DynamoSession) IsHealthy() (bool, error) {
+	input := &dynamodb.DescribeTableInput{TableName: &c.config.TableName}
+	output, err := c.ddb.DescribeTable(input)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case dynamodb.ErrCodeInternalServerError:
-				fmt.Println(dynamodb.ErrCodeInternalServerError, aerr.Error())
-			default:
-				fmt.Println(aerr.Error())
-			}
-		} else {
-			fmt.Println(err.Error())
-		}
-		return nil, err
+		return false, err
 	}
-	fmt.Println("Active tables: ", result)
-	return result, nil
 
-}
-
-// HasHealthyConnection ensures the dynamo connection is healthy by describing the tables
-func (c *DynamoSession) HasHealthyConnection() bool {
-	if _, err := c.DescribeTables(); err != nil {
-		return false
+	if *output.Table.TableStatus != dynamodb.TableStatusActive {
+		return false, nil
 	}
-	fmt.Println("Connection is healthy")
-	return true
+
+	fmt.Printf("Connection is healthy...\nTables Status: %+v\n", *output.Table.TableStatus)
+	return true, nil
 }

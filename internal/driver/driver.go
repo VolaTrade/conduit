@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/wire"
@@ -36,7 +37,7 @@ func (cd *CandlesDriver) Run() {
 	//Insert concurrent workload distribution here
 
 	// Test insertion
-	candle, err := cache.NewCandle("1234", "1245", "1245", "12455", "timestamp2")
+	candle, err := cache.NewCandle("1234", "1245", "1245", "12455")
 	if err != nil {
 		panic(err)
 	}
@@ -46,14 +47,45 @@ func (cd *CandlesDriver) Run() {
 		panic(err)
 	}
 
+	pairData := cache.InitializePairData()
+	pairData.Five = []*models.Candle{candle}
+
 	dynamoItem := &models.DynamoCandleItem{
-		Candle:    candle,
-		Pair:      "ETHUSDT",
+		PairData:  pairData,
+		PairName:  "ETHUSDT",
 		Timestamp: time.Now().String(),
 	}
 
-	if dynamo.CreateCandlesTable(); err != nil {
+	tableStatus, err := dynamo.CreateCandlesTable()
+	if err != nil {
 		panic(err)
+	}
+
+	isHealthy, err := dynamo.IsHealthy()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("HEALTH CHECK: ", isHealthy)
+
+	for isHealthy == false {
+		ms := time.Now().Nanosecond()
+		s := time.Now().Second()
+
+		// Every 5 seconds check table status
+		if s%5 == 0 && ms == 0 {
+			fmt.Printf("Table status: %+v\n", tableStatus)
+			isHealthy, err = dynamo.IsHealthy()
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		// timeout after 30 seconds
+		if s%30 == 0 {
+			panic("Table creation timed out, took longer than 30 seconds")
+		}
+
 	}
 
 	err = dynamo.AddItem(dynamoItem)

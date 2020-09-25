@@ -55,7 +55,7 @@ func (cs *CandlesService) Init() error {
 	for _, val := range dataPayLoad {
 		temp := val.(map[string]interface{}) //type casting
 		id := temp["base"].(string) + temp["target"].(string)
-		cs.cache.Pairs[id] = cache.InitializePair()
+		cs.cache.Pairs[id] = cache.InitializePairData()
 	}
 
 	for key, _ := range cs.cache.Pairs {

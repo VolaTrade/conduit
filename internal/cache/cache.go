@@ -15,13 +15,13 @@ type Cache interface {
 }
 
 type CandlesCache struct {
-	Pairs map[string]*models.Pair
+	Pairs map[string]*models.PairData
 }
 
 /**
  * NewCandle does stuff
  */
-func NewCandle(open string, close string, high string, low string, timestamp string) (*models.Candle, error) {
+func NewCandle(open string, close string, high string, low string) (*models.Candle, error) {
 	output := &models.Candle{}
 
 	value, err := strconv.ParseFloat(open, 64)
@@ -48,14 +48,13 @@ func NewCandle(open string, close string, high string, low string, timestamp str
 	}
 	output.Low = value
 
-	output.Timestamp = timestamp
 	return output, nil
 
 }
 
-func InitializePair() *models.Pair {
+func InitializePairData() *models.PairData {
 
-	return &models.Pair{
+	return &models.PairData{
 		Five:    make([]*models.Candle, 3),
 		Fifteen: make([]*models.Candle, 2),
 		Thirty:  make([]*models.Candle, 2),
@@ -64,6 +63,6 @@ func InitializePair() *models.Pair {
 
 func New() *CandlesCache {
 
-	return &CandlesCache{Pairs: make(map[string]*models.Pair)}
+	return &CandlesCache{Pairs: make(map[string]*models.PairData)}
 
 }
