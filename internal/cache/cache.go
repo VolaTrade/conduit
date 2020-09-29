@@ -15,7 +15,33 @@ type Cache interface {
 }
 
 type CandlesCache struct {
-	Pairs map[string]*models.PairData
+	Pairs *models.PairData
+}
+
+func (cs *CandlesCache) InsertCandle(candle *models.Candle) {
+
+	for i:= 1; i < 3; i++{
+		cs.Pairs.Five[i] = cs.Pairs.Five[i-1]
+	}
+	cs.Pairs.Five[0] = candle 
+}
+
+func BuildCandleFromCandleList(candleList []*models.Candle) *models.Candle {
+	tempCandle := &models.Candle{Open: 0, Close: 0, High: 0, Low: 0}
+	
+	for _, candle := range candleList{
+		
+		if tempCandle.High < candle.High{
+			tempCandle.High = candle.High
+		}
+		if tempCandle.Low > candle.Low{
+			tempCandle.Low = candle.Low
+		}
+
+	}
+	tempCandle.Open = candleList[0].Open
+	tempCandle.Close = candleList[len(candleList)-1].Close
+	return tempCandle
 }
 
 /**
@@ -52,7 +78,7 @@ func NewCandle(open string, close string, high string, low string) (*models.Cand
 
 }
 
-func InitializePairData() *models.PairData {
+func initializePairData() *models.PairData {
 
 	return &models.PairData{
 		Five:    make([]*models.Candle, 3),
@@ -63,6 +89,6 @@ func InitializePairData() *models.PairData {
 
 func New() *CandlesCache {
 
-	return &CandlesCache{Pairs: make(map[string]*models.PairData)}
+	return &CandlesCache{Pairs: initializePairData()}
 
 }
