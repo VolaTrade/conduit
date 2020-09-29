@@ -20,21 +20,21 @@ type CandlesCache struct {
 
 func (cs *CandlesCache) InsertCandle(candle *models.Candle) {
 
-	for i:= 1; i < 3; i++{
+	for i := 1; i < 3; i++ {
 		cs.Pairs.Five[i] = cs.Pairs.Five[i-1]
 	}
-	cs.Pairs.Five[0] = candle 
+	cs.Pairs.Five[0] = candle
 }
 
 func BuildCandleFromCandleList(candleList []*models.Candle) *models.Candle {
 	tempCandle := &models.Candle{Open: 0, Close: 0, High: 0, Low: 0}
-	
-	for _, candle := range candleList{
-		
-		if tempCandle.High < candle.High{
+
+	for _, candle := range candleList {
+
+		if tempCandle.High < candle.High {
 			tempCandle.High = candle.High
 		}
-		if tempCandle.Low > candle.Low{
+		if tempCandle.Low > candle.Low {
 			tempCandle.Low = candle.Low
 		}
 
