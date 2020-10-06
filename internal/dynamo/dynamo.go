@@ -15,6 +15,10 @@ var Module = wire.NewSet(
 )
 
 type Dynamo interface {
+	shouldCreateTable() (bool, error)
+	CreateCandlesTable() (string, error)
+	AddItem(in interface{}) error
+	IsHealthy() (bool, error)
 }
 
 type (

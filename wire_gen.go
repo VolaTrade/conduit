@@ -8,6 +8,7 @@ package main
 import (
 	"github.com/google/wire"
 	"github.com/volatrade/candles/internal/cache"
+	"github.com/volatrade/candles/internal/client"
 	"github.com/volatrade/candles/internal/config"
 	"github.com/volatrade/candles/internal/driver"
 	"github.com/volatrade/candles/internal/dynamo"
@@ -24,10 +25,11 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 		return nil, err
 	}
 	candlesCache := cache.New()
-	candlesService, err := service.New(dynamoSession, candlesCache)
+	apiClient, err := client.New()
 	if err != nil {
 		return nil, err
 	}
+	candlesService := service.New(dynamoSession, candlesCache, apiClient)
 	candlesDriver := driver.New(candlesService)
 	return candlesDriver, nil
 }
@@ -39,3 +41,5 @@ var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cac
 var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.CandlesService)))
 
 var storageModule = wire.NewSet(dynamo.Module, wire.Bind(new(dynamo.Dynamo), new(*dynamo.DynamoSession)))
+
+var apiClientModule = wire.NewSet(client.Module, wire.Bind(new(client.Client), new(*client.ApiClient)))
