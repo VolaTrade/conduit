@@ -3,8 +3,8 @@ package client
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"fmt"
+	"net/http"
 )
 
 func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
@@ -18,12 +18,12 @@ func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
 	resp, err := http.Get(endpoint)
 	defer resp.Body.Close()
 
-	if err != nil{
-		return err 
-	} 
-	
-	if resp.StatusCode != 200{
-		return errors.new(fmt.Sprintf("Response error \n Status Code: %d \n Message: %s", resp.StatusCode, resp.Body))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("Response error \n Status Code: %d \n Message: %s", resp.StatusCode, resp.Body))
 	}
 
 	ac.rl.IncrementRequestCount()
@@ -34,6 +34,6 @@ func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
 		return err
 	}
 
-        //marshal data into candle struct  
+	//marshal data into candle struct
 	return nil
 }
