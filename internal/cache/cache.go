@@ -15,15 +15,15 @@ type Cache interface {
 }
 
 type CandlesCache struct {
-	Pairs *models.PairData
+	Pairs map[string]*models.PairData
 }
 
-func (cs *CandlesCache) InsertCandle(candle *models.Candle) {
+func (cs *CandlesCache) InsertCandle(candle *models.Candle, pair string) {
 
 	for i := 1; i < 3; i++ {
-		cs.Pairs.Five[i] = cs.Pairs.Five[i-1]
+		cs.Pairs[pair].Five[i] = cs.Pairs[pair].Five[i-1]
 	}
-	cs.Pairs.Five[0] = candle
+	cs.Pairs[pair].Five[0] = candle
 }
 
 func BuildCandleFromCandleList(candleList []*models.Candle) *models.Candle {
@@ -78,7 +78,7 @@ func NewCandle(open string, close string, high string, low string) (*models.Cand
 
 }
 
-func initializePairData() *models.PairData {
+func InitializePairData() *models.PairData {
 
 	return &models.PairData{
 		Five:    make([]*models.Candle, 3),
@@ -89,6 +89,6 @@ func initializePairData() *models.PairData {
 
 func New() *CandlesCache {
 
-	return &CandlesCache{Pairs: initializePairData()}
+	return &CandlesCache{Pairs: make(map[string]*models.PairData)}
 
 }
