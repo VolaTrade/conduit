@@ -1,6 +1,9 @@
 package client
 
 import (
+	"os"
+	"sync"
+
 	"github.com/google/wire"
 	"github.com/volatrade/utilities/limiter"
 )
@@ -12,6 +15,7 @@ var Module = wire.NewSet(
 type Client interface {
 	FetchFiveMinuteCandle(pair string) error
 	GetActiveBinanceExchangePairs() ([]interface{}, error)
+	ConnectSocketAndReadTickData(u string, interrupt chan os.Signal, queue chan map[string]interface{}, wg *sync.WaitGroup)
 }
 
 type ApiClient struct {
