@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.34.27
 	github.com/google/wire v0.4.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/volatrade/collector v0.0.0-20200909185131-a8681403b6bf

@@ -11,25 +11,22 @@ import (
 	"github.com/volatrade/candles/internal/client"
 	"github.com/volatrade/candles/internal/config"
 	"github.com/volatrade/candles/internal/driver"
-	"github.com/volatrade/candles/internal/dynamo"
 	"github.com/volatrade/candles/internal/service"
+	"github.com/volatrade/candles/internal/storage"
 )
 
 // Injectors from wire.go:
 
 func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 	configConfig := config.NewConfig(cfg)
-	dynamoConfig := config.NewDBConfig(configConfig)
-	dynamoSession, err := dynamo.New(dynamoConfig)
-	if err != nil {
-		return nil, err
-	}
+	postgresConfig := config.NewDBConfig(configConfig)
+	connectionArray := storage.New(postgresConfig)
 	candlesCache := cache.New()
 	apiClient, err := client.New()
 	if err != nil {
 		return nil, err
 	}
-	candlesService := service.New(dynamoSession, candlesCache, apiClient)
+	candlesService := service.New(connectionArray, candlesCache, apiClient)
 	candlesDriver := driver.New(candlesService)
 	return candlesDriver, nil
 }
@@ -40,6 +37,6 @@ var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cac
 
 var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.CandlesService)))
 
-var storageModule = wire.NewSet(dynamo.Module, wire.Bind(new(dynamo.Dynamo), new(*dynamo.DynamoSession)))
+var storageModule = wire.NewSet(storage.Module, wire.Bind(new(storage.Store), new(*storage.ConnectionArray)))
 
 var apiClientModule = wire.NewSet(client.Module, wire.Bind(new(client.Client), new(*client.ApiClient)))
