@@ -46,9 +46,9 @@ func (cs *CandlesService) Init() error {
 		return err
 	}
 
-	for _, val := range tradingCryptosList {
+	for _, val := range tradingCryptosList[:20] {
 		temp := val.(map[string]interface{}) //type casting
-		id := strings.ToLower(temp["base"].(string) + temp["target"].(string))
+		id := strings.ToLower(temp["symbol"].(string))
 		cs.cache.Pairs[id] = cache.InitializePairData()
 	}
 	log.Printf("Number of connections --> %d", len(cs.cache.Pairs))
@@ -80,7 +80,8 @@ func (cs *CandlesService) ConcurrentTickDataCollection() {
 		j++
 	}
 
-	log.Printf("Initialized %d connections", j)
+	log.Printf("Initialized %d websocket connections", j)
+
 	for index, queue := range queues {
 		go func(queue chan map[string]interface{}, index int) {
 

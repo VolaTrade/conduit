@@ -5,8 +5,12 @@ import (
 	"net/http"
 )
 
+type Symbol struct {
+}
+
+// GetActiveBinanceExchangePairs gets a list of all binance tradeable pairs
 func (ac *ApiClient) GetActiveBinanceExchangePairs() ([]interface{}, error) {
-	resp, err := http.Get("https://api.coingecko.com/api/v3/exchanges/binance/tickers")
+	resp, err := http.Get("https://api.binance.com/api/v3/exchangeInfo")
 	if err != nil {
 		return nil, err
 	}
@@ -16,7 +20,6 @@ func (ac *ApiClient) GetActiveBinanceExchangePairs() ([]interface{}, error) {
 	if err := decoder.Decode(&result); err != nil {
 		return nil, err
 	}
-	dataPayLoad := result["tickers"].([]interface{})
-
+	dataPayLoad := result["symbols"].([]interface{})
 	return dataPayLoad, nil
 }

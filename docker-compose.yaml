@@ -1,11 +1,25 @@
 version: "3.2"
-services: 
+services:
+    db:
+        image: postgres
+        restart: always
+        environment:
+            POSTGRES_DB: "voladata"
+            POSTGRES_USER: "postgres"
+            POSTGRES_PASSWORD: "password"
+        ports:
+            - "5432:5432"
+
     candles:
-        build: .
+        build:
+            context: .
+            args: 
+                GITHUB_TOKEN: ${GITHUB_TOKEN}
+        command: ["./wait-for-it.sh", "db:5432", "--", "go", "run", "main.go"]
         image: candles:latest
         container_name: candles
         restart: always
-        networks: 
-            - volatrade
-networks: 
-    volatrade:
+        depends_on:
+            - db
+        links:
+            - db
