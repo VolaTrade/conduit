@@ -3,10 +3,12 @@ services:
     db:
         image: postgres
         restart: always
+        volumes:
+            - $HOME/docker/volumes/postgres:/var/lib/postgresql/data
         environment:
             POSTGRES_DB: "voladata"
             POSTGRES_USER: "postgres"
-            POSTGRES_PASSWORD: "password"
+            POSTGRES_PASSWORD: "postgres"
         ports:
             - "5432:5432"
 
@@ -15,11 +17,7 @@ services:
             context: .
             args: 
                 GITHUB_TOKEN: ${GITHUB_TOKEN}
-        command: ["./wait-for-it.sh", "db:5432", "--", "go", "run", "main.go"]
         image: candles:latest
         container_name: candles
         restart: always
-        depends_on:
-            - db
-        links:
-            - db
+        

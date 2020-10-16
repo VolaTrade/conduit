@@ -46,7 +46,7 @@ func (cs *CandlesService) Init() error {
 		return err
 	}
 
-	for _, val := range tradingCryptosList[:20] {
+	for _, val := range tradingCryptosList {
 		temp := val.(map[string]interface{}) //type casting
 		id := strings.ToLower(temp["symbol"].(string))
 		cs.cache.Pairs[id] = cache.InitializePairData()
