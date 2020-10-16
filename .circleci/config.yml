@@ -2,6 +2,8 @@ version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
+  aws-ecr: circleci/aws-ecr@6.12.2
+
 
 jobs:
   build:
@@ -29,6 +31,15 @@ jobs:
           aws-region: 'AWS_REGION'
           aws-access-key-id: 'AWS_ACCESS_KEY_ID'
           aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
+
+      - aws-ecr/build-and-push-image:
+          account-url: 752939442315.dkr.ecr.us-west-2.amazonaws.com
+          aws-access-key-id: 'AWS_ACCESS_KEY_ID'
+          aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
+          region: 'AWS_REGION'
+          create-repo: true
+          repo: "candles"
+
       - run:
           name: Zip files
           command: zip -r candles.zip .
