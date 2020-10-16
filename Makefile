@@ -9,3 +9,9 @@ build:
 docker-build:
 	docker build -t candles . --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN)
 
+
+docker-run:
+	docker run --restart=always -d candles
+
+integration-test:
+	docker-compose up --remove-orphans
