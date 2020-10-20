@@ -15,3 +15,10 @@ docker-run:
 
 integration-test:
 	docker-compose up --remove-orphans
+
+ecr-push-image:
+	docker push 752939442315.dkr.ecr.us-west-2.amazonaws.com/candles
+
+ecr-login:
+	aws ecr get-login-password --profile volatrade | docker login --username AWS --password-stdin 752939442315.dkr.ecr.us-west-2.amazonaws.com
+
