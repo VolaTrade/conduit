@@ -28,10 +28,7 @@ func (cd *CandlesDriver) Run() {
 	if err := cd.svc.Init(); err != nil {
 		panic(err)
 	}
+	//Insert concurrent workload distribution here
 
-	for {
-		//Insert concurrent workload distribution here
-
-	}
-
+	cd.svc.ConcurrentTickDataCollection()
 }

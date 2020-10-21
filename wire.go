@@ -8,8 +8,9 @@ import (
 	"github.com/volatrade/candles/internal/client"
 	"github.com/volatrade/candles/internal/config"
 	"github.com/volatrade/candles/internal/driver"
-	"github.com/volatrade/candles/internal/dynamo"
 	"github.com/volatrade/candles/internal/service"
+	"github.com/volatrade/candles/internal/stats"
+	"github.com/volatrade/candles/internal/storage"
 )
 
 func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
@@ -18,6 +19,8 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 		wire.Build(
 			config.NewConfig,
 			config.NewDBConfig,
+			config.NewStatsConfig,
+			stats.New,
 			storageModule,
 			apiClientModule,
 			cacheModule,
@@ -38,8 +41,8 @@ var serviceModule = wire.NewSet(
 )
 
 var storageModule = wire.NewSet(
-	dynamo.Module,
-	wire.Bind(new(dynamo.Dynamo), new(*dynamo.CandlesDynamo)),
+	storage.Module,
+	wire.Bind(new(storage.Store), new(*storage.ConnectionArray)),
 )
 
 var apiClientModule = wire.NewSet(

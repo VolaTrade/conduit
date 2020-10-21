@@ -4,83 +4,91 @@ import (
 	"strconv"
 
 	"github.com/google/wire"
+	"github.com/volatrade/candles/internal/models"
 )
 
 var Module = wire.NewSet(
 	New,
 )
 
-type (
-	Cache interface {
-	}
+type Cache interface {
+}
 
-	Candle struct {
-		open      float64
-		close     float64
-		high      float64
-		low       float64
-		timestamp string
-	}
+type CandlesCache struct {
+	Pairs map[string]*models.PairData
+}
 
-	Pair struct {
-		five    []*Candle // 3
-		fifteen []*Candle // 2
-		thirty  []*Candle // 2
-		hour    []*Candle // 1
-	}
+func (cs *CandlesCache) InsertCandle(candle *models.Candle, pair string) {
 
-	CandlesCache struct {
-		Pairs map[string]*Pair
+	for i := 1; i < 3; i++ {
+		cs.Pairs[pair].Five[i] = cs.Pairs[pair].Five[i-1]
 	}
-)
+	cs.Pairs[pair].Five[0] = candle
+}
+
+func BuildCandleFromCandleList(candleList []*models.Candle) *models.Candle {
+	tempCandle := &models.Candle{Open: 0, Close: 0, High: 0, Low: 0}
+
+	for _, candle := range candleList {
+
+		if tempCandle.High < candle.High {
+			tempCandle.High = candle.High
+		}
+		if tempCandle.Low > candle.Low {
+			tempCandle.Low = candle.Low
+		}
+
+	}
+	tempCandle.Open = candleList[0].Open
+	tempCandle.Close = candleList[len(candleList)-1].Close
+	return tempCandle
+}
 
 /**
  * NewCandle does stuff
  */
-func NewCandle(open string, close string, high string, low string, timestamp string) (*Candle, error) {
-	output := &Candle{}
+func NewCandle(open string, close string, high string, low string) (*models.Candle, error) {
+	output := &models.Candle{}
 
 	value, err := strconv.ParseFloat(open, 64)
 	if err != nil {
 		return nil, err
 	}
-	output.open = value
+	output.Open = value
 
 	value, err = strconv.ParseFloat(close, 64)
 	if err != nil {
 		return nil, err
 	}
-	output.close = value
+	output.Close = value
 
 	value, err = strconv.ParseFloat(high, 64)
 	if err != nil {
 		return nil, err
 	}
-	output.high = value
+	output.High = value
 
 	value, err = strconv.ParseFloat(low, 64)
 	if err != nil {
 		return nil, err
 	}
-	output.low = value
+	output.Low = value
 
-	output.timestamp = timestamp
 	return output, nil
 
 }
 
-func InitializePair() *Pair {
+func InitializePairData() *models.PairData {
 
-	return &Pair{	
-			five: make([]*Candle, 3), 
-		     	fifteen: make([]*Candle, 2), 
-			thirty: make([]*Candle, 2), 
-			hour: make([]*Candle, 2)}
+	return &models.PairData{
+		Five:    make([]*models.Candle, 3),
+		Fifteen: make([]*models.Candle, 2),
+		Thirty:  make([]*models.Candle, 2),
+		Hour:    make([]*models.Candle, 2)}
 }
 
 func New() *CandlesCache {
 
-	return &CandlesCache{Pairs: make(map[string]*Pair)}
+	return &CandlesCache{Pairs: make(map[string]*models.PairData)}
 
 }
-
