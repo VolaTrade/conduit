@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/google/wire"
+	"github.com/volatrade/candles/internal/stats"
 	"github.com/volatrade/utilities/limiter"
 )
 
@@ -19,15 +20,16 @@ type Client interface {
 }
 
 type ApiClient struct {
-	rl *limiter.RateLimiter
+	rl     *limiter.RateLimiter
+	statsd *stats.StatsD
 }
 
-func New() (*ApiClient, error) {
+func New(stats *stats.StatsD) (*ApiClient, error) {
 	var tempLimiter *limiter.RateLimiter
 	var err error
 	if tempLimiter, err = limiter.New(&limiter.Config{MaximumRequestPerInterval: 120, MinuteResetInterval: 1}); err != nil {
 		return nil, err
 	}
 
-	return &ApiClient{rl: tempLimiter}, nil
+	return &ApiClient{rl: tempLimiter, statsd: stats}, nil
 }

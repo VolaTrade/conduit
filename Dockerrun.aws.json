@@ -1,0 +1,10 @@
+{
+    "AWSEBDockerrunVersion": "1",
+    "Ports": [{"ContainerPort": "80"}],
+    "Volumes": [
+        {
+            "HostDirectory": "/var/app/current/bin",
+            "ContainerDirectory": "/opt/tickers"
+        }
+               ]
+}

@@ -3,14 +3,21 @@ module github.com/volatrade/candles
 go 1.14
 
 require (
-	github.com/aws/aws-sdk-go v1.34.27
+	github.com/alexcesaro/statsd v2.0.0+incompatible
+	github.com/cockroachdb/apd v1.1.0 // indirect
+	github.com/etsy/statsd v0.9.0 // indirect
+	github.com/gofrs/uuid v3.3.0+incompatible // indirect
+	github.com/golang/mock v1.4.4
 	github.com/google/wire v0.4.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
-	github.com/volatrade/collector v0.0.0-20200909185131-a8681403b6bf
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/stretchr/testify v1.6.1
 	github.com/volatrade/utilities v0.0.0-20200917055431-bc1341e02872
-	golang.org/x/mod v0.3.0
-	golang.org/x/tools v0.0.0-20200918232735-d647fc253266 // indirect
+	google.golang.org/appengine v1.6.6 // indirect
+	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 )

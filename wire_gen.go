@@ -12,6 +12,7 @@ import (
 	"github.com/volatrade/candles/internal/config"
 	"github.com/volatrade/candles/internal/driver"
 	"github.com/volatrade/candles/internal/service"
+	"github.com/volatrade/candles/internal/stats"
 	"github.com/volatrade/candles/internal/storage"
 )
 
@@ -22,11 +23,16 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 	postgresConfig := config.NewDBConfig(configConfig)
 	connectionArray := storage.New(postgresConfig)
 	candlesCache := cache.New()
-	apiClient, err := client.New()
+	statsConfig := config.NewStatsConfig(configConfig)
+	statsD, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, err
 	}
-	candlesService := service.New(connectionArray, candlesCache, apiClient)
+	apiClient, err := client.New(statsD)
+	if err != nil {
+		return nil, err
+	}
+	candlesService := service.New(connectionArray, candlesCache, apiClient, statsD)
 	candlesDriver := driver.New(candlesService)
 	return candlesDriver, nil
 }
