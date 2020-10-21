@@ -54,7 +54,7 @@ jobs:
 
       - run:
           name: Build and run docker image in EC2
-          command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com ''
+          command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com 
 
 
 workflows:

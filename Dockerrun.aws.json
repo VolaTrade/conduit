@@ -6,5 +6,5 @@
             "HostDirectory": "/var/app/current/bin",
             "ContainerDirectory": "/opt/tickers"
         }
-               ]
+    ]
 }
