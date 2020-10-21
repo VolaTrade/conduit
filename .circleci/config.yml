@@ -31,13 +31,22 @@ jobs:
           aws-region: 'AWS_REGION'
           aws-access-key-id: 'AWS_ACCESS_KEY_ID'
           aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
+      - setup_remote_docker
+      - run:
+          name: Log into ecr
+          command: aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 752939442315.dkr.ecr.us-west-2.amazonaws.com
+        
+      - run:
+          name: Building image
+          command: chmod +x create_env.sh && sh create_env.sh && make docker-build
 
-      - aws-ecr/build-and-push-image:
-          aws-access-key-id: 'AWS_ACCESS_KEY_ID'
-          aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
-          region: 'AWS_REGION'
-          create-repo: true
-          repo: tickers
+      - run:
+          name: Tagging image
+          command: docker tag candles:latest 752939442315.dkr.ecr.us-west-2.amazonaws.com/candles:latest
+        
+      - run:
+          name: Pushing image to ecr
+          command: docker push 752939442315.dkr.ecr.us-west-2.amazonaws.com/candles:latest
 
       - run:
           name: Zip files
