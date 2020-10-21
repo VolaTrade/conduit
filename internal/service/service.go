@@ -6,12 +6,16 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/wire"
 	"github.com/volatrade/candles/internal/cache"
 	"github.com/volatrade/candles/internal/client"
+	"github.com/volatrade/candles/internal/stats"
+
 	"github.com/volatrade/candles/internal/storage"
 )
 
@@ -28,15 +32,15 @@ type (
 	}
 
 	CandlesService struct {
-		cache *cache.CandlesCache
-		store *storage.ConnectionArray
-		exch  *client.ApiClient
+		cache  *cache.CandlesCache
+		store  *storage.ConnectionArray
+		exch   *client.ApiClient
+		statsd *stats.StatsD
 	}
 )
 
-func New(arr *storage.ConnectionArray, ch *cache.CandlesCache, cl *client.ApiClient) *CandlesService {
-
-	return &CandlesService{cache: ch, store: arr, exch: cl}
+func New(arr *storage.ConnectionArray, ch *cache.CandlesCache, cl *client.ApiClient, stats *stats.StatsD) *CandlesService {
+	return &CandlesService{cache: ch, store: arr, exch: cl, statsd: stats}
 }
 
 func (cs *CandlesService) Init() error {
@@ -46,10 +50,17 @@ func (cs *CandlesService) Init() error {
 		return err
 	}
 
-	for _, val := range tradingCryptosList {
+	for index, val := range tradingCryptosList {
 		temp := val.(map[string]interface{}) //type casting
 		id := strings.ToLower(temp["symbol"].(string))
-		cs.cache.Pairs[id] = cache.InitializePairData()
+
+		if strings.Contains(id, "btc") {
+			cs.cache.Pairs[id] = cache.InitializePairData()
+		}
+
+		if index >= 100 {
+			break
+		}
 	}
 	log.Printf("Number of connections --> %d", len(cs.cache.Pairs))
 	return nil
@@ -90,12 +101,23 @@ func (cs *CandlesService) ConcurrentTickDataCollection() {
 
 					cs.store.Arr[index].InsertTransaction(val)
 					log.Printf("Val in queue:  %s @ queue #%d w/ queue length -> %d", val, index, len(queue))
+					log.Printf("Increment")
+					cs.statsd.Client.Increment("transacts.sqlinserts")
 				}
 
 			}
 
 		}(queue, index)
 	}
+
+	go func(statz *stats.StatsD) {
+
+		for {
+			time.Sleep(1)
+			statz.Client.Gauge("tickers.goroutines", runtime.NumGoroutine())
+		}
+
+	}(cs.statsd)
 
 	wg.Wait()
 }

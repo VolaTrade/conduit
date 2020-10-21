@@ -1,7 +1,10 @@
 {
     "AWSEBDockerrunVersion": "1",
-    "Image": {
-        "Name": "752939442315.dkr.ecr.us-west-2.amazonaws.com/candles:latest",
-        "Update": "true"
-    }
+    "Ports": [{"ContainerPort": "80"}],
+    "Volumes": [
+        {
+            "HostDirectory": "/var/app/current/bin",
+            "ContainerDirectory": "/opt/tickers"
+        }
+               ]
 }
