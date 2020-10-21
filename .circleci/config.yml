@@ -48,14 +48,6 @@ jobs:
           name: Pushing image to ecr
           command: docker push 752939442315.dkr.ecr.us-west-2.amazonaws.com/candles:latest
 
-      - run:
-          name: Zip files
-          command: zip -r candles.zip .
-
-      - run:
-          name: Build and run docker image in EC2
-          command: ssh -o StrictHostKeyChecking=no ec2-user@ec2-18-144-82-127.us-west-1.compute.amazonaws.com 
-
 
 workflows:
   build-and-deploy:
