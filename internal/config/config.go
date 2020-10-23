@@ -30,6 +30,13 @@ func NewConfig(fileName FilePath) *Config {
 		log.Fatal(err)
 	}
 
+	env := os.Getenv("ENV")
+
+	if env != "DEV" && env != "PRD" {
+		log.Println("ENV ==>", env)
+		log.Fatal("ENV var in config.env isn't set properly")
+	}
+
 	return &Config{
 		DbConfig: postgres.Config{
 			Host:     os.Getenv("HOST"),
@@ -41,6 +48,7 @@ func NewConfig(fileName FilePath) *Config {
 		StatsConfig: stats.Config{
 			Host: os.Getenv("STATS_HOST"),
 			Port: port,
+			Env:  env,
 		},
 	}
 }

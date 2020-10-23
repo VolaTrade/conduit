@@ -24,7 +24,18 @@ func New(cfg *postgres.Config) *ConnectionArray {
 		arr[i] = tempDB
 	}
 
-	arr[0].DB.Exec("CREATE TABLE transactions(trade_id UUID NOT NULL DEFAULT uuid_generate_v4 (), time_stamp TIMESTAMP, pair VARCHAR, price NUMERIC, quantity NUMERIC, is_maker boolean);")
-
 	return &ConnectionArray{Arr: arr}
+}
+
+func (ca *ConnectionArray) MakeConnections() {
+
+	for i := 0; i < 40; i++ {
+		db, err := ca.Arr[i].Connect()
+		if err != nil {
+			panic(err)
+		}
+		ca.Arr[i].DB = db
+
+	}
+
 }

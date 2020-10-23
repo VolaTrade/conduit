@@ -2,6 +2,8 @@ package stats
 
 import (
 	"fmt"
+	"runtime"
+	"time"
 
 	"gopkg.in/alexcesaro/statsd.v2"
 
@@ -18,6 +20,7 @@ type (
 	Config struct {
 		Host string
 		Port int
+		Env  string
 	}
 
 	StatsD struct {
@@ -26,10 +29,18 @@ type (
 )
 
 func New(cfg *Config) (*StatsD, error) {
-	client, err := statsd.New(statsd.Address(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)))
-
+	client, err := statsd.New(statsd.Address(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)), statsd.Prefix(cfg.Env))
 	if err != nil {
 		return nil, err
 	}
 	return &StatsD{Client: client}, nil
+}
+
+func (statz *StatsD) ReportGoRoutines() {
+
+	for {
+		time.Sleep(1)
+		statz.Client.Gauge("tickers.goroutines", runtime.NumGoroutine())
+	}
+
 }

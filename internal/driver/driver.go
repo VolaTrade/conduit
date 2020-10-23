@@ -11,7 +11,7 @@ var Module = wire.NewSet(
 
 type (
 	CandlesDriver struct {
-		svc *service.CandlesService
+		svc *service.TickersService
 	}
 )
 
@@ -19,7 +19,7 @@ type Driver interface {
 	Run()
 }
 
-func New(service *service.CandlesService) *CandlesDriver {
+func New(service *service.TickersService) *CandlesDriver {
 	return &CandlesDriver{svc: service}
 }
 
@@ -30,5 +30,6 @@ func (cd *CandlesDriver) Run() {
 	}
 	//Insert concurrent workload distribution here
 
+	go cd.svc.CheckForDatabasePriveleges()
 	cd.svc.ConcurrentTickDataCollection()
 }

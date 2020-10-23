@@ -1,4 +1,4 @@
-BIN_NAME = candles 
+BIN_NAME = tickers
 
 build:
 	@echo building wire....
@@ -21,4 +21,8 @@ ecr-push-image:
 
 ecr-login:
 	aws ecr get-login-password --profile volatrade | docker login --username AWS --password-stdin 752939442315.dkr.ecr.us-west-2.amazonaws.com
+
+
+run:
+	python3 control_panel/driver.py
 

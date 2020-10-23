@@ -3,9 +3,10 @@ package postgres
 import (
 	"fmt"
 	"log"
-	"time"
 
 	_ "github.com/jackc/pgx/stdlib" //driver
+	"github.com/volatrade/candles/internal/cache"
+	"github.com/volatrade/candles/internal/models"
 
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
@@ -13,6 +14,10 @@ import (
 
 var Module = wire.NewSet(
 	New,
+)
+
+const (
+	INSERTION_QUERY = `INSERT INTO transactions(time_stamp, pair, price, quantity, is_maker) VALUES(:timestamp, :pair, :price, :quant, :maker)`
 )
 
 type (
@@ -33,15 +38,10 @@ type (
 func New(config *Config) *DB {
 	postgres := &DB{config: config}
 
-	db, err := postgres.connect()
-	if err != nil {
-		panic(err)
-	}
-	postgres.DB = db
 	return postgres
 }
 
-func (postgres *DB) connect() (*sqlx.DB, error) {
+func (postgres *DB) Connect() (*sqlx.DB, error) {
 	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		postgres.config.Host, postgres.config.Port, postgres.config.User, postgres.config.Password, postgres.config.Database)
 	log.Println("Connection string -->", connString)
@@ -68,16 +68,39 @@ func (postgres *DB) Close() error {
 	return nil
 }
 
-func (postgres *DB) InsertTransaction(mapping map[string]interface{}) error {
+func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
 
-	query := `INSERT INTO transactions(time_stamp, pair, price, quantity, is_maker) VALUES($1, $2, $3, $4, $5);`
-
-	log.Println(mapping["t"], mapping["T"], mapping["s"], mapping["p"], mapping["q"], mapping["m"])
-
-	i := int64(mapping["T"].(float64)) / 1000
-	tm := time.Unix(i, 0)
-	res := postgres.DB.MustExec(query, tm, mapping["s"], mapping["p"], mapping["q"], mapping["m"])
+	res, err := postgres.DB.Exec(INSERTION_QUERY, transaction.Timestamp, transaction.Pair, transaction.Price, transaction.Quantity, transaction.IsMaker)
 	log.Println(res)
-	return nil
+
+	return err
+
+}
+
+func (postgres *DB) PurgeCache(cache *cache.TickersCache) error {
+
+	tx := postgres.DB.MustBegin()
+	stmt, err := tx.PrepareNamed(INSERTION_QUERY)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, transactionList := range cache.Pairs {
+
+		for _, transaction := range transactionList {
+
+			if transaction == nil {
+				continue
+			}
+			_, err := stmt.Exec(transaction)
+
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+	return tx.Commit()
 
 }

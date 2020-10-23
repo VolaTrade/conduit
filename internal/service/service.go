@@ -6,14 +6,13 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"runtime"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/google/wire"
 	"github.com/volatrade/candles/internal/cache"
 	"github.com/volatrade/candles/internal/client"
+	"github.com/volatrade/candles/internal/models"
 	"github.com/volatrade/candles/internal/stats"
 
 	"github.com/volatrade/candles/internal/storage"
@@ -21,31 +20,55 @@ import (
 
 const rootWsURI string = "stream.binance.com:9443"
 
-var Module = wire.NewSet(
-	New,
+var (
+	Module = wire.NewSet(
+		New,
+	)
 )
 
 type (
 	Service interface {
 		Init() error
 		ConcurrentTickDataCollection()
+		CheckForDatabasePriveleges()
 	}
 
-	CandlesService struct {
-		cache  *cache.CandlesCache
-		store  *storage.ConnectionArray
-		exch   *client.ApiClient
-		statsd *stats.StatsD
+	TickersService struct {
+		cache     *cache.TickersCache
+		store     *storage.ConnectionArray
+		exch      *client.ApiClient
+		statsd    *stats.StatsD
+		writeToDB bool
 	}
 )
 
-func New(arr *storage.ConnectionArray, ch *cache.CandlesCache, cl *client.ApiClient, stats *stats.StatsD) *CandlesService {
-	return &CandlesService{cache: ch, store: arr, exch: cl, statsd: stats}
+func New(arr *storage.ConnectionArray, ch *cache.TickersCache, cl *client.ApiClient, stats *stats.StatsD) *TickersService {
+	return &TickersService{cache: ch, store: arr, exch: cl, statsd: stats, writeToDB: false}
 }
 
-func (cs *CandlesService) Init() error {
+func (ts *TickersService) CheckForDatabasePriveleges() {
 
-	tradingCryptosList, err := cs.exch.GetActiveBinanceExchangePairs()
+	for {
+
+		if _, err := os.Stat("start"); err == nil {
+			log.Println("making connections to DB NOW")
+			ts.store.MakeConnections()
+			ts.writeToDB = true
+			log.Println("Purging cache")
+			err := ts.store.Arr[0].PurgeCache(ts.cache)
+			if err != nil {
+				panic(err)
+
+			}
+			return
+		}
+
+	}
+}
+
+func (ts *TickersService) Init() error {
+
+	tradingCryptosList, err := ts.exch.GetActiveBinanceExchangePairs()
 	if err != nil {
 		return err
 	}
@@ -55,30 +78,30 @@ func (cs *CandlesService) Init() error {
 		id := strings.ToLower(temp["symbol"].(string))
 
 		if strings.Contains(id, "btc") {
-			cs.cache.Pairs[id] = cache.InitializePairData()
+			ts.cache.InitTransactList(id)
 		}
 
 		if index >= 100 {
 			break
 		}
 	}
-	log.Printf("Number of connections --> %d", len(cs.cache.Pairs))
+	log.Printf("Number of connections --> %d", len(ts.cache.Pairs))
 	return nil
 }
 
-func (cs *CandlesService) ConcurrentTickDataCollection() {
+func (ts *TickersService) ConcurrentTickDataCollection() {
 
 	interrupt := make(chan os.Signal, 1)
-	queues := make([]chan map[string]interface{}, 40)
+	queues := make([]chan *models.Transaction, 40)
 	for i := 0; i < 40; i++ {
-		queue := make(chan map[string]interface{}, 1)
+		queue := make(chan *models.Transaction, 1)
 		queues[i] = queue
 	}
 	signal.Notify(interrupt, os.Interrupt)
 	var wg sync.WaitGroup
 	j := 0
 
-	for pair_key, _ := range cs.cache.Pairs {
+	for pair_key, _ := range ts.cache.Pairs {
 
 		if j >= 40 {
 			j = 0
@@ -87,22 +110,27 @@ func (cs *CandlesService) ConcurrentTickDataCollection() {
 		pth := fmt.Sprintf("ws/" + pair_key + "@trade")
 		u := url.URL{Scheme: "wss", Host: rootWsURI, Path: pth}
 		wg.Add(1)
-		go cs.exch.ConnectSocketAndReadTickData(u.String(), interrupt, queues[j], &wg)
+		go ts.exch.ConnectSocketAndReadTickData(u.String(), interrupt, queues[j], &wg)
 		j++
 	}
 
 	log.Printf("Initialized %d websocket connections", j)
 
 	for index, queue := range queues {
-		go func(queue chan map[string]interface{}, index int) {
+		go func(queue chan *models.Transaction, index int) {
 
 			for {
-				for val := range queue {
+				for transaction := range queue {
 
-					cs.store.Arr[index].InsertTransaction(val)
-					log.Printf("Val in queue:  %s @ queue #%d w/ queue length -> %d", val, index, len(queue))
-					log.Printf("Increment")
-					cs.statsd.Client.Increment("transacts.sqlinserts")
+					if ts.writeToDB {
+						log.Println("Writing to db -->", transaction)
+						ts.store.Arr[index].InsertTransaction(transaction)
+
+					} else {
+						log.Println("Writing to cache -->", transaction)
+						ts.cache.Insert(transaction)
+					}
+					ts.statsd.Client.Increment(".transacts.sqlinserts")
 				}
 
 			}
@@ -110,14 +138,6 @@ func (cs *CandlesService) ConcurrentTickDataCollection() {
 		}(queue, index)
 	}
 
-	go func(statz *stats.StatsD) {
-
-		for {
-			time.Sleep(1)
-			statz.Client.Gauge("tickers.goroutines", runtime.NumGoroutine())
-		}
-
-	}(cs.statsd)
-
+	go ts.statsd.ReportGoRoutines()
 	wg.Wait()
 }

@@ -22,26 +22,23 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
 	connectionArray := storage.New(postgresConfig)
-	candlesCache := cache.New()
+	tickersCache := cache.New()
 	statsConfig := config.NewStatsConfig(configConfig)
 	statsD, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, err
 	}
-	apiClient, err := client.New(statsD)
-	if err != nil {
-		return nil, err
-	}
-	candlesService := service.New(connectionArray, candlesCache, apiClient, statsD)
-	candlesDriver := driver.New(candlesService)
+	apiClient := client.New(statsD)
+	tickersService := service.New(connectionArray, tickersCache, apiClient, statsD)
+	candlesDriver := driver.New(tickersService)
 	return candlesDriver, nil
 }
 
 // wire.go:
 
-var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cache.CandlesCache)))
+var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cache.TickersCache)))
 
-var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.CandlesService)))
+var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.TickersService)))
 
 var storageModule = wire.NewSet(storage.Module, wire.Bind(new(storage.Store), new(*storage.ConnectionArray)))
 

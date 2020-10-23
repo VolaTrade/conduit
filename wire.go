@@ -32,12 +32,12 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 
 var cacheModule = wire.NewSet(
 	cache.Module,
-	wire.Bind(new(cache.Cache), new(*cache.CandlesCache)),
+	wire.Bind(new(cache.Cache), new(*cache.TickersCache)),
 )
 
 var serviceModule = wire.NewSet(
 	service.Module,
-	wire.Bind(new(service.Service), new(*service.CandlesService)),
+	wire.Bind(new(service.Service), new(*service.TickersService)),
 )
 
 var storageModule = wire.NewSet(
