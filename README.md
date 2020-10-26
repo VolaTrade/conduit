@@ -1,4 +1,4 @@
-# candles
+# tickers
 
 
 ### To run (for now)
