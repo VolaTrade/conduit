@@ -7,7 +7,7 @@ build:
 	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/${BIN_NAME};
 
 docker-build:
-	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN)
+	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
 
 
 docker-run:

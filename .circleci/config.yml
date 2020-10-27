@@ -19,7 +19,7 @@ alias:
 
   - &configure_aws_cli
     aws-cli/setup:
-      aws-region: 'us-west-2'
+      aws-region: 'AWS_REGION'
       aws-access-key-id: 'AWS_ACCESS_KEY_ID'
       aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
   
