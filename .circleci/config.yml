@@ -2,60 +2,119 @@ version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@1.2.1
-  aws-ecr: circleci/aws-ecr@6.12.2
 
+alias:
+  - &workdir /home/circleci/build
+
+  - &container_config
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: *workdir
+
+  - &checkout checkout
+
+  - &install_aws_cli aws-cli/install
+
+  - &configure_aws_cli
+    aws-cli/setup:
+      aws-region: 'AWS_REGION'
+      aws-access-key-id: 'AWS_ACCESS_KEY_ID'
+      aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
+  
+  - &create_env
+    run:
+      name: Create config.env
+      command: chmod +x create_env.sh && sh create_env.sh
+
+  - &build_and_test_container
+    run:
+      name: Building and testing docker container
+      command: make docker-build
+
+  - &ecr_login
+    run:
+      name: Logging into ecr
+      command: make ecr-login
+
+  - &tag_image
+      run:
+        name: Tagging image
+        command: docker tag tickers:latest ${ECR_URI}/tickers:${CIRCLE_TAG}
+
+  - &ecr_push_image
+    run:
+        name: Pushing image to ECR
+        command: make ecr-push-image
+
+  - &save_image
+    run:
+        name: Saving docker image for deploy
+        command: docker save -o tickers.tar tickers:latest
+  - &save_to_workspace
+    persist_to_workspace:
+      root: *workdir
+      paths:
+        - tickers.tar
+        - config.env
+  
+  - &mount_workspace
+    attach_workspace:
+      at: *workdir
+
+  - &load_saved_image
+    run:
+      name: Loading saved docker image
+      command: docker load -i tickers.tar
+
+  - &buildtest_only_filters
+    filters:
+      tags:
+        only: /.*/
+  
+  - &deploy_production_filters
+    filters:
+      tags:
+        only: /v.*/
+      branches:
+        ignore: /.*/
 
 jobs:
   build:
-    docker:
-      - image: circleci/golang:1.13
+    <<: *container_config
     steps:
-      - checkout
-      - aws-cli/setup:
-          aws-region: 'AWS_REGION'
-          aws-access-key-id: 'AWS_ACCESS_KEY_ID'
-          aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
-      - setup_remote_docker
-      - run:
-          name: Creating config.env
-          command: chmod +x create_env.sh && sh create_env.sh
-      - run:
-          name: Making sure docker image builds and tests pass within container
-          command: make docker-build
+        - *configure_aws_cli
+        - *checkout
+        - *create_env
+        - *build_and_test_container
+        - *save_image
+        - *save_to_workspace
   deploy:
-    docker:
-      - image: circleci/golang:1.13
+    <<: *container_config
     steps:
-      - checkout
-      - aws-cli/setup:
-          aws-region: 'AWS_REGION'
-          aws-access-key-id: 'AWS_ACCESS_KEY_ID'
-          aws-secret-access-key: 'AWS_SECRET_ACCESS_KEY'
-      - setup_remote_docker
-      - run:
-          name: Log into ecr
-          command: aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 752939442315.dkr.ecr.us-west-2.amazonaws.com
-        
-      - run:
-          name: Building image
-          command: chmod +x create_env.sh && sh create_env.sh && make docker-build
-
-      - run:
-          name: Tagging image
-          command: docker tag candles:latest 752939442315.dkr.ecr.us-west-2.amazonaws.com/candles:latest
-        
-      - run:
-          name: Pushing image to ecr
-          command: docker push 752939442315.dkr.ecr.us-west-2.amazonaws.com/candles:latest
-
+        - *mount_workspace
+        - *load_saved_image
+        - *install_aws_cli
+        - *configure_aws_cli
+        - *tag_image
+        - *ecr_login
+        - *ecr_push_image
 
 workflows:
-  build-and-deploy:
+  version: 2
+
+  build-test-image:
     jobs:
-      - build
+      - build:
+          <<: *buildtest_only_filters
+          context: aws-production
+
+  deploy-production:
+    jobs:
+      - build:
+          <<: *deploy_production_filters
+          context: aws-production
       - deploy:
+          <<: *deploy_production_filters
+          context: aws-production
           requires:
             - build
-          filters:
-            branches:
-              only: master
