@@ -1,4 +1,5 @@
 BIN_NAME=tickers
+VERSION=$(echo version)
 
 build:
 	@echo building wire....
@@ -25,3 +26,5 @@ ecr-login:
 run:
 	python3 control_panel/driver.py
 
+tag:
+	git tag ${NEW_VERSION} && echo ${NEW_VERSION} >> version

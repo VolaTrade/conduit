@@ -5,6 +5,20 @@ import os
 import time
 
 
+def get_version() -> str:
+   
+    with open("version", "r") as f:
+        version = f.readlines()[0]
+    
+    return version
+
+def is_new_version(curr_version) -> bool:
+    if curr_version != get_version():
+        return True
+    
+    return False
+        
+
 def spinup():
     os.system("make docker-run >> id.txt")
     
@@ -21,7 +35,8 @@ def destroy(container: str):
     os.system(f"kill {container}")
 
 def run(blue_container, green_container):
-    update_time: bool = False 
+    update_time: bool = False
+    curr_version = get_version()
     while True: 
         if blue_container == None:
             blue_container = spinup()
@@ -34,7 +49,7 @@ def run(blue_container, green_container):
             blue_container = green_container
             green_container = None
 
-        if datetime.now().minute() == 42:
+        if is_new_version(curr_version):
             update_time = True 
     
 
