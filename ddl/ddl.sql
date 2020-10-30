@@ -1,5 +1,5 @@
 CREATE TABLE transactions(
-    trade_id UUID NOT NULL,
+    trade_id NUMERIC,
     time_stamp TIMESTAMP,
     pair VARCHAR,
     price NUMERIC,
