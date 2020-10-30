@@ -55,8 +55,7 @@ def run(blue_container: str, green_container: str):
         if is_new_version(curr_version):
             update_time = True
             curr_version = get_version()
-            print(curr_version)
-    
+            print(curr_version)    
 
 
 if __name__ == '__main__':
