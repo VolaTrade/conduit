@@ -11,7 +11,7 @@ docker-build:
 
 
 docker-run:
-	docker run --restart=always -d candles
+	docker run -e DB_PORT=5432 -e DB_HOST=docker.for.mac.host.internal -d candles 
 
 integration-test:
 	docker-compose up --remove-orphans

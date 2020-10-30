@@ -7,6 +7,7 @@ import (
 	_ "github.com/jackc/pgx/stdlib" //driver
 	"github.com/volatrade/candles/internal/cache"
 	"github.com/volatrade/candles/internal/models"
+	"github.com/volatrade/candles/internal/stats"
 
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
@@ -17,7 +18,7 @@ var Module = wire.NewSet(
 )
 
 const (
-	INSERTION_QUERY = `INSERT INTO transactions(time_stamp, pair, price, quantity, is_maker) VALUES(:timestamp, :pair, :price, :quant, :maker)`
+	INSERTION_QUERY = `INSERT INTO transactions(trade_id, time_stamp, pair, price, quantity, is_maker) VALUES(:id, :timestamp, :pair, :price, :quant, :maker) ON CONFLICT DO NOTHING`
 )
 
 type (
@@ -32,11 +33,12 @@ type (
 	DB struct {
 		DB     *sqlx.DB
 		config *Config
+		statz  *stats.StatsD
 	}
 )
 
-func New(config *Config) *DB {
-	postgres := &DB{config: config}
+func New(config *Config, statsdClient *stats.StatsD) *DB {
+	postgres := &DB{config: config, statz: statsdClient}
 
 	return postgres
 }
@@ -70,8 +72,15 @@ func (postgres *DB) Close() error {
 
 func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
 
-	res, err := postgres.DB.Exec(INSERTION_QUERY, transaction.Timestamp, transaction.Pair, transaction.Price, transaction.Quantity, transaction.IsMaker)
-	log.Println(res)
+	result, err := postgres.DB.Exec(INSERTION_QUERY, transaction.Id, transaction.Timestamp, transaction.Pair, transaction.Price, transaction.Quantity, transaction.IsMaker)
+
+	if err != nil {
+
+		return err
+	}
+	if rows, err := result.RowsAffected(); rows == 0 && err == nil {
+		postgres.statz.Client.Increment("duplicate_inserts")
+	}
 
 	return err
 
@@ -93,12 +102,21 @@ func (postgres *DB) PurgeCache(cache *cache.TickersCache) error {
 			if transaction == nil {
 				continue
 			}
-			_, err := stmt.Exec(transaction)
+			result, err := stmt.Exec(transaction)
 
 			if err != nil {
 				tx.Rollback()
 				return err
 			}
+
+			if rows, err := result.RowsAffected(); rows == 0 && err == nil {
+				postgres.statz.Client.Increment("duplicate_inserts")
+			}
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+
 		}
 	}
 	return tx.Commit()
