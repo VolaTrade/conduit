@@ -7,6 +7,7 @@ import (
 )
 
 type Transaction struct {
+	Id        int64     `db:"id"`
 	Pair      string    `db:"pair"`
 	Price     float64   `db:"price"`
 	IsMaker   bool      `db:"maker"`
@@ -26,10 +27,11 @@ func NewTransaction(mapping map[string]interface{}) (*Transaction, error) {
 	pair := mapping["s"].(string)
 	maker := mapping["m"].(bool)
 	quant_str := mapping["q"].(string)
+	id := int64(mapping["a"].(float64))
 
 	quant, err := strconv.ParseFloat(quant_str, 64)
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{Timestamp: tm, Pair: pair, Price: price, Quantity: quant, IsMaker: maker}, nil
+	return &Transaction{Id: id, Timestamp: tm, Pair: pair, Price: price, Quantity: quant, IsMaker: maker}, nil
 }

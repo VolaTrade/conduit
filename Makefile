@@ -10,12 +10,14 @@ build:
 docker-build:
 	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
 
+start-dev:
+	docker compose -f docker-compose-dev.yaml up
+
+start-prod:
+	docker-compose -f docker-compose-prod.yaml up
 
 docker-run:
-	docker run --restart=always -d ${BIN_NAME}
-
-integration-test:
-	docker-compose up --remove-orphans
+	docker run -d ${BIN_NAME}
 
 ecr-push-image:
 	docker push ${ECR_URI}/${BIN_NAME}

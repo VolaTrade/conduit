@@ -1,8 +1,9 @@
 CREATE TABLE transactions(
-    trade_id UUID NOT NULL DEFAULT uuid_generate_v4 (),
+    trade_id UUID NOT NULL,
     time_stamp TIMESTAMP,
     pair VARCHAR,
     price NUMERIC,
     quantity NUMERIC,
-    is_maker boolean
+    is_maker boolean,
+    PRIMARY KEY(trade_id, time_stamp, pair, quantity, is_maker)
 );

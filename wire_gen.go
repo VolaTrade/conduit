@@ -21,13 +21,13 @@ import (
 func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
-	connectionArray := storage.New(postgresConfig)
-	tickersCache := cache.New()
 	statsConfig := config.NewStatsConfig(configConfig)
 	statsD, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, err
 	}
+	connectionArray := storage.New(postgresConfig, statsD)
+	tickersCache := cache.New()
 	apiClient := client.New(statsD)
 	tickersService := service.New(connectionArray, tickersCache, apiClient, statsD)
 	candlesDriver := driver.New(tickersService)

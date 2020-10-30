@@ -1,0 +1,10 @@
+version: '3'
+services:
+  tickers:
+    image: tickers:latest
+    restart: always
+    environment:
+      PGHOST: 'db'
+      PGDATABASE: 'postgres'
+      PGUSER: 'postgres'
+      PGPASSWORD: 'postgres'

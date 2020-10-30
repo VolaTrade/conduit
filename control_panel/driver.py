@@ -34,23 +34,28 @@ def start_db(container: str):
 def destroy(container: str):
     os.system(f"kill {container}")
 
-def run(blue_container, green_container):
+def run(blue_container: str, green_container: str):
     update_time: bool = False
     curr_version = get_version()
+    can_update: bool = True 
     while True: 
-        if blue_container == None:
+        if blue_container is None:
             blue_container = spinup()
             start_db(blue_container)
 
-        if update_time:
+        if update_time is True and can_update is True:
             green_container = spinup()
             destroy(blue_container)
+            time.sleep(10)
             start_db(green_container)
             blue_container = green_container
             green_container = None
+            update_time = can_update =  False 
 
         if is_new_version(curr_version):
-            update_time = True 
+            update_time = True
+            curr_version = get_version()
+            print(curr_version)
     
 
 
