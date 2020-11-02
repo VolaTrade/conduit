@@ -2,14 +2,13 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/volatrade/candles/internal/models"
 )
 
 // GetActiveBinanceExchangePairs gets a list of all binance tradeable pairs
@@ -28,44 +27,15 @@ func (ac *ApiClient) GetActiveBinanceExchangePairs() ([]interface{}, error) {
 	return dataPayLoad, nil
 }
 
-func (ac *ApiClient) FetchFiveMinuteCandle(pair string) error {
-
-	if !ac.rl.RequestsCanBeMade() {
-		return errors.New("Maximum number of requests exceeded for interval")
-	}
-
-	endpoint := "https://api.binance.com/api/v1/klines?symbol=" + pair + "&interval=5m&limit=1"
-
-	resp, err := http.Get(endpoint)
-
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Response error \n Status Code: %d \n Message: %s", resp.StatusCode, resp.Body))
-	}
-
-	ac.rl.IncrementRequestCount()
-	decoder := json.NewDecoder(resp.Body)
-
-	var result []interface{}
-	if err := decoder.Decode(&result); err != nil {
-		return err
-	}
-
-	//marshal data into candle struct
-	return nil
-}
-
-func (ac *ApiClient) ConnectSocketAndReadTickData(u string, interrupt chan os.Signal, queue chan map[string]interface{}, wg *sync.WaitGroup) {
+func (ac *ApiClient) ConnectSocketAndReadTickData(socketUrl string, interrupt chan os.Signal, queue chan *models.Transaction, wg *sync.WaitGroup) {
 	defer wg.Done()
-	log.Printf("Connecting to %s", u)
-	c, _, err := websocket.DefaultDialer.Dial(u, nil)
+	log.Printf("Connecting to %s", socketUrl)
+	c, _, err := websocket.DefaultDialer.Dial(socketUrl, nil)
 	if err != nil {
+		log.Println("error")
+		log.Printf("%e", err)
 		wg.Done()
-		ac.ConnectSocketAndReadTickData(u, interrupt, queue, wg)
+		ac.ConnectSocketAndReadTickData(socketUrl, interrupt, queue, wg)
 		return
 	}
 	done := make(chan struct{})
@@ -74,10 +44,11 @@ func (ac *ApiClient) ConnectSocketAndReadTickData(u string, interrupt chan os.Si
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
+				log.Println("error")
 				log.Printf("%e", err)
 				wg.Done()
 				c.Close()
-				ac.ConnectSocketAndReadTickData(u, interrupt, queue, wg)
+				ac.ConnectSocketAndReadTickData(socketUrl, interrupt, queue, wg)
 				return
 			}
 			var json_message map[string]interface{}
@@ -87,7 +58,11 @@ func (ac *ApiClient) ConnectSocketAndReadTickData(u string, interrupt chan os.Si
 				//Log message
 				log.Printf("%e", err)
 			} else {
-				queue <- json_message
+				transaction, err := models.NewTransaction(json_message)
+				if err != nil {
+					panic(err)
+				}
+				queue <- transaction
 			}
 		}
 	}()

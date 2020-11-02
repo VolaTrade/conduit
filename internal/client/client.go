@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/google/wire"
+	"github.com/volatrade/candles/internal/models"
 	"github.com/volatrade/candles/internal/stats"
 	"github.com/volatrade/utilities/limiter"
 )
@@ -14,9 +15,8 @@ var Module = wire.NewSet(
 )
 
 type Client interface {
-	FetchFiveMinuteCandle(pair string) error
 	GetActiveBinanceExchangePairs() ([]interface{}, error)
-	ConnectSocketAndReadTickData(u string, interrupt chan os.Signal, queue chan map[string]interface{}, wg *sync.WaitGroup)
+	ConnectSocketAndReadTickData(socketUrl string, interrupt chan os.Signal, queue chan *models.Transaction, wg *sync.WaitGroup)
 }
 
 type ApiClient struct {
@@ -24,12 +24,6 @@ type ApiClient struct {
 	statsd *stats.StatsD
 }
 
-func New(stats *stats.StatsD) (*ApiClient, error) {
-	var tempLimiter *limiter.RateLimiter
-	var err error
-	if tempLimiter, err = limiter.New(&limiter.Config{MaximumRequestPerInterval: 120, MinuteResetInterval: 1}); err != nil {
-		return nil, err
-	}
-
-	return &ApiClient{rl: tempLimiter, statsd: stats}, nil
+func New(stats *stats.StatsD) *ApiClient {
+	return &ApiClient{statsd: stats}
 }

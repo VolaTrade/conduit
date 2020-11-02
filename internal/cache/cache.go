@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"strconv"
-
 	"github.com/google/wire"
 	"github.com/volatrade/candles/internal/models"
 )
@@ -12,83 +10,29 @@ var Module = wire.NewSet(
 )
 
 type Cache interface {
+	InitTransactList(pair string)
+	Insert(transact *models.Transaction)
+	Purge()
 }
 
-type CandlesCache struct {
-	Pairs map[string]*models.PairData
+type TickersCache struct {
+	Pairs map[string][]*models.Transaction
 }
 
-func (cs *CandlesCache) InsertCandle(candle *models.Candle, pair string) {
-
-	for i := 1; i < 3; i++ {
-		cs.Pairs[pair].Five[i] = cs.Pairs[pair].Five[i-1]
-	}
-	cs.Pairs[pair].Five[0] = candle
-}
-
-func BuildCandleFromCandleList(candleList []*models.Candle) *models.Candle {
-	tempCandle := &models.Candle{Open: 0, Close: 0, High: 0, Low: 0}
-
-	for _, candle := range candleList {
-
-		if tempCandle.High < candle.High {
-			tempCandle.High = candle.High
-		}
-		if tempCandle.Low > candle.Low {
-			tempCandle.Low = candle.Low
-		}
-
-	}
-	tempCandle.Open = candleList[0].Open
-	tempCandle.Close = candleList[len(candleList)-1].Close
-	return tempCandle
-}
-
-/**
- * NewCandle does stuff
- */
-func NewCandle(open string, close string, high string, low string) (*models.Candle, error) {
-	output := &models.Candle{}
-
-	value, err := strconv.ParseFloat(open, 64)
-	if err != nil {
-		return nil, err
-	}
-	output.Open = value
-
-	value, err = strconv.ParseFloat(close, 64)
-	if err != nil {
-		return nil, err
-	}
-	output.Close = value
-
-	value, err = strconv.ParseFloat(high, 64)
-	if err != nil {
-		return nil, err
-	}
-	output.High = value
-
-	value, err = strconv.ParseFloat(low, 64)
-	if err != nil {
-		return nil, err
-	}
-	output.Low = value
-
-	return output, nil
+func New() *TickersCache {
+	return &TickersCache{Pairs: make(map[string][]*models.Transaction)}
 
 }
-
-func InitializePairData() *models.PairData {
-
-	return &models.PairData{
-		Five:    make([]*models.Candle, 3),
-		Fifteen: make([]*models.Candle, 2),
-		Thirty:  make([]*models.Candle, 2),
-		Hour:    make([]*models.Candle, 2)}
+func (tc *TickersCache) Insert(transact *models.Transaction) {
+	tc.Pairs[transact.Pair] = append(tc.Pairs[transact.Pair], transact)
 }
 
-func New() *CandlesCache {
+func (tc *TickersCache) InitTransactList(pair string) {
+	tc.Pairs[pair] = make([]*models.Transaction, 10)
+}
 
-	return &CandlesCache{Pairs: make(map[string]*models.PairData)}
-
+func (tc *TickersCache) Purge() {
+	for key, _ := range tc.Pairs {
+		tc.Pairs[key] = nil
+	}
 }
