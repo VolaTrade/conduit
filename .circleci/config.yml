@@ -58,6 +58,7 @@ alias:
       paths:
         - tickers.tar
         - config.env
+        - Makefile
   
   - &mount_workspace
     attach_workspace:
