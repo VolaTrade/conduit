@@ -1,7 +1,7 @@
 version: '3'
 services:
   tickers:
-    image: 752939442315.dkr.ecr.us-west-2.amazonaws.com/tickers:1.0.0
+    image: 752939442315.dkr.ecr.us-west-2.amazonaws.com/tickers:v1.0.0-alpha-1
     restart: always
     logging:
       driver: "json-file"
