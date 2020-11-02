@@ -1,28 +1,32 @@
-BIN_NAME = tickers
+BIN_NAME=tickers
+VERSION=$(echo version)
 
 build:
 	@echo building wire....
 	@wire 
 	@echo building binary...
-	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/$(BIN_NAME);
+	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/${BIN_NAME};
 
 docker-build:
-	docker build -t candles . --build-arg GITHUB_TOKEN=$(GITHUB_TOKEN)
+	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
 
+start-dev:
+	docker compose -f docker-compose-dev.yaml up
+
+start-prod:
+	docker-compose -f docker-compose-prod.yaml up
 
 docker-run:
-	docker run -e DB_PORT=5432 -e DB_HOST=docker.for.mac.host.internal -d candles 
-
-integration-test:
-	docker-compose up --remove-orphans
+	docker run -d ${BIN_NAME}
 
 ecr-push-image:
-	docker push 752939442315.dkr.ecr.us-west-2.amazonaws.com/candles
+	docker push ${ECR_URI}/${BIN_NAME}
 
 ecr-login:
-	aws ecr get-login-password --profile volatrade | docker login --username AWS --password-stdin 752939442315.dkr.ecr.us-west-2.amazonaws.com
-
+	aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_URI}
 
 run:
 	python3 control_panel/driver.py
 
+tag:
+	git tag ${NEW_VERSION} && echo ${NEW_VERSION} >> version

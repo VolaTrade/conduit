@@ -10,7 +10,17 @@ A beatiful data pipeline implemented in golang that concurrently collects live t
 		b) `make docker-build` and `make docker-run`
 
 ### Deployment 
+**Before deploying to prod:**
+- Ensure all unit tests pass
+- Ensure all integration tests pass
+- Create a temp ec2 and deploy to there and monitor the service
 
+Follow these steps to deploy:
+1. Ensure you're on master branch
+2. Double check all of the above steps are complete and at least 2 other team members have reviewed the changes
+3. Tag the branch via `NEW_VERSION=<vx.x> make tag"`
+	- This will create a git tag for the new version and update the version file
+4. Push the tags via `git push origin ${NEW_VERSION}
 
 ### Testing 
 

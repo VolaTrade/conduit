@@ -5,6 +5,19 @@ import os
 import time
 
 
+def get_version() -> str:
+   
+    with open("version", "r") as f:
+        version = f.readlines()[0]
+    
+    return version
+
+def is_new_version(curr_version) -> bool:
+    if curr_version != get_version():
+        return True
+    
+    return False
+        
 def spinup():
     os.system("make docker-run >> id.txt")
     
@@ -21,14 +34,14 @@ def destroy(container: str):
     os.system(f"kill {container}")
 
 def run(blue_container: str, green_container: str):
-    update_time: bool = False 
-    can_update: bool = True 
+    update_time: bool = False
+    curr_version = get_version()
     while True: 
         if blue_container is None:
             blue_container = spinup()
             start_db(blue_container)
 
-        if update_time is True and can_update is True:
+        if update_time is True:
             green_container = spinup()
             destroy(blue_container)
             time.sleep(10)
@@ -37,17 +50,10 @@ def run(blue_container: str, green_container: str):
             green_container = None
             update_time = can_update =  False 
 
-        if (hour := datetime.now().hour) == 0 or hour == 12:
-            update_time  = True 
-
-        if (hour := datetime.now().hour) != 0 or hour != 12:
-            can_update = True
-
-        if datetime.now().minute == 8:
-            update_time = True 
-
-
-    
+        if is_new_version(curr_version):
+            update_time = True
+            curr_version = get_version()
+            print(curr_version)    
 
 
 if __name__ == '__main__':
