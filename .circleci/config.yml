@@ -67,13 +67,7 @@ alias:
     run:
       name: Loading saved docker image
       command: docker load -i tickers.tar
-
-  - &send_update_signal
-    run:
-      name: "Sending message to update image"
-      command: ssh ${USER}@${EC2_IP} echo ${CIRCLE_TAG} >> version
   
-
   - &buildtest_only_filters
     filters:
       tags:
@@ -107,7 +101,6 @@ jobs:
         - *tag_image
         - *ecr_login
         - *ecr_push_image
-        - *send_update_signal
 
 workflows:
   version: 2
@@ -128,3 +121,5 @@ workflows:
           context: aws-production
           requires:
             - build
+
+

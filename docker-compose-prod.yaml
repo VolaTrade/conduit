@@ -1,10 +1,10 @@
 version: '3'
 services:
   tickers:
-    image: tickers:latest
+    image: 752939442315.dkr.ecr.us-west-2.amazonaws.com/tickers:1.0.0
     restart: always
-    environment:
-      PGHOST: 'db'
-      PGDATABASE: 'postgres'
-      PGUSER: 'postgres'
-      PGPASSWORD: 'postgres'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"

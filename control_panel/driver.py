@@ -18,7 +18,6 @@ def is_new_version(curr_version) -> bool:
     
     return False
         
-
 def spinup():
     os.system("make docker-run >> id.txt")
     
@@ -37,13 +36,12 @@ def destroy(container: str):
 def run(blue_container: str, green_container: str):
     update_time: bool = False
     curr_version = get_version()
-    can_update: bool = True 
     while True: 
         if blue_container is None:
             blue_container = spinup()
             start_db(blue_container)
 
-        if update_time is True and can_update is True:
+        if update_time is True:
             green_container = spinup()
             destroy(blue_container)
             time.sleep(10)
