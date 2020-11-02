@@ -95,6 +95,7 @@ jobs:
     <<: *container_config
     steps:
         - *mount_workspace
+        - *setup_remote_docker
         - *load_saved_image
         - *install_aws_cli
         - *configure_aws_cli
