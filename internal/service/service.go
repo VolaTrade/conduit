@@ -58,7 +58,6 @@ func (ts *TickersService) CheckForDatabasePriveleges() {
 			err := ts.store.Arr[0].PurgeCache(ts.cache)
 			if err != nil {
 				panic(err)
-
 			}
 			return
 		}
@@ -73,16 +72,12 @@ func (ts *TickersService) Init() error {
 		return err
 	}
 
-	for index, val := range tradingCryptosList {
+	for _, val := range tradingCryptosList {
 		temp := val.(map[string]interface{}) //type casting
 		id := strings.ToLower(temp["symbol"].(string))
 
 		if strings.Contains(id, "btc") {
 			ts.cache.InitTransactList(id)
-		}
-
-		if index >= 100 {
-			break
 		}
 	}
 	log.Printf("Number of connections --> %d", len(ts.cache.Pairs))
