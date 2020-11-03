@@ -71,11 +71,16 @@ func (postgres *DB) Close() error {
 }
 
 func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
-
-	result, err := postgres.DB.Exec(INSERTION_QUERY, transaction.Id, transaction.Timestamp, transaction.Pair, transaction.Price, transaction.Quantity, transaction.IsMaker)
+	stmt, err := postgres.DB.PrepareNamed(INSERTION_QUERY)
 
 	if err != nil {
+		return err
+	}
 
+	defer stmt.Close()
+	result, err := stmt.Exec(transaction)
+
+	if err != nil {
 		return err
 	}
 	if rows, err := result.RowsAffected(); rows == 0 && err == nil {
@@ -119,6 +124,7 @@ func (postgres *DB) PurgeCache(cache *cache.TickersCache) error {
 
 		}
 	}
+	println("Cache has finished purgery")
 	return tx.Commit()
 
 }
