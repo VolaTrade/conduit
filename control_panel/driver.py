@@ -57,6 +57,5 @@ def run(blue_container: str, green_container: str):
 
 
 if __name__ == '__main__':
- 
     run(None, None)
 
