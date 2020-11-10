@@ -14,5 +14,7 @@ func main() {
 		os.Exit(2)
 	}
 
+	driver.InitService()
+	driver.RunListenerRoutines()
 	driver.Run()
 }

@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"github.com/volatrade/candles/internal/postgres"
 	"github.com/volatrade/candles/internal/stats"
-	"github.com/volatrade/candles/internal/storage/postgres"
 )
 
 type Config struct {

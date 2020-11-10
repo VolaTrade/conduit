@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/wire"
 	_ "github.com/jackc/pgx/stdlib" //driver
-	"github.com/volatrade/candles/internal/cache"
+	"github.com/jmoiron/sqlx"
 	"github.com/volatrade/candles/internal/models"
 	"github.com/volatrade/candles/internal/stats"
-
-	"github.com/google/wire"
-	"github.com/jmoiron/sqlx"
-)
-
-var Module = wire.NewSet(
-	New,
 )
 
 const (
 	INSERTION_QUERY = `INSERT INTO transactions(trade_id, time_stamp, pair, price, quantity, is_maker) VALUES(:id, :timestamp, :pair, :price, :quant, :maker) ON CONFLICT DO NOTHING`
+)
+
+var (
+	Module = wire.NewSet(
+		New,
+	)
 )
 
 type (
@@ -37,12 +37,13 @@ type (
 	}
 )
 
-func New(config *Config, statsdClient *stats.StatsD) *DB {
-	postgres := &DB{config: config, statz: statsdClient}
+func New(cfg *Config, statsdClient *stats.StatsD) *DB {
+	postgres := &DB{config: cfg, statz: statsdClient}
 
 	return postgres
 }
 
+//Connect establishes connection to postgres server
 func (postgres *DB) Connect() (*sqlx.DB, error) {
 	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		postgres.config.Host, postgres.config.Port, postgres.config.User, postgres.config.Password, postgres.config.Database)
@@ -60,6 +61,7 @@ func (postgres *DB) Connect() (*sqlx.DB, error) {
 	return postgresDB, nil
 }
 
+//Close closes current connection w/ postgres server
 func (postgres *DB) Close() error {
 	if postgres != nil {
 		err := postgres.DB.Close()
@@ -70,6 +72,7 @@ func (postgres *DB) Close() error {
 	return nil
 }
 
+//InsertTransaction inserts transaction into database
 func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
 	stmt, err := postgres.DB.PrepareNamed(INSERTION_QUERY)
 
@@ -91,7 +94,7 @@ func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
 
 }
 
-func (postgres *DB) PurgeCache(cache *cache.TickersCache) error {
+func (postgres *DB) BulkInsertCache(transactionList []*models.Transaction) error {
 
 	tx := postgres.DB.MustBegin()
 	stmt, err := tx.PrepareNamed(INSERTION_QUERY)
@@ -100,31 +103,28 @@ func (postgres *DB) PurgeCache(cache *cache.TickersCache) error {
 	}
 	defer stmt.Close()
 
-	for _, transactionList := range cache.Pairs {
+	for _, transaction := range transactionList {
 
-		for _, transaction := range transactionList {
-
-			if transaction == nil {
-				continue
-			}
-			result, err := stmt.Exec(transaction)
-
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
-
-			if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-				postgres.statz.Client.Increment("duplicate_inserts")
-			}
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
-
+		if transaction == nil {
+			continue
 		}
+		result, err := stmt.Exec(transaction)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		if rows, err := result.RowsAffected(); rows == 0 && err == nil {
+			postgres.statz.Client.Increment("duplicate_inserts")
+		}
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
 	}
-	println("Cache has finished purgery")
+
 	return tx.Commit()
 
 }

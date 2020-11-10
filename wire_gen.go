@@ -10,10 +10,10 @@ import (
 	"github.com/volatrade/candles/internal/cache"
 	"github.com/volatrade/candles/internal/client"
 	"github.com/volatrade/candles/internal/config"
+	"github.com/volatrade/candles/internal/connections"
 	"github.com/volatrade/candles/internal/driver"
 	"github.com/volatrade/candles/internal/service"
 	"github.com/volatrade/candles/internal/stats"
-	"github.com/volatrade/candles/internal/storage"
 )
 
 // Injectors from wire.go:
@@ -26,7 +26,7 @@ func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
 	if err != nil {
 		return nil, err
 	}
-	connectionArray := storage.New(postgresConfig, statsD)
+	connectionArray := connections.New(postgresConfig, statsD)
 	tickersCache := cache.New()
 	apiClient := client.New(statsD)
 	tickersService := service.New(connectionArray, tickersCache, apiClient, statsD)
@@ -40,6 +40,6 @@ var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cac
 
 var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.TickersService)))
 
-var storageModule = wire.NewSet(storage.Module, wire.Bind(new(storage.Store), new(*storage.ConnectionArray)))
+var connectionModule = wire.NewSet(connections.Module, wire.Bind(new(connections.Connections), new(*connections.ConnectionArray)))
 
 var apiClientModule = wire.NewSet(client.Module, wire.Bind(new(client.Client), new(*client.ApiClient)))

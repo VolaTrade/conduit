@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/alexcesaro/statsd v2.0.0+incompatible
+	github.com/aws/aws-sdk-go v1.35.23
 	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/etsy/statsd v0.9.0 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
@@ -18,6 +19,7 @@ require (
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/volatrade/utilities v0.0.0-20200917055431-bc1341e02872
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	google.golang.org/appengine v1.6.6 // indirect
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 )
