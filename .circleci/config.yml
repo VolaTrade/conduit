@@ -77,15 +77,16 @@ alias:
   
   - &build_test_only_filters
     filters:
-      tags:
-        only: /.*/
+      branches:
+        ignore: master
   
   - &deploy_production_filters
     filters:
-      tags:
-        only: /v.*/
       branches:
-        ignore: /v.*/
+        ignore: /.*/
+      tags:
+        only: /^v.*/
+      
 
 jobs:
   build:
