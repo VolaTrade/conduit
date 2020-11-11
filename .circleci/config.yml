@@ -73,7 +73,7 @@ alias:
   - &deploy
     run:
       name: Updating version within ec2
-      command: ssh ec2-user@18.237.5.40 "docker pull $ECR_URI/tickers:$CIRCLE_TAG && echo $ECR_URI/tickers:$CIRCLE_TAG > image_version"
+      command: ssh ec2-user@18.237.5.40 "docker pull $ECR_URI/tickers:$CIRCLE_TAG && echo -n $ECR_URI/tickers:$CIRCLE_TAG > image_version"
   
   - &build_test_only_filters
     filters:
