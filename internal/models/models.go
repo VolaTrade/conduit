@@ -1,7 +1,7 @@
 package models
 
 import (
-	"log"
+	"encoding/json"
 	"strconv"
 	"time"
 )
@@ -16,7 +16,6 @@ type Transaction struct {
 }
 
 func NewTransaction(mapping map[string]interface{}) (*Transaction, error) {
-	log.Println("Converting from ==>", mapping)
 	i := int64(mapping["T"].(float64)) / 1000
 	tm := time.Unix(i, 0)
 	price_str := mapping["p"].(string)
@@ -34,4 +33,15 @@ func NewTransaction(mapping map[string]interface{}) (*Transaction, error) {
 		return nil, err
 	}
 	return &Transaction{Id: id, Timestamp: tm, Pair: pair, Price: price, Quantity: quant, IsMaker: maker}, nil
+}
+
+func UnmarshalJSON(message []byte) (*Transaction, error) {
+	var json_message map[string]interface{}
+
+	if err := json.Unmarshal(message, &json_message); err != nil {
+		return nil, err
+	}
+
+	return NewTransaction(json_message)
+
 }

@@ -4,28 +4,28 @@ package main
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/candles/internal/cache"
-	"github.com/volatrade/candles/internal/client"
-	"github.com/volatrade/candles/internal/config"
-	"github.com/volatrade/candles/internal/driver"
-	"github.com/volatrade/candles/internal/service"
-	"github.com/volatrade/candles/internal/stats"
-	"github.com/volatrade/candles/internal/storage"
+	"github.com/volatrade/tickers/internal/cache"
+	"github.com/volatrade/tickers/internal/client"
+	"github.com/volatrade/tickers/internal/config"
+	"github.com/volatrade/tickers/internal/connections"
+	"github.com/volatrade/tickers/internal/driver"
+	"github.com/volatrade/tickers/internal/service"
+	"github.com/volatrade/tickers/internal/stats"
 )
 
-func InitializeAndRun(cfg config.FilePath) (*driver.CandlesDriver, error) {
+func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 
 	panic(
 		wire.Build(
 			config.NewConfig,
 			config.NewDBConfig,
+			connectionModule,
 			config.NewStatsConfig,
 			stats.New,
-			storageModule,
 			apiClientModule,
 			cacheModule,
 			serviceModule,
-			driver.New,
+			driverModule,
 		),
 	)
 }
@@ -40,12 +40,17 @@ var serviceModule = wire.NewSet(
 	wire.Bind(new(service.Service), new(*service.TickersService)),
 )
 
-var storageModule = wire.NewSet(
-	storage.Module,
-	wire.Bind(new(storage.Store), new(*storage.ConnectionArray)),
+var connectionModule = wire.NewSet(
+	connections.Module,
+	wire.Bind(new(connections.Connections), new(*connections.ConnectionArray)),
 )
 
 var apiClientModule = wire.NewSet(
 	client.Module,
 	wire.Bind(new(client.Client), new(*client.ApiClient)),
+)
+
+var driverModule = wire.NewSet(
+	driver.Module,
+	wire.Bind(new(driver.Driver), new(*driver.TickersDriver)),
 )

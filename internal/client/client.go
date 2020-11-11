@@ -1,13 +1,8 @@
 package client
 
 import (
-	"os"
-	"sync"
-
 	"github.com/google/wire"
-	"github.com/volatrade/candles/internal/models"
-	"github.com/volatrade/candles/internal/stats"
-	"github.com/volatrade/utilities/limiter"
+	"github.com/volatrade/tickers/internal/stats"
 )
 
 var Module = wire.NewSet(
@@ -16,11 +11,9 @@ var Module = wire.NewSet(
 
 type Client interface {
 	GetActiveBinanceExchangePairs() ([]interface{}, error)
-	ConnectSocketAndReadTickData(socketUrl string, interrupt chan os.Signal, queue chan *models.Transaction, wg *sync.WaitGroup)
 }
 
 type ApiClient struct {
-	rl     *limiter.RateLimiter
 	statsd *stats.StatsD
 }
 

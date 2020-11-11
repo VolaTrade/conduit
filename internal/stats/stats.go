@@ -16,6 +16,8 @@ var Module = wire.NewSet(
 
 type (
 	Stats interface {
+		ReportGoRoutines()
+		Increment(value string)
 	}
 	Config struct {
 		Host string
@@ -36,11 +38,16 @@ func New(cfg *Config) (*StatsD, error) {
 	return &StatsD{Client: client}, nil
 }
 
-func (statz *StatsD) ReportGoRoutines() {
+func ReportGoRoutines(statz *StatsD) {
 
 	for {
 		time.Sleep(1)
 		statz.Client.Gauge("tickers.goroutines", runtime.NumGoroutine())
 	}
 
+}
+
+//Encapsulation
+func (statz *StatsD) Increment(value string) {
+	statz.Client.Increment(value)
 }
