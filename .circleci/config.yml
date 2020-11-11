@@ -52,6 +52,7 @@ alias:
     run:
         name: Saving docker image for deploy
         command: docker save -o tickers.tar tickers:latest
+
   - &save_to_workspace
     persist_to_workspace:
       root: *workdir
@@ -68,8 +69,13 @@ alias:
     run:
       name: Loading saved docker image
       command: docker load -i tickers.tar
+
+  - &deploy
+    run:
+      name: Updating version within ec2
+      command: ssh ec2-user@18.237.5.40 "docker pull $ECR_URI/tickers:$CIRCLE_TAG && echo $ECR_URI/tickers:$CIRCLE_TAG > image_version"
   
-  - &buildtest_only_filters
+  - &build_test_only_filters
     filters:
       tags:
         only: /.*/
@@ -103,6 +109,7 @@ jobs:
         - *tag_image
         - *ecr_login
         - *ecr_push_image
+        - *deploy
 
 workflows:
   version: 2
@@ -110,7 +117,7 @@ workflows:
   build-test-image:
     jobs:
       - build:
-          <<: *buildtest_only_filters
+          <<: *build_test_only_filters
           context: aws-production
 
   deploy-production:

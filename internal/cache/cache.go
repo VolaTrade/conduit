@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/google/wire"
 	"github.com/volatrade/tickers/internal/models"
@@ -32,7 +33,7 @@ type (
 )
 
 func getSocketUrlString(pair string) string {
-	innerPath := fmt.Sprintf("ws/" + pair + "@trade")
+	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@trade")
 	socketUrl := url.URL{Scheme: "wss", Host: rootWsURI, Path: innerPath}
 	return socketUrl.String()
 }
