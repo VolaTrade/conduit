@@ -35,7 +35,6 @@ def destroy(container: str):
 
 def run(blue_container: str, green_container: str):
     update_time: bool = False
-    curr_version = get_version()
     while True: 
         if blue_container is None:
             blue_container = spinup()
@@ -48,12 +47,10 @@ def run(blue_container: str, green_container: str):
             start_db(green_container)
             blue_container = green_container
             green_container = None
-            update_time = can_update =  False 
+            update_time = False
 
-        if is_new_version(curr_version):
+        if datetime.now().hour % 4 == 0 and datetime.now().minute == 0 and datetime.now().second == 0:
             update_time = True
-            curr_version = get_version()
-            print(curr_version)    
 
 
 if __name__ == '__main__':
