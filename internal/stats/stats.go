@@ -38,7 +38,7 @@ func New(cfg *Config) (*StatsD, error) {
 	return &StatsD{Client: client}, nil
 }
 
-func (statz *StatsD) ReportGoRoutines() {
+func ReportGoRoutines(statz *StatsD) {
 
 	for {
 		time.Sleep(1)

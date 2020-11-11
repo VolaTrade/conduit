@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"net/url"
+	"sync"
 
 	"github.com/google/wire"
 	"github.com/volatrade/tickers/internal/models"
@@ -12,7 +13,7 @@ var Module = wire.NewSet(
 	New,
 )
 
-const rootWsURI string = "stream.binance.com:9443"
+const BASE_SOCKET_URL string = "stream.binance.com:9443"
 
 type (
 	Cache interface {
@@ -28,12 +29,13 @@ type (
 		pairUrls       []string
 		transactions   map[string][]*models.Transaction
 		transactLength int
+		mux            sync.Mutex
 	}
 )
 
 func getSocketUrlString(pair string) string {
 	innerPath := fmt.Sprintf("ws/" + pair + "@trade")
-	socketUrl := url.URL{Scheme: "wss", Host: rootWsURI, Path: innerPath}
+	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
 	return socketUrl.String()
 }
 func (tc *TickersCache) PairUrlsLength() int {
@@ -52,8 +54,9 @@ func New() *TickersCache {
 
 }
 func (tc *TickersCache) InsertTransaction(transact *models.Transaction) {
+	tc.mux.Lock()
+	defer tc.mux.Unlock()
 	tc.transactions[transact.Pair] = append(tc.transactions[transact.Pair], transact)
-	fmt.Printf("%+v\n", transact)
 	tc.transactLength++
 }
 

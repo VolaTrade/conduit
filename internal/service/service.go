@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/wire"
 	"github.com/volatrade/tickers/internal/cache"
@@ -21,18 +22,25 @@ var (
 	)
 )
 
+const (
+	READS_PER_SECOND int = 5
+)
+
 type (
 	Service interface {
 		BuildPairUrls() error
 		BuildTransactionChannels(count int)
 		CheckForDatabasePriveleges()
 		ChannelListenAndHandle(queue chan *models.Transaction, index int)
+		ConsumeTransferMessage(socket *socket.BinanceSocket)
 		SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket
 		GetSocketsArrayLength() int
 		GetChannel(index int) chan *models.Transaction
+		ReportRunning()
 	}
 
 	TickersService struct {
+		id                  string
 		cache               cache.Cache
 		connections         connections.Connections
 		exch                client.Client
@@ -43,7 +51,12 @@ type (
 )
 
 func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD) *TickersService {
-	return &TickersService{cache: ch, connections: conns, exch: cl, statsd: stats, writeToDB: false}
+	id := fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute())
+	return &TickersService{cache: ch, connections: conns, exch: cl, statsd: stats, writeToDB: false, id: id}
+}
+
+func (ts *TickersService) ReportRunning() {
+	ts.statsd.Client.Gauge(fmt.Sprintf("tickers.instance.%s", ts.id), 1)
 }
 
 //TODO there's a better way to structure this
@@ -75,25 +88,23 @@ func (ts *TickersService) BuildPairUrls() error {
 		return err
 	}
 
-	for i, val := range tradingCryptosList {
+	for _, val := range tradingCryptosList {
 		temp := val.(map[string]interface{}) //type casting
 		id := strings.ToLower(temp["symbol"].(string))
 
 		if strings.Contains(id, "btc") {
 			ts.cache.InsertPairUrl(id)
 		}
-		if i >= 50 {
-			break
-		}
 	}
 
 	return nil
 }
 
+//BuildTransactionChannels makes a slice of channels
 func (ts *TickersService) BuildTransactionChannels(count int) {
 	queues := make([]chan *models.Transaction, count)
 	for i := 0; i < count; i++ {
-		queue := make(chan *models.Transaction, 1)
+		queue := make(chan *models.Transaction, 0)
 		queues[i] = queue
 	}
 	ts.transactionChannels = queues
@@ -107,9 +118,12 @@ func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 		if j >= psqlCount {
 			j = 0
 		}
-		println("getting pair url for -->", ts.cache.GetPairUrl(i))
 		socketPairURL := ts.cache.GetPairUrl(i)
-		socket, err := socket.NewSocket(socketPairURL, ts.transactionChannels[j])
+		temp_stats := stats.StatsD{}
+		temp_stats.Client = ts.statsd.Client.Clone()
+		pair := strings.Replace(socketPairURL, "wss://stream.binance.com:9443/ws/", "", 1)
+		println("pair =---> ", pair)
+		socket, err := socket.NewSocket(socketPairURL, pair, ts.transactionChannels[j], &temp_stats)
 		println("Built socket for -->", socketPairURL)
 		if err != nil {
 			fmt.Println(err)
@@ -132,11 +146,11 @@ func (ts *TickersService) ChannelListenAndHandle(queue chan *models.Transaction,
 
 			if ts.writeToDB {
 				ts.connections.InsertTransactionToDataBase(transaction, index)
-				ts.statsd.Client.Increment(".transacts.sqlinserts")
+				ts.statsd.Client.Increment(".tickers.sqlinserts")
 
 			} else {
 				ts.cache.InsertTransaction(transaction)
-				ts.statsd.Client.Increment(".transacts.cacheinserts")
+				ts.statsd.Client.Increment(".tickers.cacheinserts")
 
 			}
 		}
@@ -149,3 +163,47 @@ func (ts *TickersService) GetChannel(index int) chan *models.Transaction {
 }
 
 //TODO go routine grafana metric
+
+func (ts *TickersService) ConsumeTransferMessage(socket *socket.BinanceSocket) {
+
+	var err error
+	if err = socket.Connect(); err != nil {
+		//TODO add handling policy
+
+		panic(err)
+	}
+	secStored := int(time.Now().Second())
+	hits := 0
+	for {
+
+		sec_now := time.Now().Second()
+		if int(sec_now) > secStored || (secStored == 59 && sec_now != 59) {
+			hits = 0
+			secStored = sec_now
+		}
+
+		if hits >= READS_PER_SECOND {
+			continue
+		}
+		message, err := socket.ReadMessage()
+
+		if err != nil {
+			//handle me
+			log.Println(err.Error())
+			ts.statsd.Client.Increment("tickers.errors.socket_read")
+			continue
+		}
+
+		var transaction *models.Transaction
+
+		if transaction, err = models.UnmarshalJSON(message); err != nil {
+			ts.statsd.Client.Increment("tickers.errors.json_unmarshal")
+
+			continue
+
+		} else {
+			log.Printf("%+v", transaction)
+			socket.DataChannel <- transaction
+		}
+	}
+}

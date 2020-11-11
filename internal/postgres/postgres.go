@@ -80,14 +80,13 @@ func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
 		return err
 	}
 
-	defer stmt.Close()
 	result, err := stmt.Exec(transaction)
 
 	if err != nil {
 		return err
 	}
 	if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-		postgres.statz.Client.Increment("duplicate_inserts")
+		postgres.statz.Client.Increment(fmt.Sprintf("tickers.duplicate_inserts.%s", transaction.Pair))
 	}
 
 	return err
@@ -116,7 +115,7 @@ func (postgres *DB) BulkInsertCache(transactionList []*models.Transaction) error
 		}
 
 		if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-			postgres.statz.Client.Increment("duplicate_inserts")
+			postgres.statz.Client.Increment(fmt.Sprintf("tickers.duplicate_inserts.%s", transaction.Pair))
 		}
 		if err != nil {
 			tx.Rollback()

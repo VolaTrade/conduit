@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 )
@@ -32,4 +33,15 @@ func NewTransaction(mapping map[string]interface{}) (*Transaction, error) {
 		return nil, err
 	}
 	return &Transaction{Id: id, Timestamp: tm, Pair: pair, Price: price, Quantity: quant, IsMaker: maker}, nil
+}
+
+func UnmarshalJSON(message []byte) (*Transaction, error) {
+	var json_message map[string]interface{}
+
+	if err := json.Unmarshal(message, &json_message); err != nil {
+		return nil, err
+	}
+
+	return NewTransaction(json_message)
+
 }

@@ -3,7 +3,6 @@ package driver
 import (
 	"github.com/google/wire"
 	"github.com/volatrade/tickers/internal/service"
-	"github.com/volatrade/tickers/internal/socket"
 )
 
 var Module = wire.NewSet(
@@ -47,9 +46,9 @@ func (td *TickersDriver) Run() {
 
 	go td.svc.CheckForDatabasePriveleges()
 	sockets := td.svc.SpawnSocketRoutines(40)
-
+	go td.svc.ReportRunning()
 	for _, active_socket := range sockets {
-		go socket.ConsumeTransferMessage(active_socket)
+		go td.svc.ConsumeTransferMessage(active_socket)
 	}
 
 	for {
