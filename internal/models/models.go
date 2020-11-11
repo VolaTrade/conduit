@@ -1,7 +1,6 @@
 package models
 
 import (
-	"log"
 	"strconv"
 	"time"
 )
@@ -16,7 +15,6 @@ type Transaction struct {
 }
 
 func NewTransaction(mapping map[string]interface{}) (*Transaction, error) {
-	log.Println("Converting from ==>", mapping)
 	i := int64(mapping["T"].(float64)) / 1000
 	tm := time.Unix(i, 0)
 	price_str := mapping["p"].(string)

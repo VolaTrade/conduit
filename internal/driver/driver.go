@@ -2,8 +2,8 @@ package driver
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/candles/internal/service"
-	"github.com/volatrade/candles/internal/socket"
+	"github.com/volatrade/tickers/internal/service"
+	"github.com/volatrade/tickers/internal/socket"
 )
 
 var Module = wire.NewSet(
@@ -11,42 +11,49 @@ var Module = wire.NewSet(
 )
 
 type (
-	CandlesDriver struct {
+	TickersDriver struct {
 		svc service.Service
 	}
 )
 
 type Driver interface {
+	RunListenerRoutines()
 	Run()
+	InitService()
 }
 
-func New(svc service.Service) *CandlesDriver {
-	return &CandlesDriver{svc: svc}
+func New(svc service.Service) *TickersDriver {
+	return &TickersDriver{svc: svc}
 }
 
-func (cd *CandlesDriver) InitService() {
-	if err := cd.svc.BuildPairUrls(); err != nil {
+//InitService initializes pairUrl list in cache and builds transactionChannels
+func (td *TickersDriver) InitService() {
+	if err := td.svc.BuildPairUrls(); err != nil {
 		panic(err)
 	}
-	cd.svc.BuildTransactionChannels(40)
+	td.svc.BuildTransactionChannels(40)
 
 }
 
-func (cd *CandlesDriver) RunListenerRoutines() {
+func (td *TickersDriver) RunListenerRoutines() {
 
 	for i := 0; i < 40; i++ {
-		channel := cd.svc.GetChannel(i)
-		go cd.svc.ChannelListenAndHandle(channel, i)
+		channel := td.svc.GetChannel(i)              //Gets channel for index
+		go td.svc.ChannelListenAndHandle(channel, i) //Tells channels to listen for transaction data from sockets
 	}
 }
 
-func (cd *CandlesDriver) Run() {
+func (td *TickersDriver) Run() {
 
-	go cd.svc.CheckForDatabasePriveleges()
-	sockets := cd.svc.SpawnSocketRoutines(40)
+	go td.svc.CheckForDatabasePriveleges()
+	sockets := td.svc.SpawnSocketRoutines(40)
 
 	for _, active_socket := range sockets {
-		socket.ConsumeTransferMessage(active_socket)
+		go socket.ConsumeTransferMessage(active_socket)
+	}
+
+	for {
+
 	}
 
 }

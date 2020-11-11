@@ -7,8 +7,8 @@ import (
 	"github.com/google/wire"
 	_ "github.com/jackc/pgx/stdlib" //driver
 	"github.com/jmoiron/sqlx"
-	"github.com/volatrade/candles/internal/models"
-	"github.com/volatrade/candles/internal/stats"
+	"github.com/volatrade/tickers/internal/models"
+	"github.com/volatrade/tickers/internal/stats"
 )
 
 const (

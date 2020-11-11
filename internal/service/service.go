@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/google/wire"
-	"github.com/volatrade/candles/internal/cache"
-	"github.com/volatrade/candles/internal/client"
-	"github.com/volatrade/candles/internal/connections"
-	"github.com/volatrade/candles/internal/models"
-	"github.com/volatrade/candles/internal/socket"
-	"github.com/volatrade/candles/internal/stats"
+	"github.com/volatrade/tickers/internal/cache"
+	"github.com/volatrade/tickers/internal/client"
+	"github.com/volatrade/tickers/internal/connections"
+	"github.com/volatrade/tickers/internal/models"
+	"github.com/volatrade/tickers/internal/socket"
+	"github.com/volatrade/tickers/internal/stats"
 )
 
 var (
