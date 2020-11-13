@@ -52,6 +52,8 @@ github.com/volatrade/candles v1.0.3 h1:x2W22hbQngSgidWyrRjmq8uWSgS6tozqnWlMZxiXI
 github.com/volatrade/candles v1.0.3/go.mod h1:JPmLRLnN29esPo+GSqAhkiTLGBMtjg8op2H1sXhVhIU=
 github.com/volatrade/utilities v0.0.0-20200917055431-bc1341e02872 h1:+EB2xex97esOyCRXmPXtrrn0FtTaZdxJfg5mEod65cM=
 github.com/volatrade/utilities v0.0.0-20200917055431-bc1341e02872/go.mod h1:5SYTOLmtjW0oSi3DQU/05g9IwzgtcH+04EJdabsr3EQ=
+github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496 h1:cNZVKHmIglYOp7Z+58Elx4m8kZ8RzoogL2Z5lOZo8cc=
+github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496/go.mod h1:5SYTOLmtjW0oSi3DQU/05g9IwzgtcH+04EJdabsr3EQ=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/net v0.0.0-20190311183353-d8887717615a/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=

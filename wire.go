@@ -11,6 +11,7 @@ import (
 	"github.com/volatrade/tickers/internal/driver"
 	"github.com/volatrade/tickers/internal/service"
 	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/utilities/slack"
 )
 
 func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
@@ -21,7 +22,9 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 			config.NewDBConfig,
 			connectionModule,
 			config.NewStatsConfig,
+			config.NewSlackConfig,
 			stats.New,
+			slackModule,
 			apiClientModule,
 			cacheModule,
 			serviceModule,
@@ -53,4 +56,9 @@ var apiClientModule = wire.NewSet(
 var driverModule = wire.NewSet(
 	driver.Module,
 	wire.Bind(new(driver.Driver), new(*driver.TickersDriver)),
+)
+
+var slackModule = wire.NewSet(
+	slack.Module,
+	wire.Bind(new(slack.Slack), new(*slack.SlackLogger)),
 )
