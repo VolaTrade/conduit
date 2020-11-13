@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/wire"
@@ -22,17 +23,12 @@ var (
 	)
 )
 
-const (
-	READS_PER_SECOND int = 5
-)
-
 type (
 	Service interface {
 		BuildPairUrls() error
 		BuildTransactionChannels(count int)
 		CheckForDatabasePriveleges()
-		ChannelListenAndHandle(queue chan *models.Transaction, index int)
-		ConsumeTransferMessage(socket *socket.BinanceSocket)
+		ChannelListenAndHandle(queue chan *models.Transaction, index int, wg *sync.WaitGroup)
 		SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket
 		GetSocketsArrayLength() int
 		GetChannel(index int) chan *models.Transaction
@@ -56,14 +52,16 @@ func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, st
 }
 
 func (ts *TickersService) ReportRunning() {
-	ts.statsd.Client.Gauge(fmt.Sprintf("tickers.instance.%s", ts.id), 1)
+	for {
+		time.Sleep(10000)
+		ts.statsd.Client.Increment(fmt.Sprintf("tickers.instances.%s", ts.id))
+	}
 }
 
 //TODO there's a better way to structure this
 func (ts *TickersService) CheckForDatabasePriveleges() {
 
 	for {
-
 		if _, err := os.Stat("start"); err == nil {
 			log.Println("making connections to DB NOW")
 			ts.connections.MakeConnections()
@@ -139,11 +137,11 @@ func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 func (ts *TickersService) GetSocketsArrayLength() int {
 	return ts.cache.PairUrlsLength()
 }
-func (ts *TickersService) ChannelListenAndHandle(queue chan *models.Transaction, index int) {
-
+func (ts *TickersService) ChannelListenAndHandle(queue chan *models.Transaction, index int, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		for transaction := range queue {
-
+			println("transaction recieved --> %+v", transaction)
 			if ts.writeToDB {
 				ts.connections.InsertTransactionToDataBase(transaction, index)
 				ts.statsd.Client.Increment(".tickers.sqlinserts")
@@ -163,47 +161,3 @@ func (ts *TickersService) GetChannel(index int) chan *models.Transaction {
 }
 
 //TODO go routine grafana metric
-
-func (ts *TickersService) ConsumeTransferMessage(socket *socket.BinanceSocket) {
-
-	var err error
-	if err = socket.Connect(); err != nil {
-		//TODO add handling policy
-
-		panic(err)
-	}
-	secStored := int(time.Now().Second())
-	hits := 0
-	for {
-
-		sec_now := time.Now().Second()
-		if int(sec_now) > secStored || (secStored == 59 && sec_now != 59) {
-			hits = 0
-			secStored = sec_now
-		}
-
-		if hits >= READS_PER_SECOND {
-			continue
-		}
-		message, err := socket.ReadMessage()
-
-		if err != nil {
-			//handle me
-			log.Println(err.Error())
-			ts.statsd.Client.Increment("tickers.errors.socket_read")
-			continue
-		}
-
-		var transaction *models.Transaction
-
-		if transaction, err = models.UnmarshalJSON(message); err != nil {
-			ts.statsd.Client.Increment("tickers.errors.json_unmarshal")
-
-			continue
-
-		} else {
-			log.Printf("%+v", transaction)
-			socket.DataChannel <- transaction
-		}
-	}
-}
