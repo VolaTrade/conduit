@@ -30,7 +30,7 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 	tickersCache := cache.New()
 	apiClient := client.New(statsD)
 	tickersService := service.New(connectionArray, tickersCache, apiClient, statsD)
-	tickersDriver := driver.New(tickersService)
+	tickersDriver := driver.New(tickersService, statsD)
 	return tickersDriver, nil
 }
 
