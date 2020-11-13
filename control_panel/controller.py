@@ -1,8 +1,9 @@
 from datetime import datetime
 from subprocess import call 
 import sys
-import os 
+import os
 import time
+import json
 
 
 def get_current_image():
@@ -19,7 +20,7 @@ def is_new_image(prev_version):
     return False
 
 def spinup(image: str):
-    os.system("docker run --network=\"host\" --log-opt max-size=10m --log-opt max-file=5 --restart always -d " + image + ">> id.txt")
+    os.system("docker run --log-opt max-size=10m --log-opt max-file=5 --restart always -d " + image + ">> id.txt")
     
     with open("id.txt", "r") as fr:
         container: str = fr.readlines()[-1].replace("\n", "")
@@ -28,7 +29,8 @@ def spinup(image: str):
 
 def start_db(container: str):
     time.sleep(20)
-    os.system(f"bash switch_state.sh {container}")
+    os.system(f"docker exec -it {container} ash  -c 'touch start'")
+    print(f"Switched state to {container}")
 
 def destroy(container: str):
     os.system(f"docker kill {container}")
@@ -43,6 +45,7 @@ def run(blue_container: str, green_container: str):
 
         if update_time:
             green_container = spinup(current_image)
+            time.sleep(5)
             destroy(blue_container)
             start_db(green_container)
             blue_container = green_container
