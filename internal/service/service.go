@@ -27,12 +27,12 @@ type (
 	Service interface {
 		BuildPairUrls() error
 		BuildTransactionChannels(count int)
-		CheckForDatabasePriveleges()
+		CheckForDatabasePriveleges(wg *sync.WaitGroup)
 		ChannelListenAndHandle(queue chan *models.Transaction, index int, wg *sync.WaitGroup)
 		SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket
 		GetSocketsArrayLength() int
 		GetChannel(index int) chan *models.Transaction
-		ReportRunning()
+		ReportRunning(wg *sync.WaitGroup)
 	}
 
 	TickersService struct {
@@ -51,7 +51,8 @@ func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, st
 	return &TickersService{cache: ch, connections: conns, exch: cl, statsd: stats, writeToDB: false, id: id}
 }
 
-func (ts *TickersService) ReportRunning() {
+func (ts *TickersService) ReportRunning(wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		time.Sleep(10000)
 		ts.statsd.Client.Increment(fmt.Sprintf("tickers.instances.%s", ts.id))
@@ -59,7 +60,8 @@ func (ts *TickersService) ReportRunning() {
 }
 
 //TODO there's a better way to structure this
-func (ts *TickersService) CheckForDatabasePriveleges() {
+func (ts *TickersService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
+	defer wg.Done()
 
 	for {
 		if _, err := os.Stat("start"); err == nil {

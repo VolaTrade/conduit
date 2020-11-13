@@ -58,9 +58,11 @@ func (td *TickersDriver) RunListenerRoutines() {
 
 func (td *TickersDriver) Run() {
 
-	go td.svc.CheckForDatabasePriveleges()
+	go td.svc.CheckForDatabasePriveleges(&Wg)
+	Wg.Add(1)
 	sockets := td.svc.SpawnSocketRoutines(40)
-	go td.svc.ReportRunning()
+	go td.svc.ReportRunning(&Wg)
+	Wg.Add(1)
 	for _, active_socket := range sockets {
 		Wg.Add(1)
 		println("Spawning routine for -->", active_socket)
