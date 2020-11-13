@@ -29,7 +29,7 @@ def spinup(image: str):
 
 def start_db(container: str):
     time.sleep(20)
-    os.system(f"docker exec -it {container} ash  -c 'touch start'")
+    os.system(f"docker exec {container} ash  -c 'touch start'")
     print(f"Switched state to {container}")
 
 def destroy(container: str):
