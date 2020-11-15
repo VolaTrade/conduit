@@ -8,11 +8,13 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/volatrade/tickers/internal/postgres"
 	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/utilities/slack"
 )
 
 type Config struct {
 	DbConfig    postgres.Config
 	StatsConfig stats.Config
+	SlackConfig slack.Config
 }
 
 type FilePath string
@@ -50,6 +52,11 @@ func NewConfig(fileName FilePath) *Config {
 			Port: port,
 			Env:  env,
 		},
+		SlackConfig: slack.Config{
+			ApiKey:   os.Getenv("SLACK_API_KEY"),
+			Location: "TICKERS",
+			Env:      env,
+		},
 	}
 }
 
@@ -62,4 +69,9 @@ func NewDBConfig(cfg *Config) *postgres.Config {
 func NewStatsConfig(cfg *Config) *stats.Config {
 	log.Println("Stats config --->", cfg.StatsConfig)
 	return &cfg.StatsConfig
+}
+
+func NewSlackConfig(cfg *Config) *slack.Config {
+	log.Println("Slack config --->", cfg.SlackConfig)
+	return &cfg.SlackConfig
 }

@@ -9,5 +9,6 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 )

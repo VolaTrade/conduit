@@ -15,6 +15,7 @@ import (
 	"github.com/volatrade/tickers/internal/models"
 	"github.com/volatrade/tickers/internal/socket"
 	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/utilities/slack"
 )
 
 var (
@@ -40,15 +41,16 @@ type (
 		cache               cache.Cache
 		connections         connections.Connections
 		exch                client.Client
+		slack               slack.Slack
 		statsd              *stats.StatsD
 		transactionChannels []chan *models.Transaction
 		writeToDB           bool
 	}
 )
 
-func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD) *TickersService {
+func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *TickersService {
 	id := fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute())
-	return &TickersService{cache: ch, connections: conns, exch: cl, statsd: stats, writeToDB: false, id: id}
+	return &TickersService{cache: ch, connections: conns, exch: cl, statsd: stats, writeToDB: false, id: id, slack: slackz}
 }
 
 func (ts *TickersService) ReportRunning(wg *sync.WaitGroup) {
@@ -82,7 +84,11 @@ func (ts *TickersService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 
 //Init reads all trading pairs from Binance and then proceeds to store them as keys in cache
 func (ts *TickersService) BuildPairUrls() error {
+	err := ts.slack.SendMessage(fmt.Sprintf("[%s] I am being invoked", ts.id))
 
+	if err != nil {
+		log.Println(err.Error())
+	}
 	tradingCryptosList, err := ts.exch.GetActiveBinanceExchangePairs()
 	if err != nil {
 		return err

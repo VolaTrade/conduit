@@ -14,6 +14,7 @@ import (
 	"github.com/volatrade/tickers/internal/driver"
 	"github.com/volatrade/tickers/internal/service"
 	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/utilities/slack"
 )
 
 // Injectors from wire.go:
@@ -29,7 +30,9 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 	connectionArray := connections.New(postgresConfig, statsD)
 	tickersCache := cache.New()
 	apiClient := client.New(statsD)
-	tickersService := service.New(connectionArray, tickersCache, apiClient, statsD)
+	slackConfig := config.NewSlackConfig(configConfig)
+	slackLogger := slack.New(slackConfig)
+	tickersService := service.New(connectionArray, tickersCache, apiClient, statsD, slackLogger)
 	tickersDriver := driver.New(tickersService, statsD)
 	return tickersDriver, nil
 }
@@ -45,3 +48,5 @@ var connectionModule = wire.NewSet(connections.Module, wire.Bind(new(connections
 var apiClientModule = wire.NewSet(client.Module, wire.Bind(new(client.Client), new(*client.ApiClient)))
 
 var driverModule = wire.NewSet(driver.Module, wire.Bind(new(driver.Driver), new(*driver.TickersDriver)))
+
+var slackModule = wire.NewSet(slack.Module, wire.Bind(new(slack.Slack), new(*slack.SlackLogger)))

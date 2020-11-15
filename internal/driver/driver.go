@@ -57,7 +57,6 @@ func (td *TickersDriver) RunListenerRoutines() {
 }
 
 func (td *TickersDriver) Run() {
-
 	go td.svc.CheckForDatabasePriveleges(&Wg)
 	Wg.Add(1)
 	sockets := td.svc.SpawnSocketRoutines(40)
