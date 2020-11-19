@@ -28,7 +28,12 @@ alias:
       name: Create config.env
       command: chmod +x create_env.sh && sh create_env.sh
 
-  - &build_and_test_container
+  - &test_code
+    run:
+      name: Running unit tests
+      command: go test -cover ./...
+      
+  - &build_container
     run:
       name: Building and testing docker container
       command: make docker-build
@@ -96,7 +101,8 @@ jobs:
         - *configure_aws_cli
         - *checkout
         - *create_env
-        - *build_and_test_container
+        - *test_code
+        - *build_container
         - *save_image
         - *save_to_workspace
   deploy:

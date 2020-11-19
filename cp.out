@@ -1,0 +1,25 @@
+mode: set
+github.com/volatrade/tickers/internal/models/models.go:33.86,35.16 2 1
+github.com/volatrade/tickers/internal/models/models.go:38.2,39.16 2 1
+github.com/volatrade/tickers/internal/models/models.go:43.2,49.8 1 1
+github.com/volatrade/tickers/internal/models/models.go:35.16,37.3 1 0
+github.com/volatrade/tickers/internal/models/models.go:39.16,41.3 1 0
+github.com/volatrade/tickers/internal/models/models.go:52.81,54.63 2 1
+github.com/volatrade/tickers/internal/models/models.go:57.2,58.16 2 1
+github.com/volatrade/tickers/internal/models/models.go:62.2,62.16 1 1
+github.com/volatrade/tickers/internal/models/models.go:54.63,56.3 1 0
+github.com/volatrade/tickers/internal/models/models.go:58.16,60.3 1 0
+github.com/volatrade/tickers/internal/models/models.go:65.75,70.16 5 0
+github.com/volatrade/tickers/internal/models/models.go:73.2,79.16 6 0
+github.com/volatrade/tickers/internal/models/models.go:82.2,82.108 1 0
+github.com/volatrade/tickers/internal/models/models.go:70.16,72.3 1 0
+github.com/volatrade/tickers/internal/models/models.go:79.16,81.3 1 0
+github.com/volatrade/tickers/internal/models/models.go:85.69,88.63 2 0
+github.com/volatrade/tickers/internal/models/models.go:92.2,92.37 1 0
+github.com/volatrade/tickers/internal/models/models.go:88.63,90.3 1 0
+github.com/volatrade/tickers/internal/models/models.go:96.57,99.20 2 1
+github.com/volatrade/tickers/internal/models/models.go:111.2,112.15 2 1
+github.com/volatrade/tickers/internal/models/models.go:99.20,102.35 2 1
+github.com/volatrade/tickers/internal/models/models.go:102.35,104.18 2 1
+github.com/volatrade/tickers/internal/models/models.go:107.4,107.28 1 1
+github.com/volatrade/tickers/internal/models/models.go:104.18,106.5 1 0
