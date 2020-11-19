@@ -40,7 +40,7 @@ alias:
 
   - &build_container
     run:
-      name: Building and testing docker container
+      name: Building docker container
       command: make docker-build
 
   - &ecr_login

@@ -16,4 +16,3 @@ CREATE TABLE order_books(
 	asks jsonb NOT NULL,
 	PRIMARY KEY(id, pair, time_stamp)
 );
-
