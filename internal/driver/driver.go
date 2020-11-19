@@ -107,7 +107,6 @@ func (td *TickersDriver) consumeTransferMessage(socket *socket.BinanceSocket, wg
 		}
 
 		var transaction *models.Transaction
-		var orderBookUpdate *models.OrderBookRow
 
 		if transaction, err = models.UnmarshalTransactionJSON(message); err != nil {
 			println(err.Error())
@@ -118,13 +117,7 @@ func (td *TickersDriver) consumeTransferMessage(socket *socket.BinanceSocket, wg
 			socket.DataChannel <- transaction
 		}
 
+		// TODO: Add order book insertions
 		// TODO: Add support for passing pair since we dont get it back from socket
-		if orderBookUpdate, err = models.UnmarshalOrderBookJSON(message, "BTCUSDT"); err != nil {
-			println(err.Error())
-			td.statz.Client.Increment("tickers.errors.json_unmarshal")
-		} else {
-			log.Printf("%+v", orderBookUpdate)
-			// TODO: Send data through orderBook channel
-		}
 	}
 }
