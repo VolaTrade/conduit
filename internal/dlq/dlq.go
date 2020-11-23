@@ -15,5 +15,5 @@ type (
 
 func (tdq *TickersDeadQueue) InsertFailedSocket(socket *socket.BinanceSocket) {
 
-	tdq.failedSockets = append(tdq.failedSocket, socket)
+	tdq.failedSockets = append(tdq.failedSockets, socket)
 }

@@ -1,9 +1,14 @@
 BIN_NAME=tickers
-VERSION=$(echo version)
 
 build:
 	@echo building binary...
-	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/${BIN_NAME};
+	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/${BIN_NAME}
+
+deps:
+	git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/volatrade/".insteadOf "https://github.com/volatrade/" && go mod download
+
+test:
+	go test -cover ./...
 
 docker-build:
 	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
