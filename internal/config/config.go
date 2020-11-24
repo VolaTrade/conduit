@@ -15,6 +15,7 @@ type Config struct {
 	DbConfig    postgres.Config
 	StatsConfig stats.Config
 	SlackConfig slack.Config
+	//DriverConfig driver.Config
 }
 
 type FilePath string
@@ -32,6 +33,11 @@ func NewConfig(fileName FilePath) *Config {
 		log.Fatal(err)
 	}
 
+	// length, err := strconv.Atoi(os.Getenv("CONNECTION_LENGTH"))
+
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 	env := os.Getenv("ENV")
 
 	if env != "DEV" && env != "PRD" {
@@ -57,6 +63,9 @@ func NewConfig(fileName FilePath) *Config {
 			Location: "TICKERS",
 			Env:      env,
 		},
+		// DriverConfig: driver.Config{
+		// 	Length: length,
+		// },
 	}
 }
 
@@ -75,3 +84,8 @@ func NewSlackConfig(cfg *Config) *slack.Config {
 	log.Println("Slack config --->", cfg.SlackConfig)
 	return &cfg.SlackConfig
 }
+
+// func NewDriverConfig(cfg *Config) *driver.Config {
+// 	log.Println("Driver config --->", cfg.DriverConfig)
+// 	return &driver.Config{3}
+// }

@@ -19,6 +19,7 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 	panic(
 		wire.Build(
 			config.NewConfig,
+			//config.NewDriverConfig,
 			config.NewDBConfig,
 			connectionModule,
 			config.NewStatsConfig,

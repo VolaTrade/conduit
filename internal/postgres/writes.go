@@ -11,7 +11,7 @@ const (
 	DEPTH_INSERTION_QUERY       = `INSERT INTO order_books (id, pair, time_stamp, bids, asks) VALUES (:id, :pair, :timestamp, :bids, :asks) ON CONFLICT DO NOTHING;`
 )
 
-func (postgres *DB) InsertOrderBookUpdate(obUpdate *models.OrderBookRow) error {
+func (postgres *DB) InsertOrderBookRow(obUpdate *models.OrderBookRow) error {
 	stmt, err := postgres.DB.PrepareNamed(DEPTH_INSERTION_QUERY)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
 
 }
 
-func (postgres *DB) BulkInsertCache(transactionList []*models.Transaction) error {
+func (postgres *DB) BulkInsertTransactions(transactionList []*models.Transaction) error {
 
 	tx := postgres.DB.MustBegin()
 	stmt, err := tx.PrepareNamed(TRANSACTION_INSERTION_QUERY)
@@ -73,6 +73,44 @@ func (postgres *DB) BulkInsertCache(transactionList []*models.Transaction) error
 
 		if rows, err := result.RowsAffected(); rows == 0 && err == nil {
 			postgres.statz.Client.Increment(fmt.Sprintf("tickers.duplicate_inserts.%s", transaction.Pair))
+		}
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+	}
+
+	return tx.Commit()
+
+}
+
+func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow) error {
+
+	tx := postgres.DB.MustBegin()
+
+	stmt, err := tx.PrepareNamed(DEPTH_INSERTION_QUERY)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	for _, orderBookRow := range orderBookRows {
+
+		if orderBookRow == nil {
+			continue
+		}
+		result, err := stmt.Exec(orderBookRow)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		if rows, err := result.RowsAffected(); rows == 0 && err == nil {
+			postgres.statz.Client.Increment(fmt.Sprintf("tickers.duplicate_inserts.%s", orderBookRow.Pair))
 		}
 		if err != nil {
 			tx.Rollback()
