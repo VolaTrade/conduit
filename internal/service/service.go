@@ -30,8 +30,7 @@ type (
 		BuildTransactionChannels(count int)
 		BuildOrderBookChannels(count int)
 		CheckForDatabasePriveleges(wg *sync.WaitGroup)
-		TransactionChannelListenAndHandle(queue chan *models.Transaction, index int, wg *sync.WaitGroup)
-		OrderBookChannelListenAndHandle(queue chan *models.OrderBookRow, index int, wg *sync.WaitGroup)
+		ListenAndHandle(queue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, ch chan bool)
 		SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket
 		GetSocketsArrayLength() int
 		GetTransactionChannel(index int) chan *models.Transaction
@@ -173,38 +172,45 @@ func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 func (ts *TickersService) GetSocketsArrayLength() int {
 	return ts.cache.UrlsLength()
 }
-func (ts *TickersService) TransactionChannelListenAndHandle(queue chan *models.Transaction, index int, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		for transaction := range queue {
-			println("transaction recieved --> %+v", transaction)
-			if ts.writeToDB {
-				ts.connections.InsertTransactionToDataBase(transaction, index)
-				ts.statsd.Client.Increment(".tickers.sqlinserts")
 
-			} else {
-				ts.cache.InsertTransaction(transaction)
-				ts.statsd.Client.Increment(".tickers.cacheinserts")
+func (ts *TickersService) handleTransaction(tx *models.Transaction, index int) {
+	if ts.writeToDB {
+		ts.connections.InsertTransactionToDataBase(tx, index)
+		ts.statsd.Client.Increment(".tickers.sqlinserts")
 
-			}
-		}
+	} else {
+		ts.cache.InsertTransaction(tx)
+		ts.statsd.Client.Increment(".tickers.cacheinserts")
 
 	}
 }
-func (ts *TickersService) OrderBookChannelListenAndHandle(queue chan *models.OrderBookRow, index int, wg *sync.WaitGroup) {
+
+func (ts *TickersService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+	if ts.writeToDB {
+		ts.connections.InsertOrderBookRowToDataBase(tx, index)
+		ts.statsd.Client.Increment(".tickers.sqlinserts")
+
+	} else {
+		ts.cache.InsertOrderBookRow(tx)
+		ts.statsd.Client.Increment(".tickers.cacheinserts")
+
+	}
+}
+
+func (ts *TickersService) ListenAndHandle(txQueue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
 	defer wg.Done()
 	for {
-		for orderBookData := range queue {
-			println("transaction recieved --> %+v", orderBookData)
-			if ts.writeToDB {
-				ts.connections.InsertOrderBookRowToDataBase(orderBookData, index)
-				ts.statsd.Client.Increment(".tickers.sqlinserts")
+		select {
 
-			} else {
-				ts.cache.InsertOrderBookRow(orderBookData)
-				ts.statsd.Client.Increment(".tickers.cacheinserts")
+		case <-quit:
+			println("[ListenAndHandle] Exit")
+			return
 
-			}
+		case transaction := <-txQueue:
+			ts.handleTransaction(transaction, index)
+
+		case orderBookRow := <-obQueue:
+			ts.handleOrderBookRow(orderBookRow, index)
 		}
 
 	}
@@ -215,7 +221,6 @@ func (ts *TickersService) GetTransactionChannel(index int) chan *models.Transact
 }
 
 func (ts *TickersService) GetOrderBookChannel(index int) chan *models.OrderBookRow {
-	println("Index being requested -->", index)
 	return ts.orderBookChannels[index]
 }
 

@@ -25,6 +25,7 @@ type (
 		GetTransactionUrl(index int) string
 		GetOrderBookUrl(index int) string
 		TransactionsLength() int
+		OrderBookRowsLength() int
 		GetAllTransactions() []*models.Transaction
 		GetAllOrderBookRows() []*models.OrderBookRow
 		UrlsLength() int
@@ -42,6 +43,16 @@ type (
 	}
 )
 
+func New() *TickersCache {
+	return &TickersCache{
+		txUrls:         make([]string, 0),
+		obUrls:         make([]string, 0),
+		transactions:   make(map[string][]*models.Transaction, 0),
+		orderBookData:  make([]*models.OrderBookRow, 0),
+		transactLength: 0,
+	}
+
+}
 func getTransactionUrlString(pair string) string {
 	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@trade")
 	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
@@ -72,16 +83,11 @@ func (tc *TickersCache) UrlsLength() int {
 func (tc *TickersCache) TransactionsLength() int {
 	return tc.transactLength
 }
-func New() *TickersCache {
-	return &TickersCache{
-		txUrls:         make([]string, 0),
-		obUrls:         make([]string, 0),
-		transactions:   make(map[string][]*models.Transaction, 0),
-		orderBookData:  make([]*models.OrderBookRow, 0),
-		transactLength: 0,
-	}
 
+func (tc *TickersCache) OrderBookRowsLength() int {
+	return len(tc.orderBookData)
 }
+
 func (tc *TickersCache) InsertTransaction(transact *models.Transaction) {
 	tc.txMux.Lock()
 	defer tc.txMux.Unlock()

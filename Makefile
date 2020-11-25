@@ -33,3 +33,4 @@ run:
 
 tag:
 	git tag ${NEW_VERSION} && echo ${NEW_VERSION} >> version
+

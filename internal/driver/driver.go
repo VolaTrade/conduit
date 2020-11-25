@@ -15,7 +15,6 @@ import (
 var Module = wire.NewSet(
 	New,
 )
-var Wg sync.WaitGroup
 
 type (
 	TickersDriver struct {
@@ -29,8 +28,8 @@ const (
 )
 
 type Driver interface {
-	RunListenerRoutines()
-	Run()
+	RunListenerRoutines(wg *sync.WaitGroup, ch chan bool)
+	Run(wg *sync.WaitGroup)
 	InitService()
 }
 
@@ -48,32 +47,27 @@ func (td *TickersDriver) InitService() {
 
 }
 
-func (td *TickersDriver) RunListenerRoutines() {
-
+func (td *TickersDriver) RunListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
 	for i := 0; i < 3; i++ {
-		Wg.Add(1)
-		txChannel := td.svc.GetTransactionChannel(i)                   //Gets channel for index
-		go td.svc.TransactionChannelListenAndHandle(txChannel, i, &Wg) //Tells channels to listen for transaction data from sockets
+		wg.Add(1)
+		txChannel := td.svc.GetTransactionChannel(i)
 		obChannel := td.svc.GetOrderBookChannel(i)
-		go td.svc.OrderBookChannelListenAndHandle(obChannel, i, &Wg)
+		go td.svc.ListenAndHandle(txChannel, obChannel, i, wg, ch) //Tells channels to listen for transaction data from sockets
 	}
 }
 
-func (td *TickersDriver) Run() {
-	go td.svc.CheckForDatabasePriveleges(&Wg)
-	Wg.Add(1)
+func (td *TickersDriver) Run(wg *sync.WaitGroup) {
+	go td.svc.CheckForDatabasePriveleges(wg)
+	wg.Add(1)
 	sockets := td.svc.SpawnSocketRoutines(3)
-	go td.svc.ReportRunning(&Wg)
-	Wg.Add(1)
+	go td.svc.ReportRunning(wg)
 	for _, active_socket := range sockets {
-		Wg.Add(1)
+		wg.Add(1)
 		println("Spawning routine for -->", active_socket)
-		go td.consumeTransferTransactionMessage(active_socket, &Wg)
-		go td.consumeTransferOrderBookMessage(active_socket, &Wg)
+		go td.consumeTransferTransactionMessage(active_socket, wg)
+		go td.consumeTransferOrderBookMessage(active_socket, wg)
 		println("Spawned spawned")
 	}
-
-	Wg.Wait()
 
 }
 
@@ -170,8 +164,5 @@ func (td *TickersDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 			log.Printf("%+v", orderBookRow)
 			socket.OrderBookChannel <- orderBookRow
 		}
-
-		// TODO: Add order book insertions
-		// TODO: Add support for passing pair since we dont get it back from socket
 	}
 }
