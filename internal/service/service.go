@@ -152,7 +152,7 @@ func (ts *TickersService) GetUrlsAndPair(index int) (string, string, string) {
 
 	pair, err := ts.cache.GetPair(index)
 
-	if err == nil {
+	if err != nil {
 		panic(err)
 	}
 
@@ -163,7 +163,7 @@ func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 
 	sockets := make([]*socket.BinanceSocket, 0)
 	j := 0
-	for i := 0; i < ts.cache.PairsLength()-1; i++ {
+	for i := 0; i < ts.cache.PairsLength(); i++ {
 		if j >= psqlCount {
 			j = 0
 		}
