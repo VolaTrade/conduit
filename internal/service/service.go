@@ -52,8 +52,16 @@ type (
 )
 
 func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *TickersService {
-	id := fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute())
-	return &TickersService{cache: ch, connections: conns, exch: cl, statsd: stats, writeToDB: false, id: id, slack: slackz}
+
+	return &TickersService{
+		cache:       ch,
+		connections: conns,
+		exch:        cl,
+		statsd:      stats,
+		writeToDB:   false,
+		id:          fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute()),
+		slack:       slackz,
+	}
 }
 
 func (ts *TickersService) ReportRunning(wg *sync.WaitGroup) {
@@ -107,8 +115,7 @@ func (ts *TickersService) BuildPairUrls() error {
 		id := strings.ToLower(temp["symbol"].(string))
 
 		if id == "btcusdt" || id == "ethusdt" || id == "xrpusdt" {
-			ts.cache.InsertTransactionUrl(id)
-			ts.cache.InsertOrderBookUrl(id)
+			ts.cache.InsertPair(id)
 		}
 	}
 
@@ -136,23 +143,37 @@ func (ts *TickersService) BuildOrderBookChannels(count int) {
 	ts.orderBookChannels = queues
 }
 
+func (ts *TickersService) GetUrlsAndPair(index int) (string, string, string) {
+	transactionURL, orderBookURL, err := ts.cache.GetTransactionOrderBookUrls(index)
+
+	if err != nil {
+		panic(err)
+	}
+
+	pair, err := ts.cache.GetPair(index)
+
+	if err == nil {
+		panic(err)
+	}
+
+	return transactionURL, orderBookURL, pair
+}
+
 func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket {
 
 	sockets := make([]*socket.BinanceSocket, 0)
 	j := 0
-	for i := 0; i < ts.cache.UrlsLength()-1; i++ {
+	for i := 0; i < ts.cache.PairsLength()-1; i++ {
 		if j >= psqlCount {
 			j = 0
 		}
-		transactionURL := ts.cache.GetTransactionUrl(i)
-		orderBookURL := ts.cache.GetOrderBookUrl(i)
 
-		temp_stats := stats.StatsD{}
-		temp_stats.Client = ts.statsd.Client.Clone()
-		pair := strings.Replace(transactionURL, "wss://stream.binance.com:9443/ws/", "", 1)
-		println("pair =---> ", pair)
+		transactionURL, orderBookURL, pair := ts.GetUrlsAndPair(i)
+
+		temp_stats := stats.StatsD{}                 //fix me
+		temp_stats.Client = ts.statsd.Client.Clone() // fix me.. I am uneccesary
 		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], &temp_stats)
-		println("Built socket for -->", transactionURL)
+
 		if err != nil {
 			fmt.Println(err)
 
@@ -162,10 +183,10 @@ func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 	}
 
 	return sockets
-
 }
+
 func (ts *TickersService) GetSocketsArrayLength() int {
-	return ts.cache.UrlsLength()
+	return ts.cache.PairsLength()
 }
 
 func (ts *TickersService) handleTransaction(tx *models.Transaction, index int) {

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -14,42 +15,40 @@ var Module = wire.NewSet(
 	New,
 )
 
-const BASE_SOCKET_URL string = "stream.binance.com:9443"
+const (
+	BASE_SOCKET_URL     string = "stream.binance.com:9443"
+	OUT_OF_BOUNDS_ERROR string = "Index does not exist for pair slice"
+)
 
 type (
 	Cache interface {
-		InsertTransaction(transact *models.Transaction)
-		InsertOrderBookRow(obRow *models.OrderBookRow)
-		InsertTransactionUrl(pair string)
-		InsertOrderBookUrl(pair string)
-		GetTransactionUrl(index int) string
-		GetOrderBookUrl(index int) string
-		TransactionsLength() int
-		OrderBookRowsLength() int
-		GetAllTransactions() []*models.Transaction
 		GetAllOrderBookRows() []*models.OrderBookRow
-		UrlsLength() int
+		GetAllTransactions() []*models.Transaction
+		GetPair(index int) (string, error)
+		GetTransactionOrderBookUrls(index int) (string, string, error)
+		InsertOrderBookRow(obRow *models.OrderBookRow)
+		InsertTransaction(transact *models.Transaction)
+		InsertPair(pair string)
+		OrderBookRowsLength() int
+		PairsLength() int
 		Purge()
+		TransactionsLength() int
 	}
 
 	TickersCache struct {
-		txUrls         []string
-		obUrls         []string
-		transactions   map[string][]*models.Transaction
-		orderBookData  []*models.OrderBookRow
-		transactLength int
-		txMux          sync.Mutex
-		obMux          sync.Mutex
+		pairs         []string
+		transactions  []*models.Transaction
+		orderBookData []*models.OrderBookRow
+		txMux         sync.Mutex
+		obMux         sync.Mutex
 	}
 )
 
 func New() *TickersCache {
 	return &TickersCache{
-		txUrls:         make([]string, 0),
-		obUrls:         make([]string, 0),
-		transactions:   make(map[string][]*models.Transaction, 0),
-		orderBookData:  make([]*models.OrderBookRow, 0),
-		transactLength: 0,
+		pairs:         make([]string, 0),
+		transactions:  make([]*models.Transaction, 0),
+		orderBookData: make([]*models.OrderBookRow, 0),
 	}
 
 }
@@ -64,38 +63,71 @@ func getOrderBookUrlString(pair string) string {
 	return socketUrl.String()
 }
 
-func (tc *TickersCache) InsertTransactionUrl(pair string) {
-	tempUrl := getTransactionUrlString(pair)
-	tc.txUrls = append(tc.txUrls, tempUrl)
-	println(tc.txUrls)
+func (tc *TickersCache) GetTransactionOrderBookUrls(index int) (string, string, error) {
+
+	if index < 0 || index >= len(tc.pairs) {
+		return "", "", errors.New(OUT_OF_BOUNDS_ERROR)
+	}
+	return getTransactionUrlString(tc.pairs[index]), getOrderBookUrlString(tc.pairs[index]), nil
 }
 
-func (tc *TickersCache) InsertOrderBookUrl(pair string) {
-	tempUrl := getOrderBookUrlString(pair)
-	tc.obUrls = append(tc.obUrls, tempUrl)
-
+func (tc *TickersCache) GetAllTransactions() []*models.Transaction {
+	return tc.transactions
 }
 
-func (tc *TickersCache) UrlsLength() int {
-	return len(tc.txUrls)
+func (tc *TickersCache) GetAllOrderBookRows() []*models.OrderBookRow {
+	return tc.orderBookData
+}
+
+func (tc *TickersCache) GetPair(index int) (string, error) {
+	if index < 0 || index >= len(tc.pairs) {
+		return "", errors.New(OUT_OF_BOUNDS_ERROR)
+	}
+
+	return tc.pairs[index], nil
 }
 
 func (tc *TickersCache) TransactionsLength() int {
-	return tc.transactLength
+	if tc.transactions != nil {
+		return len(tc.transactions)
+	}
+	return 0
 }
 
 func (tc *TickersCache) OrderBookRowsLength() int {
-	return len(tc.orderBookData)
+
+	if tc.orderBookData != nil {
+		return len(tc.orderBookData)
+	}
+	return 0
+}
+
+func (tc *TickersCache) PairsLength() int {
+	return len(tc.pairs)
+}
+
+func (tc *TickersCache) InsertPair(pair string) {
+	tc.pairs = append(tc.pairs, pair)
+
 }
 
 func (tc *TickersCache) InsertTransaction(transact *models.Transaction) {
+
+	if transact == nil {
+		return
+	}
+
 	tc.txMux.Lock()
 	defer tc.txMux.Unlock()
-	tc.transactions[transact.Pair] = append(tc.transactions[transact.Pair], transact)
-	tc.transactLength++
+	tc.transactions = append(tc.transactions, transact)
 }
 
 func (tc *TickersCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
+
+	if obRow == nil {
+		return
+	}
+
 	tc.obMux.Lock()
 	defer tc.obMux.Unlock()
 	tc.orderBookData = append(tc.orderBookData, obRow)
@@ -104,27 +136,5 @@ func (tc *TickersCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 func (tc *TickersCache) Purge() {
 	tc.transactions = nil
 	tc.orderBookData = nil
-	tc.transactLength = 0
-}
-
-func (tc *TickersCache) GetTransactionUrl(index int) string {
-	return tc.txUrls[index]
-}
-
-func (tc *TickersCache) GetOrderBookUrl(index int) string {
-	return tc.obUrls[index]
-}
-
-func (tc *TickersCache) GetAllTransactions() []*models.Transaction {
-	tempTransacts := make([]*models.Transaction, tc.transactLength)
-
-	for _, list := range tc.transactions {
-		tempTransacts = append(tempTransacts, list...)
-	}
-
-	return tempTransacts
-}
-
-func (tc *TickersCache) GetAllOrderBookRows() []*models.OrderBookRow {
-	return tc.orderBookData
+	tc.pairs = nil
 }
