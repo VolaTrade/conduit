@@ -97,11 +97,6 @@ func (ts *TickersService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 
 //Init reads all trading pairs from Binance and then proceeds to store them as keys in cache
 func (ts *TickersService) BuildPairUrls() error {
-	err := ts.slack.SendMessage(fmt.Sprintf("[%s] I am being invoked", ts.id))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
 	tradingCryptosList, err := ts.exch.GetActiveBinanceExchangePairs()
 	if err != nil {
 		return err

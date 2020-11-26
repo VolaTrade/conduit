@@ -19,6 +19,7 @@ type testSuite struct {
 	mockConnections *mocks.MockConnections
 	service         *service.TickersService
 	cache           cache.Cache
+	client          *mocks.MockClient
 }
 
 func createTestSuite(t *testing.T) testSuite {
@@ -89,4 +90,86 @@ func TestOrderBookChannelsToCache(t *testing.T) {
 	wg.Wait()
 	assert.True(t, ts.cache.OrderBookRowsLength() == 100)
 
+}
+
+// func TestCheckForDatabasePriveleges(t *testing.T) {
+// 	ts := createTestSuite(t)
+
+// 	ts.cache.InsertOrderBookRow(&models.OrderBookRow{
+// 		Id:        123,
+// 		Bids:      []byte("bids"),
+// 		Asks:      []byte("asks"),
+// 		Timestamp: time.Now(),
+// 		Pair:      "BTCUSDT",
+// 	})
+
+// 	ts.cache.InsertTransaction(&models.Transaction{
+// 		Id:        234,
+// 		Pair:      "BTCUSDT",
+// 		Price:     123.23,
+// 		IsMaker:   false,
+// 		Timestamp: time.Now(),
+// 		Quantity:  12.21,
+// 	})
+
+// 	f, _ := os.Create("start")
+// 	fmt.Printf("Created file %s", f.Name())
+
+// 	var wg sync.WaitGroup
+// 	wg.Add(1)
+// 	go ts.service.CheckForDatabasePriveleges(&wg)
+// 	wg.Wait()
+
+// 	assert.Equal(t, 0, ts.cache.TransactionsLength())
+// 	assert.Equal(t, 0, ts.cache.TransactionsLength())
+// 	os.Remove("start")
+// }
+
+func TestBuildPairUrls(t *testing.T) {
+	ts := createTestSuite(t)
+
+	res := ts.service.BuildPairUrls()
+	assert.True(t, res == nil)
+}
+
+func TestBuildOrderBookChannels(t *testing.T) {
+
+	ts := createTestSuite(t)
+	ts.service.BuildOrderBookChannels(3)
+	c := ts.service.GetOrderBookChannel(2)
+	assert.True(t, c != nil)
+}
+
+func TestBuildTransactionChannels(t *testing.T) {
+	ts := createTestSuite(t)
+	ts.service.BuildTransactionChannels(3)
+	c := ts.service.GetTransactionChannel(2)
+	assert.True(t, c != nil)
+}
+
+func TestSpawnSocketRoutines(t *testing.T) {
+	ts := createTestSuite(t)
+
+	sockets := ts.service.SpawnSocketRoutines(3)
+	assert.True(t, sockets != nil)
+}
+
+func TestGetTransactionChannel(t *testing.T) {
+	ts := createTestSuite(t)
+
+	ts.service.BuildTransactionChannels(5)
+
+	c := ts.service.GetTransactionChannel(4)
+
+	assert.True(t, c != nil)
+}
+
+func TestGetOrderBookChannel(t *testing.T) {
+	ts := createTestSuite(t)
+
+	ts.service.BuildOrderBookChannels(5)
+
+	c := ts.service.GetOrderBookChannel(4)
+
+	assert.True(t, c != nil)
 }
