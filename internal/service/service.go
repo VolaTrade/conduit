@@ -122,20 +122,21 @@ func (ts *TickersService) BuildPairUrls() error {
 	return nil
 }
 
-//BuildTransactionChannels makes a slice of channels
-func (ts *TickersService) BuildTransactionChannels(count int) {
-	queues := make([]chan *models.Transaction, count)
-	for i := 0; i < count; i++ {
+//BuildTransactionChannels makes a slice of transaction struct channels
+func (ts *TickersService) BuildTransactionChannels(size int) {
+	queues := make([]chan *models.Transaction, size)
+	for i := 0; i < size; i++ {
 		queue := make(chan *models.Transaction, 0)
 		queues[i] = queue
 	}
 	ts.transactionChannels = queues
 }
 
-func (ts *TickersService) BuildOrderBookChannels(count int) {
-	queues := make([]chan *models.OrderBookRow, count)
+//BuildOrderBookChannels makes a slice of orderbook struct channels
+func (ts *TickersService) BuildOrderBookChannels(size int) {
+	queues := make([]chan *models.OrderBookRow, size)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < size; i++ {
 		queue := make(chan *models.OrderBookRow, 0)
 		queues[i] = queue
 	}
