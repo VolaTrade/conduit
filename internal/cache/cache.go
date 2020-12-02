@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -14,75 +15,126 @@ var Module = wire.NewSet(
 	New,
 )
 
-const BASE_SOCKET_URL string = "stream.binance.com:9443"
+const (
+	BASE_SOCKET_URL     string = "stream.binance.com:9443"
+	OUT_OF_BOUNDS_ERROR string = "Index does not exist for pair slice"
+)
 
 type (
 	Cache interface {
-		InsertTransaction(transact *models.Transaction)
-		PurgeTransactions()
-		InsertPairUrl(pair string)
-		GetPairUrl(index int) string
-		PairUrlsLength() int
-		TransactionsLength() int
+		GetAllOrderBookRows() []*models.OrderBookRow
 		GetAllTransactions() []*models.Transaction
+		GetPair(index int) (string, error)
+		GetTransactionOrderBookUrls(index int) (string, string, error)
+		InsertOrderBookRow(obRow *models.OrderBookRow)
+		InsertTransaction(transact *models.Transaction)
+		InsertPair(pair string)
+		OrderBookRowsLength() int
+		PairsLength() int
+		Purge()
+		TransactionsLength() int
 	}
+
 	TickersCache struct {
-		pairUrls       []string
-		transactions   map[string][]*models.Transaction
-		transactLength int
-		mux            sync.Mutex
+		pairs         []string
+		transactions  []*models.Transaction
+		orderBookData []*models.OrderBookRow
+		txMux         sync.Mutex
+		obMux         sync.Mutex
 	}
 )
 
-func getSocketUrlString(pair string) string {
+func New() *TickersCache {
+	return &TickersCache{
+		pairs:         make([]string, 0),
+		transactions:  make([]*models.Transaction, 0),
+		orderBookData: make([]*models.OrderBookRow, 0),
+	}
+
+}
+func getTransactionUrlString(pair string) string {
 	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@trade")
 	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
 	return socketUrl.String()
 }
-func (tc *TickersCache) PairUrlsLength() int {
-	return len(tc.pairUrls)
+func getOrderBookUrlString(pair string) string {
+	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@depth10@100ms")
+	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
+	return socketUrl.String()
 }
 
-func (tc *TickersCache) TransactionsLength() int {
-	return tc.transactLength
-}
-func New() *TickersCache {
-	return &TickersCache{
-		pairUrls:       make([]string, 0),
-		transactions:   make(map[string][]*models.Transaction, 0),
-		transactLength: 0,
+func (tc *TickersCache) GetTransactionOrderBookUrls(index int) (string, string, error) {
+
+	if index < 0 || index >= len(tc.pairs) {
+		return "", "", errors.New(OUT_OF_BOUNDS_ERROR)
 	}
-
-}
-func (tc *TickersCache) InsertTransaction(transact *models.Transaction) {
-	tc.mux.Lock()
-	defer tc.mux.Unlock()
-	tc.transactions[transact.Pair] = append(tc.transactions[transact.Pair], transact)
-	tc.transactLength++
-}
-
-func (tc *TickersCache) InsertPairUrl(pair string) {
-	tempUrl := getSocketUrlString(pair)
-	tc.pairUrls = append(tc.pairUrls, tempUrl)
-	println(tc.pairUrls)
-
-}
-
-func (tc *TickersCache) PurgeTransactions() {
-	tc.transactions = nil
-	tc.transactLength = 0
-}
-
-func (tc *TickersCache) GetPairUrl(index int) string {
-	return tc.pairUrls[index]
+	return getTransactionUrlString(tc.pairs[index]), getOrderBookUrlString(tc.pairs[index]), nil
 }
 
 func (tc *TickersCache) GetAllTransactions() []*models.Transaction {
-	tempTransacts := make([]*models.Transaction, tc.transactLength)
+	return tc.transactions
+}
 
-	for _, list := range tc.transactions {
-		tempTransacts = append(tempTransacts, list...)
+func (tc *TickersCache) GetAllOrderBookRows() []*models.OrderBookRow {
+	return tc.orderBookData
+}
+
+func (tc *TickersCache) GetPair(index int) (string, error) {
+	if index < 0 || index >= len(tc.pairs) {
+		return "", errors.New(OUT_OF_BOUNDS_ERROR)
 	}
 
-	return tempTransacts
+	return tc.pairs[index], nil
+}
+
+func (tc *TickersCache) TransactionsLength() int {
+	if tc.transactions != nil {
+		return len(tc.transactions)
+	}
+	return 0
+}
+
+func (tc *TickersCache) OrderBookRowsLength() int {
+
+	if tc.orderBookData != nil {
+		return len(tc.orderBookData)
+	}
+	return 0
+}
+
+func (tc *TickersCache) PairsLength() int {
+	return len(tc.pairs)
+}
+
+func (tc *TickersCache) InsertPair(pair string) {
+	tc.pairs = append(tc.pairs, pair)
+
+}
+
+func (tc *TickersCache) InsertTransaction(transact *models.Transaction) {
+
+	if transact == nil {
+		return
+	}
+
+	tc.txMux.Lock()
+	defer tc.txMux.Unlock()
+	tc.transactions = append(tc.transactions, transact)
+}
+
+func (tc *TickersCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
+
+	if obRow == nil {
+		return
+	}
+
+	tc.obMux.Lock()
+	defer tc.obMux.Unlock()
+	tc.orderBookData = append(tc.orderBookData, obRow)
+}
+
+func (tc *TickersCache) Purge() {
+	tc.transactions = nil
+	tc.orderBookData = nil
+	tc.pairs = nil
 }

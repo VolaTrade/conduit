@@ -28,11 +28,13 @@ type (
 	Service interface {
 		BuildPairUrls() error
 		BuildTransactionChannels(count int)
+		BuildOrderBookChannels(count int)
 		CheckForDatabasePriveleges(wg *sync.WaitGroup)
-		ChannelListenAndHandle(queue chan *models.Transaction, index int, wg *sync.WaitGroup)
+		ListenAndHandle(queue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, ch chan bool)
 		SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket
 		GetSocketsArrayLength() int
-		GetChannel(index int) chan *models.Transaction
+		GetTransactionChannel(index int) chan *models.Transaction
+		GetOrderBookChannel(index int) chan *models.OrderBookRow
 		ReportRunning(wg *sync.WaitGroup)
 	}
 
@@ -44,13 +46,22 @@ type (
 		slack               slack.Slack
 		statsd              *stats.StatsD
 		transactionChannels []chan *models.Transaction
+		orderBookChannels   []chan *models.OrderBookRow
 		writeToDB           bool
 	}
 )
 
 func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *TickersService {
-	id := fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute())
-	return &TickersService{cache: ch, connections: conns, exch: cl, statsd: stats, writeToDB: false, id: id, slack: slackz}
+
+	return &TickersService{
+		cache:       ch,
+		connections: conns,
+		exch:        cl,
+		statsd:      stats,
+		writeToDB:   false,
+		id:          fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute()),
+		slack:       slackz,
+	}
 }
 
 func (ts *TickersService) ReportRunning(wg *sync.WaitGroup) {
@@ -64,18 +75,28 @@ func (ts *TickersService) ReportRunning(wg *sync.WaitGroup) {
 //TODO there's a better way to structure this
 func (ts *TickersService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 	defer wg.Done()
-
+	var err error
 	for {
-		if _, err := os.Stat("start"); err == nil {
+		if _, writeToCache := os.Stat("start"); writeToCache == nil {
 			log.Println("making connections to DB NOW")
 			ts.connections.MakeConnections()
 			ts.writeToDB = true
 			log.Println("Purging cache")
-			cached_transactions := ts.cache.GetAllTransactions()
-			err := ts.connections.TransferCache(cached_transactions)
+			cachedTransactions := ts.cache.GetAllTransactions()
+			cachedOrderBookRows := ts.cache.GetAllOrderBookRows()
+			err = ts.connections.TransferTransactionCache(cachedTransactions)
 			if err != nil {
 				panic(err)
 			}
+
+			err = ts.connections.TransferOrderBookCache(cachedOrderBookRows)
+
+			if err != nil {
+				panic(err)
+			}
+
+			ts.cache.Purge()
+			//TODO insert transfer logic for order book data
 			return
 		}
 
@@ -84,11 +105,6 @@ func (ts *TickersService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 
 //Init reads all trading pairs from Binance and then proceeds to store them as keys in cache
 func (ts *TickersService) BuildPairUrls() error {
-	err := ts.slack.SendMessage(fmt.Sprintf("[%s] I am being invoked", ts.id))
-
-	if err != nil {
-		log.Println(err.Error())
-	}
 	tradingCryptosList, err := ts.exch.GetActiveBinanceExchangePairs()
 	if err != nil {
 		return err
@@ -98,39 +114,67 @@ func (ts *TickersService) BuildPairUrls() error {
 		temp := val.(map[string]interface{}) //type casting
 		id := strings.ToLower(temp["symbol"].(string))
 
-		if strings.Contains(id, "btc") {
-			ts.cache.InsertPairUrl(id)
+		if id == "btcusdt" || id == "ethusdt" || id == "xrpusdt" {
+			ts.cache.InsertPair(id)
 		}
 	}
 
 	return nil
 }
 
-//BuildTransactionChannels makes a slice of channels
-func (ts *TickersService) BuildTransactionChannels(count int) {
-	queues := make([]chan *models.Transaction, count)
-	for i := 0; i < count; i++ {
+//BuildTransactionChannels makes a slice of transaction struct channels
+func (ts *TickersService) BuildTransactionChannels(size int) {
+	queues := make([]chan *models.Transaction, size)
+	for i := 0; i < size; i++ {
 		queue := make(chan *models.Transaction, 0)
 		queues[i] = queue
 	}
 	ts.transactionChannels = queues
 }
 
+//BuildOrderBookChannels makes a slice of orderbook struct channels
+func (ts *TickersService) BuildOrderBookChannels(size int) {
+	queues := make([]chan *models.OrderBookRow, size)
+
+	for i := 0; i < size; i++ {
+		queue := make(chan *models.OrderBookRow, 0)
+		queues[i] = queue
+	}
+
+	ts.orderBookChannels = queues
+}
+
+func (ts *TickersService) GetUrlsAndPair(index int) (string, string, string) {
+	transactionURL, orderBookURL, err := ts.cache.GetTransactionOrderBookUrls(index)
+
+	if err != nil {
+		panic(err)
+	}
+
+	pair, err := ts.cache.GetPair(index)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return transactionURL, orderBookURL, pair
+}
+
 func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket {
 
 	sockets := make([]*socket.BinanceSocket, 0)
 	j := 0
-	for i := 0; i < ts.cache.PairUrlsLength()-1; i++ {
+	for i := 0; i < ts.cache.PairsLength(); i++ {
 		if j >= psqlCount {
 			j = 0
 		}
-		socketPairURL := ts.cache.GetPairUrl(i)
-		temp_stats := stats.StatsD{}
-		temp_stats.Client = ts.statsd.Client.Clone()
-		pair := strings.Replace(socketPairURL, "wss://stream.binance.com:9443/ws/", "", 1)
-		println("pair =---> ", pair)
-		socket, err := socket.NewSocket(socketPairURL, pair, ts.transactionChannels[j], &temp_stats)
-		println("Built socket for -->", socketPairURL)
+
+		transactionURL, orderBookURL, pair := ts.GetUrlsAndPair(i)
+
+		temp_stats := stats.StatsD{}                 //fix me
+		temp_stats.Client = ts.statsd.Client.Clone() // fix me.. I am uneccesary
+		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], &temp_stats)
+
 		if err != nil {
 			fmt.Println(err)
 
@@ -140,32 +184,61 @@ func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 	}
 
 	return sockets
+}
 
-}
 func (ts *TickersService) GetSocketsArrayLength() int {
-	return ts.cache.PairUrlsLength()
+	return ts.cache.PairsLength()
 }
-func (ts *TickersService) ChannelListenAndHandle(queue chan *models.Transaction, index int, wg *sync.WaitGroup) {
+
+func (ts *TickersService) handleTransaction(tx *models.Transaction, index int) {
+	if ts.writeToDB {
+		ts.connections.InsertTransactionToDataBase(tx, index)
+		ts.statsd.Client.Increment(".tickers.sqlinserts")
+
+	} else {
+		ts.cache.InsertTransaction(tx)
+		ts.statsd.Client.Increment(".tickers.cacheinserts")
+
+	}
+}
+
+func (ts *TickersService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+	if ts.writeToDB {
+		ts.connections.InsertOrderBookRowToDataBase(tx, index)
+		ts.statsd.Client.Increment(".tickers.sqlinserts")
+
+	} else {
+		ts.cache.InsertOrderBookRow(tx)
+		ts.statsd.Client.Increment(".tickers.cacheinserts")
+
+	}
+}
+
+func (ts *TickersService) ListenAndHandle(txQueue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
 	defer wg.Done()
 	for {
-		for transaction := range queue {
-			println("transaction recieved --> %+v", transaction)
-			if ts.writeToDB {
-				ts.connections.InsertTransactionToDataBase(transaction, index)
-				ts.statsd.Client.Increment(".tickers.sqlinserts")
+		select {
 
-			} else {
-				ts.cache.InsertTransaction(transaction)
-				ts.statsd.Client.Increment(".tickers.cacheinserts")
+		case <-quit:
+			println("[ListenAndHandle] Exit")
+			return
 
-			}
+		case transaction := <-txQueue:
+			ts.handleTransaction(transaction, index)
+
+		case orderBookRow := <-obQueue:
+			ts.handleOrderBookRow(orderBookRow, index)
 		}
 
 	}
 }
 
-func (ts *TickersService) GetChannel(index int) chan *models.Transaction {
+func (ts *TickersService) GetTransactionChannel(index int) chan *models.Transaction {
 	return ts.transactionChannels[index]
+}
+
+func (ts *TickersService) GetOrderBookChannel(index int) chan *models.OrderBookRow {
+	return ts.orderBookChannels[index]
 }
 
 //TODO go routine grafana metric

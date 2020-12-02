@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 )
@@ -17,25 +16,26 @@ type Transaction struct {
 }
 
 type OrderBookRes struct {
-	Id   int        `json:"lastUpdateId" db:"id"`
-	Bids [][]string `json:"bids" db:"bids"`
-	Asks [][]string `json:"asks" db:"asks"`
+	Id   int        `json:"lastUpdateId"`
+	Bids [][]string `json:"bids"`
+	Asks [][]string `json:"asks"`
 }
 
 type OrderBookRow struct {
-	Id        int         `db:"id"`
-	Bids      [][]float64 `db:"bids"`
-	Asks      [][]float64 `db:"asks"`
-	Timestamp time.Time   `db:"timestamp"`
-	Pair      string      `db:"pair"`
+	Id        int             `db:"id"`
+	Bids      json.RawMessage `db:"bids"`
+	Asks      json.RawMessage `db:"asks"`
+	Timestamp time.Time       `db:"timestamp"`
+	Pair      string          `db:"pair"`
 }
 
 func NewOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, error) {
-	bids, err := Str2FloatSlice(jsonResponse.Bids)
+	bids, err := json.Marshal(jsonResponse.Bids)
 	if err != nil {
 		return nil, err
 	}
-	asks, err := Str2FloatSlice(jsonResponse.Asks)
+
+	asks, err := json.Marshal(jsonResponse.Asks)
 	if err != nil {
 		return nil, err
 	}
@@ -91,23 +91,4 @@ func UnmarshalTransactionJSON(message []byte) (*Transaction, error) {
 
 	return NewTransaction(json_message)
 
-}
-
-func Str2FloatSlice(sl [][]string) ([][]float64, error) {
-
-	n := make([][]float64, len(sl))
-	for i := range sl {
-		n[i] = make([]float64, 0)
-
-		for j := 0; j < len(sl[i]); j++ {
-			f64, err := strconv.ParseFloat(sl[i][j], 64)
-			if err != nil {
-				return nil, err
-			}
-			n[i] = append(n[i], f64)
-		}
-
-	}
-	fmt.Println(n)
-	return n, nil
 }
