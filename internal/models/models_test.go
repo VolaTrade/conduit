@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/volatrade/tickers/internal/models"
+	"github.com/volatrade/conduit/internal/models"
 )
 
 var ts = time.Now()

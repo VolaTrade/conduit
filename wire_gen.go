@@ -7,13 +7,13 @@ package main
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/tickers/internal/cache"
-	"github.com/volatrade/tickers/internal/client"
-	"github.com/volatrade/tickers/internal/config"
-	"github.com/volatrade/tickers/internal/connections"
-	"github.com/volatrade/tickers/internal/driver"
-	"github.com/volatrade/tickers/internal/service"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/client"
+	"github.com/volatrade/conduit/internal/config"
+	"github.com/volatrade/conduit/internal/connections"
+	"github.com/volatrade/conduit/internal/driver"
+	"github.com/volatrade/conduit/internal/service"
+	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -28,25 +28,25 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 		return nil, err
 	}
 	connectionArray := connections.New(postgresConfig, statsD)
-	tickersCache := cache.New()
+	conduitCache := cache.New()
 	apiClient := client.New(statsD)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	tickersService := service.New(connectionArray, tickersCache, apiClient, statsD, slackLogger)
-	tickersDriver := driver.New(tickersService, statsD)
-	return tickersDriver, nil
+	conduitService := service.New(connectionArray, conduitCache, apiClient, statsD, slackLogger)
+	conduitDriver := driver.New(conduitService, statsD)
+	return conduitDriver, nil
 }
 
 // wire.go:
 
-var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cache.TickersCache)))
+var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cache.ConduitCache)))
 
-var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.TickersService)))
+var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.ConduitService)))
 
 var connectionModule = wire.NewSet(connections.Module, wire.Bind(new(connections.Connections), new(*connections.ConnectionArray)))
 
 var apiClientModule = wire.NewSet(client.Module, wire.Bind(new(client.Client), new(*client.ApiClient)))
 
-var driverModule = wire.NewSet(driver.Module, wire.Bind(new(driver.Driver), new(*driver.TickersDriver)))
+var driverModule = wire.NewSet(driver.Module, wire.Bind(new(driver.Driver), new(*driver.ConduitDriver)))
 
 var slackModule = wire.NewSet(slack.Module, wire.Bind(new(slack.Slack), new(*slack.SlackLogger)))

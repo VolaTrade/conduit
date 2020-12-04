@@ -1,4 +1,4 @@
-BIN_NAME=tickers
+BIN_NAME=conduit
 
 build:
 	@echo building binary...

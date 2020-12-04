@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/volatrade/tickers/internal/cache"
-	"github.com/volatrade/tickers/internal/models"
+	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/models"
 )
 
 func TestInsertTransactionValueGetAndLength(t *testing.T) {

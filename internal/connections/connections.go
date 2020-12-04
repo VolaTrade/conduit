@@ -2,9 +2,9 @@ package connections
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/tickers/internal/models"
-	"github.com/volatrade/tickers/internal/postgres"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/postgres"
+	"github.com/volatrade/conduit/internal/stats"
 )
 
 var Module = wire.NewSet(

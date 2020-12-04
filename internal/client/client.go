@@ -2,7 +2,7 @@ package client
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/stats"
 )
 
 var Module = wire.NewSet(

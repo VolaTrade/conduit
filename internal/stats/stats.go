@@ -42,7 +42,7 @@ func ReportGoRoutines(statz *StatsD) {
 
 	for {
 		time.Sleep(1)
-		statz.Client.Gauge("tickers.goroutines", runtime.NumGoroutine())
+		statz.Client.Gauge("conduit.goroutines", runtime.NumGoroutine())
 	}
 
 }

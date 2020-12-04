@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
-	"github.com/volatrade/tickers/internal/postgres"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/postgres"
+	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -60,7 +60,7 @@ func NewConfig(fileName FilePath) *Config {
 		},
 		SlackConfig: slack.Config{
 			ApiKey:   os.Getenv("SLACK_API_KEY"),
-			Location: "TICKERS",
+			Location: "conduit",
 			Env:      env,
 		},
 		// DriverConfig: driver.Config{

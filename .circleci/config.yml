@@ -51,7 +51,7 @@ alias:
   - &tag_image
       run:
         name: Tagging image
-        command: docker tag tickers:latest ${ECR_URI}/tickers:${CIRCLE_TAG}
+        command: docker tag conduit:latest ${ECR_URI}/conduit:${CIRCLE_TAG}
 
   - &ecr_push_image
     run:
@@ -61,13 +61,13 @@ alias:
   - &save_image
     run:
         name: Saving docker image for deploy
-        command: docker save -o tickers.tar tickers:latest
+        command: docker save -o conduit.tar conduit:latest
 
   - &save_to_workspace
     persist_to_workspace:
       root: *workdir
       paths:
-        - tickers.tar
+        - conduit.tar
         - config.env
         - Makefile
   
@@ -78,12 +78,12 @@ alias:
   - &load_saved_image
     run:
       name: Loading saved docker image
-      command: docker load -i tickers.tar
+      command: docker load -i conduit.tar
 
   - &deploy
     run:
       name: Updating version within ec2
-      command: ssh -o StrictHostKeyChecking=no ec2-user@18.237.5.40 "docker pull $ECR_URI/tickers:$CIRCLE_TAG && echo -n $ECR_URI/tickers:$CIRCLE_TAG > control_panel/image_version"
+      command: ssh -o StrictHostKeyChecking=no ec2-user@18.237.5.40 "docker pull $ECR_URI/conduit:$CIRCLE_TAG && echo -n $ECR_URI/conduit:$CIRCLE_TAG > control_panel/image_version"
   
   - &build_test_only_filters
     filters:

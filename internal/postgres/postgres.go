@@ -7,7 +7,7 @@ import (
 	"github.com/google/wire"
 	_ "github.com/jackc/pgx/stdlib" //driver
 	"github.com/jmoiron/sqlx"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/stats"
 )
 
 var (

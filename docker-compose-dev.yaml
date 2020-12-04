@@ -1,5 +1,5 @@
 version: '3'
 services:
-  tickers:
-    image: tickers:latest
+  conduit:
+    image: conduit:latest
     restart: always

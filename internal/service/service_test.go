@@ -9,17 +9,17 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatrade/tickers/internal/cache"
-	"github.com/volatrade/tickers/internal/mocks"
-	"github.com/volatrade/tickers/internal/models"
-	"github.com/volatrade/tickers/internal/service"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/mocks"
+	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/service"
+	"github.com/volatrade/conduit/internal/stats"
 )
 
 type testSuite struct {
 	mockController  *gomock.Controller
 	mockConnections *mocks.MockConnections
-	service         *service.TickersService
+	service         *service.conduitService
 	cache           cache.Cache
 	client          *mocks.MockClient
 }
