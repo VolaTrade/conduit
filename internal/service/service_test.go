@@ -49,6 +49,7 @@ func TestMain(m *testing.M) {
 
 }
 
+//TODO remove return after stats updates 
 func TestTransactionChannelsToCache(t *testing.T) {
 	return 
 	ts := createTestSuite(t)
@@ -72,6 +73,7 @@ func TestTransactionChannelsToCache(t *testing.T) {
 	assert.True(t, ts.cache.TransactionsLength() == 100)
 }
 
+//TODO remove return after stats updates 
 func TestOrderBookChannelsToCache(t *testing.T) {
 	return 
 	ts := createTestSuite(t)
