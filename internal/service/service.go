@@ -64,7 +64,7 @@ func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, st
 	}
 }
 
-func (ts *ConduitService	) ReportRunning(wg *sync.WaitGroup) {
+func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		time.Sleep(10000)
@@ -73,7 +73,7 @@ func (ts *ConduitService	) ReportRunning(wg *sync.WaitGroup) {
 }
 
 //TODO there's a better way to structure this
-func (ts *ConduitService	) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
+func (ts *ConduitService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 	defer wg.Done()
 	var err error
 	for {
@@ -104,7 +104,7 @@ func (ts *ConduitService	) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 }
 
 //Init reads all trading pairs from Binance and then proceeds to store them as keys in cache
-func (ts *ConduitService	) BuildPairUrls() error {
+func (ts *ConduitService) BuildPairUrls() error {
 	tradingCryptosList, err := ts.exch.GetActiveBinanceExchangePairs()
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (ts *ConduitService	) BuildPairUrls() error {
 }
 
 //BuildTransactionChannels makes a slice of transaction struct channels
-func (ts *ConduitService	) BuildTransactionChannels(size int) {
+func (ts *ConduitService) BuildTransactionChannels(size int) {
 	queues := make([]chan *models.Transaction, size)
 	for i := 0; i < size; i++ {
 		queue := make(chan *models.Transaction, 0)
@@ -133,7 +133,7 @@ func (ts *ConduitService	) BuildTransactionChannels(size int) {
 }
 
 //BuildOrderBookChannels makes a slice of orderbook struct channels
-func (ts *ConduitService	) BuildOrderBookChannels(size int) {
+func (ts *ConduitService) BuildOrderBookChannels(size int) {
 	queues := make([]chan *models.OrderBookRow, size)
 
 	for i := 0; i < size; i++ {
@@ -144,7 +144,7 @@ func (ts *ConduitService	) BuildOrderBookChannels(size int) {
 	ts.orderBookChannels = queues
 }
 
-func (ts *ConduitService	) GetUrlsAndPair(index int) (string, string, string) {
+func (ts *ConduitService) GetUrlsAndPair(index int) (string, string, string) {
 	transactionURL, orderBookURL, err := ts.cache.GetTransactionOrderBookUrls(index)
 
 	if err != nil {
@@ -160,7 +160,7 @@ func (ts *ConduitService	) GetUrlsAndPair(index int) (string, string, string) {
 	return transactionURL, orderBookURL, pair
 }
 
-func (ts *ConduitService	) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket {
+func (ts *ConduitService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket {
 
 	sockets := make([]*socket.BinanceSocket, 0)
 	j := 0
@@ -186,11 +186,11 @@ func (ts *ConduitService	) SpawnSocketRoutines(psqlCount int) []*socket.BinanceS
 	return sockets
 }
 
-func (ts *ConduitService	) GetSocketsArrayLength() int {
+func (ts *ConduitService) GetSocketsArrayLength() int {
 	return ts.cache.PairsLength()
 }
 
-func (ts *ConduitService	) handleTransaction(tx *models.Transaction, index int) {
+func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertTransactionToDataBase(tx, index)
 		ts.statsd.Client.Increment(".conduit.sqlinserts")
@@ -202,7 +202,7 @@ func (ts *ConduitService	) handleTransaction(tx *models.Transaction, index int) 
 	}
 }
 
-func (ts *ConduitService	) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+func (ts *ConduitService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertOrderBookRowToDataBase(tx, index)
 		ts.statsd.Client.Increment(".conduit.sqlinserts")
@@ -214,7 +214,7 @@ func (ts *ConduitService	) handleOrderBookRow(tx *models.OrderBookRow, index int
 	}
 }
 
-func (ts *ConduitService	) ListenAndHandle(txQueue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
+func (ts *ConduitService) ListenAndHandle(txQueue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
 	defer wg.Done()
 	for {
 		select {
@@ -233,11 +233,11 @@ func (ts *ConduitService	) ListenAndHandle(txQueue chan *models.Transaction, obQ
 	}
 }
 
-func (ts *ConduitService	) GetTransactionChannel(index int) chan *models.Transaction {
+func (ts *ConduitService) GetTransactionChannel(index int) chan *models.Transaction {
 	return ts.transactionChannels[index]
 }
 
-func (ts *ConduitService	) GetOrderBookChannel(index int) chan *models.OrderBookRow {
+func (ts *ConduitService) GetOrderBookChannel(index int) chan *models.OrderBookRow {
 	return ts.orderBookChannels[index]
 }
 
