@@ -69,13 +69,13 @@ func TestTransactionUrlsInsertAndGet(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.True(t, txUrl == "wss://stream.binance.com:9443/ws/ethusdt@trade")
-	assert.True(t, odUrl == "wss://stream.binance.com:9443/ws/ethusdt@depth10@100ms")
+	assert.True(t, odUrl == "wss://stream.binance.com:9443/ws/ethusdt@depth10@1000ms")
 
 	txUrl, odUrl, err = c.GetTransactionOrderBookUrls(1)
 
 	assert.Nil(t, err)
 	assert.True(t, txUrl == "wss://stream.binance.com:9443/ws/btcusdt@trade")
-	assert.True(t, odUrl == "wss://stream.binance.com:9443/ws/btcusdt@depth10@100ms")
+	assert.True(t, odUrl == "wss://stream.binance.com:9443/ws/btcusdt@depth10@1000ms")
 
 	txUrl, odUrl, err = c.GetTransactionOrderBookUrls(5)
 

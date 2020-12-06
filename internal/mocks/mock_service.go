@@ -127,16 +127,16 @@ func (mr *MockServiceMockRecorder) GetTransactionChannel(arg0 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionChannel", reflect.TypeOf((*MockService)(nil).GetTransactionChannel), arg0)
 }
 
-// OrderBookChannelListenAndHandle mocks base method
-func (m *MockService) OrderBookChannelListenAndHandle(arg0 chan *models.OrderBookRow, arg1 int, arg2 *sync.WaitGroup) {
+// ListenAndHandle mocks base method
+func (m *MockService) ListenAndHandle(arg0 chan *models.Transaction, arg1 chan *models.OrderBookRow, arg2 int, arg3 *sync.WaitGroup, arg4 chan bool) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OrderBookChannelListenAndHandle", arg0, arg1, arg2)
+	m.ctrl.Call(m, "ListenAndHandle", arg0, arg1, arg2, arg3, arg4)
 }
 
-// OrderBookChannelListenAndHandle indicates an expected call of OrderBookChannelListenAndHandle
-func (mr *MockServiceMockRecorder) OrderBookChannelListenAndHandle(arg0, arg1, arg2 interface{}) *gomock.Call {
+// ListenAndHandle indicates an expected call of ListenAndHandle
+func (mr *MockServiceMockRecorder) ListenAndHandle(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrderBookChannelListenAndHandle", reflect.TypeOf((*MockService)(nil).OrderBookChannelListenAndHandle), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenAndHandle", reflect.TypeOf((*MockService)(nil).ListenAndHandle), arg0, arg1, arg2, arg3, arg4)
 }
 
 // ReportRunning mocks base method
@@ -163,16 +163,4 @@ func (m *MockService) SpawnSocketRoutines(arg0 int) []*socket.BinanceSocket {
 func (mr *MockServiceMockRecorder) SpawnSocketRoutines(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpawnSocketRoutines", reflect.TypeOf((*MockService)(nil).SpawnSocketRoutines), arg0)
-}
-
-// TransactionChannelListenAndHandle mocks base method
-func (m *MockService) TransactionChannelListenAndHandle(arg0 chan *models.Transaction, arg1 int, arg2 *sync.WaitGroup) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "TransactionChannelListenAndHandle", arg0, arg1, arg2)
-}
-
-// TransactionChannelListenAndHandle indicates an expected call of TransactionChannelListenAndHandle
-func (mr *MockServiceMockRecorder) TransactionChannelListenAndHandle(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionChannelListenAndHandle", reflect.TypeOf((*MockService)(nil).TransactionChannelListenAndHandle), arg0, arg1, arg2)
 }

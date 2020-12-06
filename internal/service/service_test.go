@@ -19,7 +19,7 @@ import (
 type testSuite struct {
 	mockController  *gomock.Controller
 	mockConnections *mocks.MockConnections
-	service         *service.conduitService
+	service         *service.ConduitService
 	cache           cache.Cache
 	client          *mocks.MockClient
 }
