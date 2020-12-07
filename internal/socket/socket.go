@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/gorilla/websocket"
-	"github.com/volatrade/tickers/internal/models"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/stats"
 )
 
 type (
@@ -55,7 +55,7 @@ func (bs *BinanceSocket) ReadMessage(messageType string) ([]byte, error) {
 	println("Message received -->", message)
 
 	println("URl --->", bs.orderBookUrl)
-	bs.statsd.Client.Increment(fmt.Sprintf("tickers.socket_reads.%s", bs.Pair))
+	bs.statsd.Client.Increment(fmt.Sprintf("conduit.socket_reads.%s", bs.Pair))
 	return message, err
 }
 

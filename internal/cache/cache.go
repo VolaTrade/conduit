@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/google/wire"
-	"github.com/volatrade/tickers/internal/models"
+	"github.com/volatrade/conduit/internal/models"
 )
 
 var Module = wire.NewSet(
@@ -35,7 +35,7 @@ type (
 		TransactionsLength() int
 	}
 
-	TickersCache struct {
+	ConduitCache struct {
 		pairs         []string
 		transactions  []*models.Transaction
 		orderBookData []*models.OrderBookRow
@@ -44,8 +44,8 @@ type (
 	}
 )
 
-func New() *TickersCache {
-	return &TickersCache{
+func New() *ConduitCache {
+	return &ConduitCache{
 		pairs:         make([]string, 0),
 		transactions:  make([]*models.Transaction, 0),
 		orderBookData: make([]*models.OrderBookRow, 0),
@@ -58,12 +58,12 @@ func getTransactionUrlString(pair string) string {
 	return socketUrl.String()
 }
 func getOrderBookUrlString(pair string) string {
-	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@depth10@100ms")
+	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@depth10@1000ms")
 	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
 	return socketUrl.String()
 }
 
-func (tc *TickersCache) GetTransactionOrderBookUrls(index int) (string, string, error) {
+func (tc *ConduitCache) GetTransactionOrderBookUrls(index int) (string, string, error) {
 
 	if index < 0 || index >= len(tc.pairs) {
 		return "", "", errors.New(OUT_OF_BOUNDS_ERROR)
@@ -71,15 +71,15 @@ func (tc *TickersCache) GetTransactionOrderBookUrls(index int) (string, string, 
 	return getTransactionUrlString(tc.pairs[index]), getOrderBookUrlString(tc.pairs[index]), nil
 }
 
-func (tc *TickersCache) GetAllTransactions() []*models.Transaction {
+func (tc *ConduitCache) GetAllTransactions() []*models.Transaction {
 	return tc.transactions
 }
 
-func (tc *TickersCache) GetAllOrderBookRows() []*models.OrderBookRow {
+func (tc *ConduitCache) GetAllOrderBookRows() []*models.OrderBookRow {
 	return tc.orderBookData
 }
 
-func (tc *TickersCache) GetPair(index int) (string, error) {
+func (tc *ConduitCache) GetPair(index int) (string, error) {
 	if index < 0 || index >= len(tc.pairs) {
 		return "", errors.New(OUT_OF_BOUNDS_ERROR)
 	}
@@ -87,14 +87,14 @@ func (tc *TickersCache) GetPair(index int) (string, error) {
 	return tc.pairs[index], nil
 }
 
-func (tc *TickersCache) TransactionsLength() int {
+func (tc *ConduitCache) TransactionsLength() int {
 	if tc.transactions != nil {
 		return len(tc.transactions)
 	}
 	return 0
 }
 
-func (tc *TickersCache) OrderBookRowsLength() int {
+func (tc *ConduitCache) OrderBookRowsLength() int {
 
 	if tc.orderBookData != nil {
 		return len(tc.orderBookData)
@@ -102,16 +102,16 @@ func (tc *TickersCache) OrderBookRowsLength() int {
 	return 0
 }
 
-func (tc *TickersCache) PairsLength() int {
+func (tc *ConduitCache) PairsLength() int {
 	return len(tc.pairs)
 }
 
-func (tc *TickersCache) InsertPair(pair string) {
+func (tc *ConduitCache) InsertPair(pair string) {
 	tc.pairs = append(tc.pairs, pair)
 
 }
 
-func (tc *TickersCache) InsertTransaction(transact *models.Transaction) {
+func (tc *ConduitCache) InsertTransaction(transact *models.Transaction) {
 
 	if transact == nil {
 		return
@@ -122,7 +122,7 @@ func (tc *TickersCache) InsertTransaction(transact *models.Transaction) {
 	tc.transactions = append(tc.transactions, transact)
 }
 
-func (tc *TickersCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
+func (tc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 
 	if obRow == nil {
 		return
@@ -133,7 +133,7 @@ func (tc *TickersCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 	tc.orderBookData = append(tc.orderBookData, obRow)
 }
 
-func (tc *TickersCache) Purge() {
+func (tc *ConduitCache) Purge() {
 	tc.transactions = nil
 	tc.orderBookData = nil
 	tc.pairs = nil

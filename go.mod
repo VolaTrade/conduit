@@ -1,4 +1,4 @@
-module github.com/volatrade/tickers
+module github.com/volatrade/conduit
 
 go 1.14
 

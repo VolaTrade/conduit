@@ -1,4 +1,4 @@
-# tickers
+# conduit
 
 A beatiful data pipeline implemented in golang that concurrently collects live transaction data for anything traded against bitcoin on Binance 
 

@@ -2,15 +2,14 @@ package driver
 
 import (
 	"log"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/google/wire"
-	"github.com/volatrade/tickers/internal/models"
-	"github.com/volatrade/tickers/internal/service"
-	"github.com/volatrade/tickers/internal/socket"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/service"
+	"github.com/volatrade/conduit/internal/socket"
+	"github.com/volatrade/conduit/internal/stats"
 )
 
 var Module = wire.NewSet(
@@ -18,7 +17,7 @@ var Module = wire.NewSet(
 )
 
 type (
-	TickersDriver struct {
+	ConduitDriver struct {
 		svc   service.Service
 		statz *stats.StatsD
 	}
@@ -34,12 +33,12 @@ type Driver interface {
 	InitService()
 }
 
-func New(svc service.Service, stats *stats.StatsD) *TickersDriver {
-	return &TickersDriver{svc: svc, statz: stats}
+func New(svc service.Service, stats *stats.StatsD) *ConduitDriver {
+	return &ConduitDriver{svc: svc, statz: stats}
 }
 
 //InitService initializes pairUrl list in cache and builds transactionChannels
-func (td *TickersDriver) InitService() {
+func (td *ConduitDriver) InitService() {
 	if err := td.svc.BuildPairUrls(); err != nil {
 		panic(err)
 	}
@@ -48,7 +47,7 @@ func (td *TickersDriver) InitService() {
 
 }
 
-func (td *TickersDriver) RunListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
+func (td *ConduitDriver) RunListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
 		txChannel := td.svc.GetTransactionChannel(i)
@@ -57,7 +56,7 @@ func (td *TickersDriver) RunListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
 	}
 }
 
-func (td *TickersDriver) Run(wg *sync.WaitGroup) {
+func (td *ConduitDriver) Run(wg *sync.WaitGroup) {
 	go td.svc.CheckForDatabasePriveleges(wg)
 	wg.Add(1)
 	sockets := td.svc.SpawnSocketRoutines(3)
@@ -72,7 +71,7 @@ func (td *TickersDriver) Run(wg *sync.WaitGroup) {
 
 }
 
-func (td *TickersDriver) consumeTransferTransactionMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
+func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
 	defer wg.Done()
 	println("Consuming and transferring messsage")
 	var err error
@@ -101,7 +100,7 @@ func (td *TickersDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 		if err != nil {
 			//handle me
 			log.Println(err.Error())
-			td.statz.Client.Increment("tickers.errors.socket_read")
+			td.statz.Client.Increment("conduit.errors.socket_read")
 			continue
 		}
 
@@ -109,7 +108,7 @@ func (td *TickersDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 
 		if transaction, err = models.UnmarshalTransactionJSON(message); err != nil {
 			println(err.Error())
-			td.statz.Client.Increment("tickers.errors.json_unmarshal")
+			td.statz.Client.Increment("conduit.errors.json_unmarshal")
 
 		} else {
 			log.Printf("%+v", transaction)
@@ -121,16 +120,7 @@ func (td *TickersDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 	}
 }
 
-func getCurrentMilisecond() (int, error) {
-	ts := int(time.Now().UnixNano()) / (int(time.Millisecond) / int(time.Nanosecond))
-
-	strTime := strconv.Itoa(ts)
-
-	ms, err := strconv.Atoi(strTime[10:11])
-
-	return ms, err
-}
-func (td *TickersDriver) consumeTransferOrderBookMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
+func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
 	defer wg.Done()
 	println("Consuming and transferring messsage")
 	var err error
@@ -139,28 +129,23 @@ func (td *TickersDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 		println("error establishing socket connection")
 		panic(err)
 	}
-	reset := true
+	prev_min := time.Now().Minute() - 1 
 	for {
-		ms, _ := getCurrentMilisecond()
+		
+		curr_min := time.Now().Minute()
 
-		if ms%2 != 0 && ms != 0 {
-			reset = true
-			continue
+		if prev_min == curr_min{
+			continue 
 		}
-
-		if !reset {
-			continue
-		}
-
 		message, err := socket.ReadMessage("OB")
 
-		reset = false
 		println("RAW ORDER BOOK MESSAGE ->", string(message))
-		println("READ @ ->", ms)
+		println("READ @ ->", curr_min)
+		prev_min = curr_min
 		if err != nil {
 			//handle me
 			log.Println(err.Error())
-			td.statz.Client.Increment("tickers.errors.socket_read")
+			td.statz.Client.Increment("conduit.errors.socket_read")
 			continue
 		}
 
@@ -168,7 +153,7 @@ func (td *TickersDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, socket.Pair); err != nil {
 			println(err.Error())
-			td.statz.Client.Increment("tickers.errors.json_unmarshal")
+			td.statz.Client.Increment("conduit.errors.json_unmarshal")
 
 		} else {
 			log.Printf("%+v", orderBookRow)

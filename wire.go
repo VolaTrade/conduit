@@ -4,13 +4,13 @@ package main
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/tickers/internal/cache"
-	"github.com/volatrade/tickers/internal/client"
-	"github.com/volatrade/tickers/internal/config"
-	"github.com/volatrade/tickers/internal/connections"
-	"github.com/volatrade/tickers/internal/driver"
-	"github.com/volatrade/tickers/internal/service"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/client"
+	"github.com/volatrade/conduit/internal/config"
+	"github.com/volatrade/conduit/internal/connections"
+	"github.com/volatrade/conduit/internal/driver"
+	"github.com/volatrade/conduit/internal/service"
+	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -36,12 +36,12 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 
 var cacheModule = wire.NewSet(
 	cache.Module,
-	wire.Bind(new(cache.Cache), new(*cache.TickersCache)),
+	wire.Bind(new(cache.Cache), new(*cache.ConduitCache)),
 )
 
 var serviceModule = wire.NewSet(
 	service.Module,
-	wire.Bind(new(service.Service), new(*service.TickersService)),
+	wire.Bind(new(service.Service), new(*service.ConduitService)),
 )
 
 var connectionModule = wire.NewSet(
@@ -56,7 +56,7 @@ var apiClientModule = wire.NewSet(
 
 var driverModule = wire.NewSet(
 	driver.Module,
-	wire.Bind(new(driver.Driver), new(*driver.TickersDriver)),
+	wire.Bind(new(driver.Driver), new(*driver.ConduitDriver)),
 )
 
 var slackModule = wire.NewSet(

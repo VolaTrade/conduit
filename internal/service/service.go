@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/google/wire"
-	"github.com/volatrade/tickers/internal/cache"
-	"github.com/volatrade/tickers/internal/client"
-	"github.com/volatrade/tickers/internal/connections"
-	"github.com/volatrade/tickers/internal/models"
-	"github.com/volatrade/tickers/internal/socket"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/client"
+	"github.com/volatrade/conduit/internal/connections"
+	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/socket"
+	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -38,7 +38,7 @@ type (
 		ReportRunning(wg *sync.WaitGroup)
 	}
 
-	TickersService struct {
+	ConduitService	 struct {
 		id                  string
 		cache               cache.Cache
 		connections         connections.Connections
@@ -51,9 +51,9 @@ type (
 	}
 )
 
-func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *TickersService {
+func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *ConduitService	 {
 
-	return &TickersService{
+	return &ConduitService	{
 		cache:       ch,
 		connections: conns,
 		exch:        cl,
@@ -64,16 +64,16 @@ func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, st
 	}
 }
 
-func (ts *TickersService) ReportRunning(wg *sync.WaitGroup) {
+func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		time.Sleep(10000)
-		ts.statsd.Client.Increment(fmt.Sprintf("tickers.instances.%s", ts.id))
+		ts.statsd.Client.Increment(fmt.Sprintf("conduit.instances.%s", ts.id))
 	}
 }
 
 //TODO there's a better way to structure this
-func (ts *TickersService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
+func (ts *ConduitService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 	defer wg.Done()
 	var err error
 	for {
@@ -104,7 +104,7 @@ func (ts *TickersService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 }
 
 //Init reads all trading pairs from Binance and then proceeds to store them as keys in cache
-func (ts *TickersService) BuildPairUrls() error {
+func (ts *ConduitService) BuildPairUrls() error {
 	tradingCryptosList, err := ts.exch.GetActiveBinanceExchangePairs()
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (ts *TickersService) BuildPairUrls() error {
 }
 
 //BuildTransactionChannels makes a slice of transaction struct channels
-func (ts *TickersService) BuildTransactionChannels(size int) {
+func (ts *ConduitService) BuildTransactionChannels(size int) {
 	queues := make([]chan *models.Transaction, size)
 	for i := 0; i < size; i++ {
 		queue := make(chan *models.Transaction, 0)
@@ -133,7 +133,7 @@ func (ts *TickersService) BuildTransactionChannels(size int) {
 }
 
 //BuildOrderBookChannels makes a slice of orderbook struct channels
-func (ts *TickersService) BuildOrderBookChannels(size int) {
+func (ts *ConduitService) BuildOrderBookChannels(size int) {
 	queues := make([]chan *models.OrderBookRow, size)
 
 	for i := 0; i < size; i++ {
@@ -144,7 +144,7 @@ func (ts *TickersService) BuildOrderBookChannels(size int) {
 	ts.orderBookChannels = queues
 }
 
-func (ts *TickersService) GetUrlsAndPair(index int) (string, string, string) {
+func (ts *ConduitService) GetUrlsAndPair(index int) (string, string, string) {
 	transactionURL, orderBookURL, err := ts.cache.GetTransactionOrderBookUrls(index)
 
 	if err != nil {
@@ -160,7 +160,7 @@ func (ts *TickersService) GetUrlsAndPair(index int) (string, string, string) {
 	return transactionURL, orderBookURL, pair
 }
 
-func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket {
+func (ts *ConduitService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket {
 
 	sockets := make([]*socket.BinanceSocket, 0)
 	j := 0
@@ -186,35 +186,35 @@ func (ts *TickersService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 	return sockets
 }
 
-func (ts *TickersService) GetSocketsArrayLength() int {
+func (ts *ConduitService) GetSocketsArrayLength() int {
 	return ts.cache.PairsLength()
 }
 
-func (ts *TickersService) handleTransaction(tx *models.Transaction, index int) {
+func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertTransactionToDataBase(tx, index)
-		ts.statsd.Client.Increment(".tickers.sqlinserts")
+		ts.statsd.Client.Increment(".conduit.sqlinserts")
 
 	} else {
 		ts.cache.InsertTransaction(tx)
-		ts.statsd.Client.Increment(".tickers.cacheinserts")
+		ts.statsd.Client.Increment(".conduit.cacheinserts")
 
 	}
 }
 
-func (ts *TickersService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+func (ts *ConduitService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertOrderBookRowToDataBase(tx, index)
-		ts.statsd.Client.Increment(".tickers.sqlinserts")
+		ts.statsd.Client.Increment(".conduit.sqlinserts")
 
 	} else {
 		ts.cache.InsertOrderBookRow(tx)
-		ts.statsd.Client.Increment(".tickers.cacheinserts")
+		ts.statsd.Client.Increment(".conduit.cacheinserts")
 
 	}
 }
 
-func (ts *TickersService) ListenAndHandle(txQueue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
+func (ts *ConduitService) ListenAndHandle(txQueue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
 	defer wg.Done()
 	for {
 		select {
@@ -233,11 +233,11 @@ func (ts *TickersService) ListenAndHandle(txQueue chan *models.Transaction, obQu
 	}
 }
 
-func (ts *TickersService) GetTransactionChannel(index int) chan *models.Transaction {
+func (ts *ConduitService) GetTransactionChannel(index int) chan *models.Transaction {
 	return ts.transactionChannels[index]
 }
 
-func (ts *TickersService) GetOrderBookChannel(index int) chan *models.OrderBookRow {
+func (ts *ConduitService) GetOrderBookChannel(index int) chan *models.OrderBookRow {
 	return ts.orderBookChannels[index]
 }
 

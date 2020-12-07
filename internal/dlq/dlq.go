@@ -1,19 +1,19 @@
 package dlq
 
 import (
-	"github.com/volatrade/tickers/internal/socket"
+	"github.com/volatrade/conduit/internal/socket"
 )
 
 type (
 	DeadQueue interface {
 	}
 
-	TickersDeadQueue struct {
+	conduitDeadQueue struct {
 		failedSockets []*socket.BinanceSocket
 	}
 )
 
-func (tdq *TickersDeadQueue) InsertFailedSocket(socket *socket.BinanceSocket) {
+func (tdq *conduitDeadQueue) InsertFailedSocket(socket *socket.BinanceSocket) {
 
 	tdq.failedSockets = append(tdq.failedSockets, socket)
 }

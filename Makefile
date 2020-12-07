@@ -1,4 +1,4 @@
-BIN_NAME=tickers
+BIN_NAME=conduit
 
 build:
 	@echo building binary...
@@ -34,3 +34,5 @@ run:
 tag:
 	git tag ${NEW_VERSION} && echo ${NEW_VERSION} >> version
 
+gen-mocks:
+	python3 gen_mocks.py 

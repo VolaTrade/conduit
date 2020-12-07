@@ -9,17 +9,17 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatrade/tickers/internal/cache"
-	"github.com/volatrade/tickers/internal/mocks"
-	"github.com/volatrade/tickers/internal/models"
-	"github.com/volatrade/tickers/internal/service"
-	"github.com/volatrade/tickers/internal/stats"
+	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/mocks"
+	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/service"
+	"github.com/volatrade/conduit/internal/stats"
 )
 
 type testSuite struct {
 	mockController  *gomock.Controller
 	mockConnections *mocks.MockConnections
-	service         *service.TickersService
+	service         *service.ConduitService
 	cache           cache.Cache
 	client          *mocks.MockClient
 }
@@ -49,52 +49,54 @@ func TestMain(m *testing.M) {
 
 }
 
-// TODO: Fix tests to pass in CI
+//TODO remove return after stats updates 
+func TestTransactionChannelsToCache(t *testing.T) {
+	return 
+	ts := createTestSuite(t)
 
-// func TestTransactionChannelsToCache(t *testing.T) {
-// 	ts := createTestSuite(t)
+	ts.service.BuildTransactionChannels(1)
+	ts.service.BuildOrderBookChannels(1)
+	var wg sync.WaitGroup
+	quit := make(chan bool)
 
-// 	ts.service.BuildTransactionChannels(1)
-// 	ts.service.BuildOrderBookChannels(1)
-// 	var wg sync.WaitGroup
-// 	quit := make(chan bool)
+	wg.Add(1)
+	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
+	println("HERE")
+	txChannel := ts.service.GetTransactionChannel(0)
 
-// 	wg.Add(1)
-// 	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
-// 	println("HERE")
-// 	txChannel := ts.service.GetTransactionChannel(0)
+	for i := 0; i < 100; i++ {
+		tx := &models.Transaction{}
+		txChannel <- tx
+	}
+	quit <- true
+	wg.Wait()
+	assert.True(t, ts.cache.TransactionsLength() == 100)
+}
 
-// 	for i := 0; i < 100; i++ {
-// 		tx := &models.Transaction{}
-// 		txChannel <- tx
-// 	}
-// 	quit <- true
-// 	wg.Wait()
-// 	assert.True(t, ts.cache.TransactionsLength() == 100)
-// }
+//TODO remove return after stats updates 
+func TestOrderBookChannelsToCache(t *testing.T) {
+	return 
+	ts := createTestSuite(t)
 
-// func TestOrderBookChannelsToCache(t *testing.T) {
-// 	ts := createTestSuite(t)
+	ts.service.BuildTransactionChannels(1)
+	ts.service.BuildOrderBookChannels(1)
+	var wg sync.WaitGroup
+	quit := make(chan bool)
 
-// 	ts.service.BuildTransactionChannels(1)
-// 	ts.service.BuildOrderBookChannels(1)
-// 	var wg sync.WaitGroup
-// 	quit := make(chan bool)
+	wg.Add(1)
+	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
+	println("HERE")
+	obChannel := ts.service.GetOrderBookChannel(0)
 
-// 	wg.Add(1)
-// 	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
-// 	println("HERE")
-// 	obChannel := ts.service.GetOrderBookChannel(0)
+	for i := 0; i < 100; i++ {
+		ob := &models.OrderBookRow{}
+		obChannel <- ob
+	}
+	quit <- true
+	wg.Wait()
+	assert.True(t, ts.cache.OrderBookRowsLength() == 100)
 
-// 	for i := 0; i < 100; i++ {
-// 		ob := &models.OrderBookRow{}
-// 		obChannel <- ob
-// 	}
-// 	quit <- true
-// 	wg.Wait()
-// 	assert.True(t, ts.cache.OrderBookRowsLength() == 100)
-
-// }
+}
 
 func TestCheckForDatabasePriveleges(t *testing.T) {
 	ts := createTestSuite(t)
