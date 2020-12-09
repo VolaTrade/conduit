@@ -91,7 +91,6 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 		}
 
 		if hits >= READS_PER_SECOND {
-			println("Continuing :p")
 			continue
 		}
 
@@ -100,7 +99,7 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 		if err != nil {
 			//handle me
 			log.Println(err.Error())
-			td.statz.Client.Increment("conduit.errors.socket_read")
+			td.statz.Client.Increment("conduit.errors.socket_read.tx")
 			continue
 		}
 
@@ -120,6 +119,27 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 	}
 }
 
+func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD) {
+	prev_sec := time.Now().Second()
+
+	for {
+		curr_sec := time.Now().Second()
+
+		if prev_sec == curr_sec {
+			continue
+		}
+
+		_, err := socket.ReadMessage("OB")
+		prev_sec = curr_sec
+
+		if err != nil {
+			statz.Client.Increment("conduit.errors.socket_read.ob")
+		}
+
+	}
+
+}
+
 func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
 	defer wg.Done()
 	println("Consuming and transferring messsage")
@@ -129,34 +149,36 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 		println("error establishing socket connection")
 		panic(err)
 	}
-	prev_min := time.Now().Minute() - 1 
+
+	go func() {
+		runKeepAlive(socket, td.statz)
+	}()
+
+	prev_min := time.Now().Minute() - 1
 	for {
-		
+
 		curr_min := time.Now().Minute()
 
-		if prev_min == curr_min{
-			continue 
+		if prev_min == curr_min {
+			continue
 		}
 		message, err := socket.ReadMessage("OB")
 
-		println("RAW ORDER BOOK MESSAGE ->", string(message))
-		println("READ @ ->", curr_min)
 		prev_min = curr_min
 		if err != nil {
 			//handle me
-			log.Println(err.Error())
-			td.statz.Client.Increment("conduit.errors.socket_read")
+			log.Println(err.Error(), socket.Pair)
+			td.statz.Client.Increment("conduit.errors.socket_read.ob")
 			continue
 		}
 
 		var orderBookRow *models.OrderBookRow
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, socket.Pair); err != nil {
-			println(err.Error())
+			log.Println(err.Error(), socket.Pair)
 			td.statz.Client.Increment("conduit.errors.json_unmarshal")
 
 		} else {
-			log.Printf("%+v", orderBookRow)
 			socket.OrderBookChannel <- orderBookRow
 		}
 	}
