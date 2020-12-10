@@ -38,7 +38,7 @@ type (
 		ReportRunning(wg *sync.WaitGroup)
 	}
 
-	ConduitService	 struct {
+	ConduitService struct {
 		id                  string
 		cache               cache.Cache
 		connections         connections.Connections
@@ -51,9 +51,9 @@ type (
 	}
 )
 
-func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *ConduitService	 {
+func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *ConduitService {
 
-	return &ConduitService	{
+	return &ConduitService{
 		cache:       ch,
 		connections: conns,
 		exch:        cl,
@@ -115,6 +115,7 @@ func (ts *ConduitService) BuildPairUrls() error {
 		id := strings.ToLower(temp["symbol"].(string))
 
 		if id == "btcusdt" || id == "ethusdt" || id == "xrpusdt" {
+			println("Inserting to cache")
 			ts.cache.InsertPair(id)
 		}
 	}

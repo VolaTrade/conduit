@@ -48,13 +48,12 @@ func (bs *BinanceSocket) ReadMessage(messageType string) ([]byte, error) {
 		_, message, err = bs.orderBookConnection.ReadMessage()
 	}
 	if err != nil {
-		log.Println("message from error ->", message)
 		return nil, err
 	}
 
-	println("Message received -->", message)
+	//println("Message received -->", message)
 
-	println("URl --->", bs.orderBookUrl)
+	//println("URl --->", bs.orderBookUrl)
 	bs.statsd.Client.Increment(fmt.Sprintf("conduit.socket_reads.%s", bs.Pair))
 	return message, err
 }
