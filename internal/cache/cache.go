@@ -123,14 +123,17 @@ func (tc *ConduitCache) InsertTransaction(transact *models.Transaction) {
 }
 
 func (tc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
-
+	println("Inserting into cache", obRow)
 	if obRow == nil {
+		println("Nil row case")
 		return
 	}
 
 	tc.obMux.Lock()
 	defer tc.obMux.Unlock()
 	tc.orderBookData = append(tc.orderBookData, obRow)
+
+	println("Length", tc.OrderBookRowsLength())
 }
 
 func (tc *ConduitCache) Purge() {

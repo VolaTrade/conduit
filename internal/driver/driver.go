@@ -137,7 +137,6 @@ func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD, mux *sync.M
 		}
 
 	}
-
 }
 
 func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
@@ -181,7 +180,6 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 			td.statz.Client.Increment("conduit.errors.json_unmarshal")
 
 		} else {
-			log.Printf("%v", orderBookRow)
 			socket.OrderBookChannel <- orderBookRow
 		}
 	}
