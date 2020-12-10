@@ -110,7 +110,6 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 			td.statz.Client.Increment("conduit.errors.json_unmarshal")
 
 		} else {
-			log.Printf("%+v", transaction)
 			socket.TransactionChannel <- transaction
 		}
 
@@ -119,7 +118,7 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 	}
 }
 
-func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD) {
+func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD, mux *sync.Mutex) {
 	prev_sec := time.Now().Second()
 
 	for {
@@ -128,8 +127,9 @@ func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD) {
 		if prev_sec == curr_sec {
 			continue
 		}
-
+		mux.Lock()
 		_, err := socket.ReadMessage("OB")
+		mux.Unlock()
 		prev_sec = curr_sec
 
 		if err != nil {
@@ -141,6 +141,7 @@ func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD) {
 }
 
 func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
+	socketMux := &sync.Mutex{}
 	defer wg.Done()
 	println("Consuming and transferring messsage")
 	var err error
@@ -151,7 +152,7 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 	}
 
 	go func() {
-		runKeepAlive(socket, td.statz)
+		runKeepAlive(socket, td.statz, socketMux)
 	}()
 
 	prev_min := time.Now().Minute() - 1
@@ -162,8 +163,9 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 		if prev_min == curr_min {
 			continue
 		}
+		socketMux.Lock()
 		message, err := socket.ReadMessage("OB")
-
+		socketMux.Unlock()
 		prev_min = curr_min
 		if err != nil {
 			//handle me
@@ -179,6 +181,7 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 			td.statz.Client.Increment("conduit.errors.json_unmarshal")
 
 		} else {
+			log.Printf("%v", orderBookRow)
 			socket.OrderBookChannel <- orderBookRow
 		}
 	}
