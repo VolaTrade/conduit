@@ -1,6 +1,8 @@
 package connections
 
 import (
+	"log"
+
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/postgres"
@@ -65,7 +67,7 @@ func (ca *ConnectionArray) InsertTransactionToDataBase(transaction *models.Trans
 }
 
 func (ca *ConnectionArray) InsertOrderBookRowToDataBase(obRow *models.OrderBookRow, index int) error {
-	println("Inserting order book data for index ->", index)
-	println("list length -> ", len(ca.Arr))
+	log.Println("Inserting order book data for index ->", index)
+	log.Println("list length -> ", len(ca.Arr))
 	return ca.Arr[index].InsertOrderBookRow(obRow)
 }

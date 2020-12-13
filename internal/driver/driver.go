@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"context"
 	"log"
 	"sync"
 	"time"
@@ -29,7 +30,7 @@ const (
 
 type Driver interface {
 	RunListenerRoutines(wg *sync.WaitGroup, ch chan bool)
-	Run(wg *sync.WaitGroup)
+	Run(wg *sync.WaitGroup, ch chan bool)
 	InitService()
 }
 
@@ -56,28 +57,32 @@ func (td *ConduitDriver) RunListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
 	}
 }
 
-func (td *ConduitDriver) Run(wg *sync.WaitGroup) {
+func (td *ConduitDriver) Run(wg *sync.WaitGroup, ch chan bool) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+
 	go td.svc.CheckForDatabasePriveleges(wg)
 	wg.Add(1)
 	sockets := td.svc.SpawnSocketRoutines(3)
-	go td.svc.ReportRunning(wg)
+	go td.svc.ReportRunning(wg, ctx)
+	go td.svc.CheckForExit(wg, cancel)
 	for _, active_socket := range sockets {
 		wg.Add(1)
-		println("Spawning routine for -->", active_socket)
+		log.Println("Spawning routine for -->", active_socket)
 		go td.consumeTransferTransactionMessage(active_socket, wg)
 		go td.consumeTransferOrderBookMessage(active_socket, wg)
-		println("Spawned spawned")
+		log.Println("Spawned spawned")
 	}
 
 }
 
 func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
 	defer wg.Done()
-	println("Consuming and transferring messsage")
+	log.Println("Consuming and transferring messsage")
 	var err error
 	if err = socket.Connect(); err != nil {
 		//TODO add handling policy
-		println("error establishing socket connection")
+		log.Println("error establishing socket connection")
 		panic(err)
 	}
 	secStored := int(time.Now().Second())
@@ -106,7 +111,7 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 		var transaction *models.Transaction
 
 		if transaction, err = models.UnmarshalTransactionJSON(message); err != nil {
-			println(err.Error())
+			log.Println(err.Error())
 			td.statz.Client.Increment("conduit.errors.json_unmarshal")
 
 		} else {
@@ -142,11 +147,11 @@ func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD, mux *sync.M
 func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
 	socketMux := &sync.Mutex{}
 	defer wg.Done()
-	println("Consuming and transferring messsage")
+	log.Println("Consuming and transferring messsage")
 	var err error
 	if err = socket.Connect(); err != nil {
 		//TODO add handling policy
-		println("error establishing socket connection")
+		log.Println("error establishing socket connection")
 		panic(err)
 	}
 
