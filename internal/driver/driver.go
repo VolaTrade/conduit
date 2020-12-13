@@ -30,7 +30,7 @@ const (
 
 type Driver interface {
 	RunListenerRoutines(wg *sync.WaitGroup, ch chan bool)
-	Run(wg *sync.WaitGroup, ch chan bool)
+	Run(wg *sync.WaitGroup)
 	InitService()
 }
 
@@ -57,7 +57,7 @@ func (td *ConduitDriver) RunListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
 	}
 }
 
-func (td *ConduitDriver) Run(wg *sync.WaitGroup, ch chan bool) {
+func (td *ConduitDriver) Run(wg *sync.WaitGroup) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 

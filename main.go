@@ -29,7 +29,7 @@ func main() {
 	}()
 	driver.InitService()
 	driver.RunListenerRoutines(&wg, quit)
-	driver.Run(&wg, quit)
+	driver.Run(&wg)
 
 	wg.Wait()
 }
