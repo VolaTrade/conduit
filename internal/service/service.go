@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -30,12 +31,13 @@ type (
 		BuildTransactionChannels(count int)
 		BuildOrderBookChannels(count int)
 		CheckForDatabasePriveleges(wg *sync.WaitGroup)
+		CheckForExit(wg *sync.WaitGroup, exit func())
 		ListenAndHandle(queue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, ch chan bool)
 		SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket
 		GetSocketsArrayLength() int
 		GetTransactionChannel(index int) chan *models.Transaction
 		GetOrderBookChannel(index int) chan *models.OrderBookRow
-		ReportRunning(wg *sync.WaitGroup)
+		ReportRunning(wg *sync.WaitGroup, ctx context.Context)
 	}
 
 	ConduitService struct {
@@ -64,11 +66,20 @@ func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, st
 	}
 }
 
-func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup) {
+func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
+	ts.statsd.Client.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 1)
+
 	for {
-		time.Sleep(10000)
-		ts.statsd.Client.Increment(fmt.Sprintf("conduit.instances.%s", ts.id))
+
+		select {
+
+		case <-ctx.Done():
+			println("Reporting zero")
+			ts.statsd.Client.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 0)
+			return
+
+		}
 	}
 }
 
@@ -96,10 +107,18 @@ func (ts *ConduitService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 			}
 
 			ts.cache.Purge()
-			//TODO insert transfer logic for order book data
 			return
 		}
+	}
+}
 
+func (ts *ConduitService) CheckForExit(wg *sync.WaitGroup, exit func()) {
+	defer wg.Done()
+	for {
+		if _, err := os.Stat("finish"); err == nil {
+			exit()
+			return
+		}
 	}
 }
 
@@ -115,7 +134,7 @@ func (ts *ConduitService) BuildPairUrls() error {
 		id := strings.ToLower(temp["symbol"].(string))
 
 		if id == "btcusdt" || id == "ethusdt" || id == "xrpusdt" {
-			println("Inserting to cache")
+			log.Println("Inserting to cache")
 			ts.cache.InsertPair(id)
 		}
 	}
@@ -194,11 +213,11 @@ func (ts *ConduitService) GetSocketsArrayLength() int {
 func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertTransactionToDataBase(tx, index)
-		ts.statsd.Client.Increment(".conduit.sqlinserts")
+		ts.statsd.Client.Increment(".conduit.sqlinserts.tx")
 
 	} else {
 		ts.cache.InsertTransaction(tx)
-		ts.statsd.Client.Increment(".conduit.cacheinserts")
+		ts.statsd.Client.Increment(".conduit.cacheinserts.tx")
 
 	}
 }
@@ -206,28 +225,28 @@ func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 func (ts *ConduitService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertOrderBookRowToDataBase(tx, index)
-		ts.statsd.Client.Increment(".conduit.sqlinserts")
+		ts.statsd.Client.Increment(".conduit.sqlinserts.ob")
 
 	} else {
 		ts.cache.InsertOrderBookRow(tx)
-		ts.statsd.Client.Increment(".conduit.cacheinserts")
+		ts.statsd.Client.Increment(".conduit.cacheinserts.ob")
 
 	}
 }
 
-func (ts *ConduitService) ListenAndHandle(txQueue chan *models.Transaction, obQueue chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
+func (ts *ConduitService) ListenAndHandle(txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, index int, wg *sync.WaitGroup, quit chan bool) {
 	defer wg.Done()
 	for {
 		select {
 
 		case <-quit:
-			println("[ListenAndHandle] Exit")
+			log.Println("[ListenAndHandle] Exit")
 			return
 
-		case transaction := <-txQueue:
+		case transaction := <-txChannel:
 			ts.handleTransaction(transaction, index)
 
-		case orderBookRow := <-obQueue:
+		case orderBookRow := <-obChannel:
 			ts.handleOrderBookRow(orderBookRow, index)
 		}
 

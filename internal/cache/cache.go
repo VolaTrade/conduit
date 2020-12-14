@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 	"sync"
@@ -123,9 +124,9 @@ func (tc *ConduitCache) InsertTransaction(transact *models.Transaction) {
 }
 
 func (tc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
-	println("Inserting into cache", obRow)
+	log.Println("Inserting into cache", obRow)
 	if obRow == nil {
-		println("Nil row case")
+		log.Println("Nil row case")
 		return
 	}
 
@@ -133,7 +134,7 @@ func (tc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 	defer tc.obMux.Unlock()
 	tc.orderBookData = append(tc.orderBookData, obRow)
 
-	println("Length", tc.OrderBookRowsLength())
+	log.Println("Length", tc.OrderBookRowsLength())
 }
 
 func (tc *ConduitCache) Purge() {
