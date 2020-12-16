@@ -1,3 +1,6 @@
+//go:generate mockgen -package=mocks -destination=../mocks/client.go github.com/volatrade/conduit/internal/client Client
+
+
 package client
 
 import (

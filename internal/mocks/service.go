@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	gomock "github.com/golang/mock/gomock"
 	models "github.com/volatrade/conduit/internal/models"
 	socket "github.com/volatrade/conduit/internal/socket"
@@ -85,6 +86,18 @@ func (mr *MockServiceMockRecorder) CheckForDatabasePriveleges(arg0 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckForDatabasePriveleges", reflect.TypeOf((*MockService)(nil).CheckForDatabasePriveleges), arg0)
 }
 
+// CheckForExit mocks base method
+func (m *MockService) CheckForExit(arg0 *sync.WaitGroup, arg1 func()) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "CheckForExit", arg0, arg1)
+}
+
+// CheckForExit indicates an expected call of CheckForExit
+func (mr *MockServiceMockRecorder) CheckForExit(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckForExit", reflect.TypeOf((*MockService)(nil).CheckForExit), arg0, arg1)
+}
+
 // GetOrderBookChannel mocks base method
 func (m *MockService) GetOrderBookChannel(arg0 int) chan *models.OrderBookRow {
 	m.ctrl.T.Helper()
@@ -140,15 +153,15 @@ func (mr *MockServiceMockRecorder) ListenAndHandle(arg0, arg1, arg2, arg3, arg4 
 }
 
 // ReportRunning mocks base method
-func (m *MockService) ReportRunning(arg0 *sync.WaitGroup) {
+func (m *MockService) ReportRunning(arg0 *sync.WaitGroup, arg1 context.Context) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ReportRunning", arg0)
+	m.ctrl.Call(m, "ReportRunning", arg0, arg1)
 }
 
 // ReportRunning indicates an expected call of ReportRunning
-func (mr *MockServiceMockRecorder) ReportRunning(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) ReportRunning(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportRunning", reflect.TypeOf((*MockService)(nil).ReportRunning), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportRunning", reflect.TypeOf((*MockService)(nil).ReportRunning), arg0, arg1)
 }
 
 // SpawnSocketRoutines mocks base method

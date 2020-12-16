@@ -1,3 +1,5 @@
+//go:generate mockgen -package=mocks -destination=../mocks/stats.go github.com/volatrade/conduit/internal/stats Stats
+
 package stats
 
 import (

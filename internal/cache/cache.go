@@ -1,3 +1,5 @@
+//go:generate mockgen -package=mocks -destination=../mocks/cache.go github.com/volatrade/conduit/internal/cache Cache
+
 package cache
 
 import (

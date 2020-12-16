@@ -1,3 +1,4 @@
+//go:generate mockgen -package=mocks -destination=../mocks/service.go github.com/volatrade/conduit/internal/service Service
 package service
 
 import (
