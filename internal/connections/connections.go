@@ -1,3 +1,5 @@
+//go:generate mockgen -package=mocks -destination=../mocks/connections.go github.com/volatrade/conduit/internal/connections Connections
+
 package connections
 
 import (

@@ -1,4 +1,5 @@
 BIN_NAME=conduit
+GOMOCK := $(shell command -v mockgen 2> /dev/null)
 
 build:
 	@echo building binary...
@@ -34,5 +35,18 @@ run:
 tag:
 	git tag ${NEW_VERSION} && echo ${NEW_VERSION} >> version
 
-gen-mocks:
-	python3 gen_mocks.py 
+.PHONY : gen-mocks
+gen-mocks : setup/gomock go-gen-mocks
+
+.PHONY: setup/gomock
+setup/gomock:
+ifeq ('$(GOMOCK)','')
+	@echo "Installing gomock"
+	@GO111MODULE=off go get github.com/golang/mock/gomock >/dev/null
+	@GO111MODULE=off go install github.com/golang/mock/mockgen >/dev/null
+endif
+
+.PHONY: go-gen-mocks
+go-gen-mocks:
+	@echo "generating go mocks..."
+	@GO111MODULE=on go generate --run "mockgen*" ./...
