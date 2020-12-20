@@ -66,12 +66,11 @@ func (td *ConduitDriver) Run(wg *sync.WaitGroup) {
 	sockets := td.svc.SpawnSocketRoutines(3)
 	go td.svc.ReportRunning(wg, ctx)
 	go td.svc.CheckForExit(wg, cancel)
+
 	for _, active_socket := range sockets {
 		wg.Add(1)
-		log.Println("Spawning routine for -->", active_socket)
 		go td.consumeTransferTransactionMessage(active_socket, wg)
 		go td.consumeTransferOrderBookMessage(active_socket, wg)
-		log.Println("Spawned spawned")
 	}
 
 }

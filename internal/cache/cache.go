@@ -5,13 +5,13 @@ package cache
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 	"sync"
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
+	log "github.com/volatrade/currie-logs"
 )
 
 var Module = wire.NewSet(
@@ -39,6 +39,7 @@ type (
 	}
 
 	ConduitCache struct {
+		logger        *log.Logger
 		pairs         []string
 		transactions  []*models.Transaction
 		orderBookData []*models.OrderBookRow
@@ -47,8 +48,10 @@ type (
 	}
 )
 
-func New() *ConduitCache {
+func New(logger *log.Logger) *ConduitCache {
+	
 	return &ConduitCache{
+		logger:        logger,
 		pairs:         make([]string, 0),
 		transactions:  make([]*models.Transaction, 0),
 		orderBookData: make([]*models.OrderBookRow, 0),
@@ -126,9 +129,7 @@ func (tc *ConduitCache) InsertTransaction(transact *models.Transaction) {
 }
 
 func (tc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
-	log.Println("Inserting into cache", obRow)
 	if obRow == nil {
-		log.Println("Nil row case")
 		return
 	}
 
@@ -136,7 +137,7 @@ func (tc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 	defer tc.obMux.Unlock()
 	tc.orderBookData = append(tc.orderBookData, obRow)
 
-	log.Println("Length", tc.OrderBookRowsLength())
+	tc.logger.Infow("Cache Length", "value", tc.OrderBookRowsLength())
 }
 
 func (tc *ConduitCache) Purge() {

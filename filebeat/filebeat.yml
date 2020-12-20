@@ -1,0 +1,24 @@
+filebeat.inputs:
+- type: container
+  paths: 
+    - '/var/lib/docker/containers/*/*.log'
+
+processors:
+- add_docker_metadata:
+    host: "unix:///var/run/docker.sock"
+
+- decode_json_fields:
+    fields: ["msg"]
+    target: "json"
+    overwrite_keys: true
+
+output.elasticsearch:
+  indices:
+    - index: "log-"
+
+logging.json: true
+logging.metrics.enabled: false
+
+
+cloud.id: "i-o-optimized-deployment:dXMtd2VzdC0yLmF3cy5mb3VuZC5pbyRhYzJmOWQ4NTE3ZDQ0N2IxYWYzYzllN2RkNzE0MGY5NiRlZDliODYzMzVhN2E0N2VkOGRmNjJjMWZhYzlmMWM1ZQ=="
+cloud.auth: "elastic:HISh5PEmhfl5GFjWOd2QSFds"

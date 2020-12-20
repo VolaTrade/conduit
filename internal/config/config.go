@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
-	"github.com/volatrade/conduit/internal/postgres"
 	"github.com/volatrade/conduit/internal/stats"
+	"github.com/volatrade/conduit/internal/store/postgres"
+	logger "github.com/volatrade/currie-logs"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -16,6 +17,7 @@ type Config struct {
 	StatsConfig stats.Config
 	SlackConfig slack.Config
 	//DriverConfig driver.Config
+	LoggerConfig logger.Config
 }
 
 type FilePath string
@@ -63,6 +65,7 @@ func NewConfig(fileName FilePath) *Config {
 			Location: "conduit",
 			Env:      env,
 		},
+		LoggerConfig: logger.Config{},
 		// DriverConfig: driver.Config{
 		// 	Length: length,
 		// },
@@ -83,6 +86,11 @@ func NewStatsConfig(cfg *Config) *stats.Config {
 func NewSlackConfig(cfg *Config) *slack.Config {
 	log.Println("Slack config --->", cfg.SlackConfig)
 	return &cfg.SlackConfig
+}
+
+func NewLoggerConfig(cfg *Config) *logger.Config {
+	log.Println("Logger config --->", cfg.LoggerConfig)
+	return &cfg.LoggerConfig
 }
 
 // func NewDriverConfig(cfg *Config) *driver.Config {

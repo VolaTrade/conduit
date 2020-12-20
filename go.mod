@@ -12,6 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/volatrade/candles v1.0.3
+	github.com/volatrade/currie-logs v0.0.3
 	github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 )

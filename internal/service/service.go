@@ -4,19 +4,18 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
-	"github.com/volatrade/conduit/internal/client"
-	"github.com/volatrade/conduit/internal/connections"
 	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/socket"
 	"github.com/volatrade/conduit/internal/stats"
+	"github.com/volatrade/conduit/internal/store"
+	log "github.com/volatrade/currie-logs"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -42,10 +41,11 @@ type (
 	}
 
 	ConduitService struct {
+		logger              *log.Logger
 		id                  string
 		cache               cache.Cache
-		connections         connections.Connections
-		exch                client.Client
+		dbStreams           store.StorageConnections
+		requests            requests.Requests
 		slack               slack.Slack
 		statsd              *stats.StatsD
 		transactionChannels []chan *models.Transaction
@@ -54,16 +54,20 @@ type (
 	}
 )
 
-func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *ConduitService {
+func New(conns store.StorageConnections, ch cache.Cache, requests requests.Requests, stats *stats.StatsD, slackz slack.Slack, logger *log.Logger) *ConduitService {
 
+	id := fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute())
+
+	logger.SetConstantField("Instance ID", id)
 	return &ConduitService{
-		cache:       ch,
-		connections: conns,
-		exch:        cl,
-		statsd:      stats,
-		writeToDB:   false,
-		id:          fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute()),
-		slack:       slackz,
+		cache:     ch,
+		dbStreams: conns,
+		requests:  requests,
+		statsd:    stats,
+		writeToDB: false,
+		id:        id,
+		slack:     slackz,
+		logger:    logger,
 	}
 }
 
@@ -76,7 +80,6 @@ func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup, ctx context.Context)
 		select {
 
 		case <-ctx.Done():
-			println("Reporting zero")
 			ts.statsd.Client.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 0)
 			return
 
@@ -90,18 +93,17 @@ func (ts *ConduitService) CheckForDatabasePriveleges(wg *sync.WaitGroup) {
 	var err error
 	for {
 		if _, writeToCache := os.Stat("start"); writeToCache == nil {
-			log.Println("making connections to DB NOW")
-			ts.connections.MakeConnections()
+			ts.logger.Infow("establishing database connections, moving cache to databse, and purging cache")
+			ts.dbStreams.MakeConnections()
 			ts.writeToDB = true
-			log.Println("Purging cache")
 			cachedTransactions := ts.cache.GetAllTransactions()
 			cachedOrderBookRows := ts.cache.GetAllOrderBookRows()
-			err = ts.connections.TransferTransactionCache(cachedTransactions)
+			err = ts.dbStreams.TransferTransactionCache(cachedTransactions)
 			if err != nil {
 				panic(err)
 			}
 
-			err = ts.connections.TransferOrderBookCache(cachedOrderBookRows)
+			err = ts.dbStreams.TransferOrderBookCache(cachedOrderBookRows)
 
 			if err != nil {
 				panic(err)
@@ -125,18 +127,17 @@ func (ts *ConduitService) CheckForExit(wg *sync.WaitGroup, exit func()) {
 
 //Init reads all trading pairs from Binance and then proceeds to store them as keys in cache
 func (ts *ConduitService) BuildPairUrls() error {
-	tradingCryptosList, err := ts.exch.GetActiveBinanceExchangePairs()
+
+	tradingPairs, err := ts.requests.GetActiveBinanceExchangePairs()
+
 	if err != nil {
 		return err
 	}
 
-	for _, val := range tradingCryptosList {
-		temp := val.(map[string]interface{}) //type casting
-		id := strings.ToLower(temp["symbol"].(string))
+	for _, pair := range tradingPairs {
 
-		if id == "btcusdt" || id == "ethusdt" || id == "xrpusdt" {
-			log.Println("Inserting to cache")
-			ts.cache.InsertPair(id)
+		if pair == "btcusdt" || pair == "ethusdt" || pair == "xrpusdt" {
+			ts.cache.InsertPair(pair)
 		}
 	}
 
@@ -194,7 +195,7 @@ func (ts *ConduitService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 
 		temp_stats := stats.StatsD{}                 //fix me
 		temp_stats.Client = ts.statsd.Client.Clone() // fix me.. I am uneccesary
-		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], &temp_stats)
+		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], &temp_stats, ts.logger)
 
 		if err != nil {
 			fmt.Println(err)
@@ -213,7 +214,7 @@ func (ts *ConduitService) GetSocketsArrayLength() int {
 
 func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 	if ts.writeToDB {
-		ts.connections.InsertTransactionToDataBase(tx, index)
+		ts.dbStreams.InsertTransactionToDataBase(tx, index)
 		ts.statsd.Client.Increment(".conduit.sqlinserts.tx")
 
 	} else {
@@ -225,7 +226,7 @@ func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 
 func (ts *ConduitService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if ts.writeToDB {
-		ts.connections.InsertOrderBookRowToDataBase(tx, index)
+		ts.dbStreams.InsertOrderBookRowToDataBase(tx, index)
 		ts.statsd.Client.Increment(".conduit.sqlinserts.ob")
 
 	} else {
@@ -241,7 +242,6 @@ func (ts *ConduitService) ListenAndHandle(txChannel chan *models.Transaction, ob
 		select {
 
 		case <-quit:
-			log.Println("[ListenAndHandle] Exit")
 			return
 
 		case transaction := <-txChannel:
