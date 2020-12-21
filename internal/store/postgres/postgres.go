@@ -7,7 +7,7 @@ import (
 	"github.com/google/wire"
 	_ "github.com/jackc/pgx/stdlib" //driver
 	"github.com/jmoiron/sqlx"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 )
 
 var (
@@ -28,12 +28,12 @@ type (
 	DB struct {
 		DB     *sqlx.DB
 		config *Config
-		statz  *stats.StatsD
+		kstats *stats.Stats
 	}
 )
 
-func New(cfg *Config, statsdClient *stats.StatsD) *DB {
-	postgres := &DB{config: cfg, statz: statsdClient}
+func New(cfg *Config, statsdClient *stats.Stats) *DB {
+	postgres := &DB{config: cfg, kstats: statsdClient}
 
 	return postgres
 }

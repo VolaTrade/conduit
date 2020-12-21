@@ -13,8 +13,8 @@ import (
 	"github.com/volatrade/conduit/internal/mocks"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/service"
-	"github.com/volatrade/conduit/internal/stats"
 	logger "github.com/volatrade/currie-logs"
+	stats "github.com/volatrade/k-stats"
 )
 
 type testSuite struct {
@@ -27,15 +27,16 @@ type testSuite struct {
 
 func createTestSuite(t *testing.T) testSuite {
 	mockController := gomock.NewController(t)
-	fakeStats, _ := stats.New(&stats.Config{Host: "localhost", Port: 8080, Env: "DEV"})
 
 	cache := cache.New(logger.NewNoop())
+
+	stats, _ := stats.New(&stats.Config{Env: "DEV"})
 
 	mockConnections := mocks.NewMockStorageConnections(mockController)
 
 	mockRequests := mocks.NewMockRequests(mockController)
 
-	svc := service.New(mockConnections, cache, nil, fakeStats, nil, logger.NewNoop())
+	svc := service.New(mockConnections, cache, nil, stats, nil, logger.NewNoop())
 
 	return testSuite{
 		mockController:  mockController,

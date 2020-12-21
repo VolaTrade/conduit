@@ -9,9 +9,9 @@ import (
 	"github.com/volatrade/conduit/internal/driver"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/service"
-	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/conduit/internal/store"
 	logger "github.com/volatrade/currie-logs"
+	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -58,12 +58,12 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 			config.NewConfig,
 			//config.NewDriverConfig,
 			config.NewDBConfig,
-			storageModule,
 			config.NewStatsConfig,
 			config.NewSlackConfig,
 			config.NewLoggerConfig,
 			logger.New,
 			stats.New,
+			storageModule,
 			slackModule,
 			requestsModule,
 			cacheModule,

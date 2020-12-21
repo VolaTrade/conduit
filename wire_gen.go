@@ -12,9 +12,9 @@ import (
 	"github.com/volatrade/conduit/internal/driver"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/service"
-	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/conduit/internal/store"
 	"github.com/volatrade/currie-logs"
+	"github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -24,22 +24,22 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
 	statsConfig := config.NewStatsConfig(configConfig)
-	statsD, err := stats.New(statsConfig)
+	statsStats, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, nil, err
 	}
-	conduitStorageConnections := store.New(postgresConfig, statsD)
+	conduitStorageConnections := store.New(postgresConfig, statsStats)
 	loggerConfig := config.NewLoggerConfig(configConfig)
 	loggerLogger, cleanup, err := logger.New(loggerConfig)
 	if err != nil {
 		return nil, nil, err
 	}
 	conduitCache := cache.New(loggerLogger)
-	conduitRequests := requests.New(statsD)
+	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitService := service.New(conduitStorageConnections, conduitCache, conduitRequests, statsD, slackLogger, loggerLogger)
-	conduitDriver := driver.New(conduitService, statsD)
+	conduitService := service.New(conduitStorageConnections, conduitCache, conduitRequests, statsStats, slackLogger, loggerLogger)
+	conduitDriver := driver.New(conduitService, statsStats)
 	return conduitDriver, func() {
 		cleanup()
 	}, nil

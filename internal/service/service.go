@@ -13,9 +13,9 @@ import (
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/socket"
-	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/conduit/internal/store"
-	log "github.com/volatrade/currie-logs"
+	logger "github.com/volatrade/currie-logs"
+	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -41,46 +41,47 @@ type (
 	}
 
 	ConduitService struct {
-		logger              *log.Logger
+		logger              *logger.Logger
 		id                  string
 		cache               cache.Cache
 		dbStreams           store.StorageConnections
 		requests            requests.Requests
 		slack               slack.Slack
-		statsd              *stats.StatsD
+		kstats              *stats.Stats
 		transactionChannels []chan *models.Transaction
 		orderBookChannels   []chan *models.OrderBookRow
 		writeToDB           bool
 	}
 )
 
-func New(conns store.StorageConnections, ch cache.Cache, requests requests.Requests, stats *stats.StatsD, slackz slack.Slack, logger *log.Logger) *ConduitService {
+func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger) *ConduitService {
 
 	id := fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute())
 
 	logger.SetConstantField("Instance ID", id)
 	return &ConduitService{
+		logger:    logger,
 		cache:     ch,
 		dbStreams: conns,
-		requests:  requests,
-		statsd:    stats,
+		requests:  cl,
+		kstats:    stats,
 		writeToDB: false,
-		id:        id,
+		id:        fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute()),
 		slack:     slackz,
-		logger:    logger,
 	}
 }
 
 func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
-	ts.statsd.Client.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 1)
+	ts.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 1.0) //should this Gauge be 1?
 
 	for {
 
 		select {
 
 		case <-ctx.Done():
-			ts.statsd.Client.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 0)
+			println("Reporting zero")
+			ts.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 0.0)
 			return
 
 		}
@@ -194,9 +195,7 @@ func (ts *ConduitService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 
 		transactionURL, orderBookURL, pair := ts.GetUrlsAndPair(i)
 
-		temp_stats := stats.StatsD{}                 //fix me
-		temp_stats.Client = ts.statsd.Client.Clone() // fix me.. I am uneccesary
-		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], &temp_stats, ts.logger)
+		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], ts.kstats, ts.logger)
 
 		if err != nil {
 			fmt.Println(err)
@@ -216,11 +215,11 @@ func (ts *ConduitService) GetSocketsArrayLength() int {
 func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 	if ts.writeToDB {
 		ts.dbStreams.InsertTransactionToDataBase(tx, index)
-		ts.statsd.Client.Increment(".conduit.sqlinserts.tx")
+		ts.kstats.Increment(".conduit.sqlinserts.tx", 1.0)
 
 	} else {
 		ts.cache.InsertTransaction(tx)
-		ts.statsd.Client.Increment(".conduit.cacheinserts.tx")
+		ts.kstats.Increment(".conduit.cacheinserts.tx", 1.0)
 
 	}
 }
@@ -228,11 +227,11 @@ func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 func (ts *ConduitService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if ts.writeToDB {
 		ts.dbStreams.InsertOrderBookRowToDataBase(tx, index)
-		ts.statsd.Client.Increment(".conduit.sqlinserts.ob")
+		ts.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
 
 	} else {
 		ts.cache.InsertOrderBookRow(tx)
-		ts.statsd.Client.Increment(".conduit.cacheinserts.ob")
+		ts.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
 
 	}
 }
@@ -262,5 +261,3 @@ func (ts *ConduitService) GetTransactionChannel(index int) chan *models.Transact
 func (ts *ConduitService) GetOrderBookChannel(index int) chan *models.OrderBookRow {
 	return ts.orderBookChannels[index]
 }
-
-//TODO go routine grafana metric

@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
-	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/conduit/internal/store/postgres"
 	logger "github.com/volatrade/currie-logs"
+	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -17,7 +17,6 @@ type Config struct {
 	StatsConfig stats.Config
 	SlackConfig slack.Config
 	//DriverConfig driver.Config
-	LoggerConfig logger.Config
 }
 
 type FilePath string
@@ -42,7 +41,7 @@ func NewConfig(fileName FilePath) *Config {
 	// }
 	env := os.Getenv("ENV")
 
-	if env != "DEV" && env != "PRD" {
+	if env != "DEV" && env != "PRD" && env != "INTEG" {
 		log.Println("ENV ==>", env)
 		log.Fatal("ENV var in config.env isn't set properly")
 	}
@@ -65,7 +64,6 @@ func NewConfig(fileName FilePath) *Config {
 			Location: "conduit",
 			Env:      env,
 		},
-		LoggerConfig: logger.Config{},
 		// DriverConfig: driver.Config{
 		// 	Length: length,
 		// },
@@ -89,7 +87,6 @@ func NewSlackConfig(cfg *Config) *slack.Config {
 }
 
 func NewLoggerConfig(cfg *Config) *logger.Config {
-	log.Println("Logger config --->", cfg.LoggerConfig)
 	return nil
 }
 

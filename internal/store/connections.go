@@ -5,8 +5,8 @@ package store
 import (
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
-	"github.com/volatrade/conduit/internal/stats"
 	"github.com/volatrade/conduit/internal/store/postgres"
+	stats "github.com/volatrade/k-stats"
 )
 
 var (
@@ -29,27 +29,25 @@ type (
 	}
 )
 
-func New(cfg *postgres.Config, statz *stats.StatsD) *ConduitStorageConnections {
+func New(cfg *postgres.Config, kstats *stats.Stats) *ConduitStorageConnections {
 	arr := make([]*postgres.DB, 3)
 
 	for i := 0; i < 3; i++ {
-		temp_stats := stats.StatsD{}
-		temp_stats.Client = statz.Client.Clone()
-		tempDB := postgres.New(cfg, &temp_stats)
+		tempDB := postgres.New(cfg, kstats)
 		arr[i] = tempDB
 	}
 
 	return &ConduitStorageConnections{postgresConnections: arr}
 }
 
-func (cc *ConduitStorageConnections) MakeConnections() {
+func (ca *ConduitStorageConnections) MakeConnections() {
 
 	for i := 0; i < 3; i++ {
-		db, err := cc.postgresConnections[i].Connect()
+		db, err := ca.postgresConnections[i].Connect()
 		if err != nil {
 			panic(err)
 		}
-		cc.postgresConnections[i].DB = db
+		ca.postgresConnections[i].DB = db
 
 	}
 

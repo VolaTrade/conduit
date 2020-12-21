@@ -10,7 +10,7 @@ import (
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/service"
 	"github.com/volatrade/conduit/internal/socket"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 )
 
 var Module = wire.NewSet(
@@ -19,8 +19,8 @@ var Module = wire.NewSet(
 
 type (
 	ConduitDriver struct {
-		svc   service.Service
-		statz *stats.StatsD
+		svc    service.Service
+		kstats *stats.Stats
 	}
 )
 
@@ -34,8 +34,8 @@ type Driver interface {
 	InitService()
 }
 
-func New(svc service.Service, stats *stats.StatsD) *ConduitDriver {
-	return &ConduitDriver{svc: svc, statz: stats}
+func New(svc service.Service, stats *stats.Stats) *ConduitDriver {
+	return &ConduitDriver{svc: svc, kstats: stats}
 }
 
 //InitService initializes pairUrl list in cache and builds transactionChannels
@@ -103,7 +103,7 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 		if err != nil {
 			//handle me
 			log.Println(err.Error())
-			td.statz.Client.Increment("conduit.errors.socket_read.tx")
+			td.kstats.Increment("conduit.errors.socket_read.tx", 1.0)
 			continue
 		}
 
@@ -111,7 +111,7 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 
 		if transaction, err = models.UnmarshalTransactionJSON(message); err != nil {
 			log.Println(err.Error())
-			td.statz.Client.Increment("conduit.errors.json_unmarshal")
+			td.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
 			socket.TransactionChannel <- transaction
@@ -122,7 +122,7 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 	}
 }
 
-func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD, mux *sync.Mutex) {
+func runKeepAlive(socket *socket.BinanceSocket, kstats *stats.Stats, mux *sync.Mutex) {
 	prev_sec := time.Now().Second()
 
 	for {
@@ -137,7 +137,7 @@ func runKeepAlive(socket *socket.BinanceSocket, statz *stats.StatsD, mux *sync.M
 		prev_sec = curr_sec
 
 		if err != nil {
-			statz.Client.Increment("conduit.errors.socket_read.ob")
+			kstats.Increment("conduit.errors.socket_read.ob", 1.0)
 		}
 
 	}
@@ -150,12 +150,12 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 	var err error
 	if err = socket.Connect(); err != nil {
 		//TODO add handling policy
-		log.Println("error establishing socket connection")
+		log.Println("error establishing socket connection", 1.0)
 		panic(err)
 	}
 
 	go func() {
-		runKeepAlive(socket, td.statz, socketMux)
+		runKeepAlive(socket, td.kstats, socketMux)
 	}()
 
 	prev_min := time.Now().Minute() - 1
@@ -173,7 +173,7 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 		if err != nil {
 			//handle me
 			log.Println(err.Error(), socket.Pair)
-			td.statz.Client.Increment("conduit.errors.socket_read.ob")
+			td.kstats.Increment("conduit.errors.socket_read.ob", 1.0)
 			continue
 		}
 
@@ -181,7 +181,7 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, socket.Pair); err != nil {
 			log.Println(err.Error(), socket.Pair)
-			td.statz.Client.Increment("conduit.errors.json_unmarshal")
+			td.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
 			socket.OrderBookChannel <- orderBookRow

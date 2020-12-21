@@ -1,10 +1,10 @@
-//go:generate mockgen -package=requests -destination=../mocks/requests.go github.com/volatrade/conduit/internal/requests Requests
+//go:generate mockgen -package=mocks -destination=../mocks/requests.go github.com/volatrade/conduit/internal/requests Requests
 
 package requests
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 )
 
 var Module = wire.NewSet(
@@ -16,9 +16,9 @@ type Requests interface {
 }
 
 type ConduitRequests struct {
-	statsd *stats.StatsD
+	kstats *stats.Stats
 }
 
-func New(stats *stats.StatsD) *ConduitRequests {
-	return &ConduitRequests{statsd: stats}
+func New(stats *stats.Stats) *ConduitRequests {
+	return &ConduitRequests{kstats: stats}
 }
