@@ -61,35 +61,30 @@ func (mr *MockCacheMockRecorder) GetAllTransactions() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllTransactions", reflect.TypeOf((*MockCache)(nil).GetAllTransactions))
 }
 
-// GetPair mocks base method
-func (m *MockCache) GetPair(arg0 int) (string, error) {
+// GetEntries mocks base method
+func (m *MockCache) GetEntries() []*models.CacheEntry {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPair", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GetEntries")
+	ret0, _ := ret[0].([]*models.CacheEntry)
+	return ret0
 }
 
-// GetPair indicates an expected call of GetPair
-func (mr *MockCacheMockRecorder) GetPair(arg0 interface{}) *gomock.Call {
+// GetEntries indicates an expected call of GetEntries
+func (mr *MockCacheMockRecorder) GetEntries() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPair", reflect.TypeOf((*MockCache)(nil).GetPair), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntries", reflect.TypeOf((*MockCache)(nil).GetEntries))
 }
 
-// GetTransactionOrderBookUrls mocks base method
-func (m *MockCache) GetTransactionOrderBookUrls(arg0 int) (string, string, error) {
+// InsertEntry mocks base method
+func (m *MockCache) InsertEntry(arg0 string) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransactionOrderBookUrls", arg0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	m.ctrl.Call(m, "InsertEntry", arg0)
 }
 
-// GetTransactionOrderBookUrls indicates an expected call of GetTransactionOrderBookUrls
-func (mr *MockCacheMockRecorder) GetTransactionOrderBookUrls(arg0 interface{}) *gomock.Call {
+// InsertEntry indicates an expected call of InsertEntry
+func (mr *MockCacheMockRecorder) InsertEntry(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionOrderBookUrls", reflect.TypeOf((*MockCache)(nil).GetTransactionOrderBookUrls), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEntry", reflect.TypeOf((*MockCache)(nil).InsertEntry), arg0)
 }
 
 // InsertOrderBookRow mocks base method
@@ -102,18 +97,6 @@ func (m *MockCache) InsertOrderBookRow(arg0 *models.OrderBookRow) {
 func (mr *MockCacheMockRecorder) InsertOrderBookRow(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOrderBookRow", reflect.TypeOf((*MockCache)(nil).InsertOrderBookRow), arg0)
-}
-
-// InsertPair mocks base method
-func (m *MockCache) InsertPair(arg0 string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "InsertPair", arg0)
-}
-
-// InsertPair indicates an expected call of InsertPair
-func (mr *MockCacheMockRecorder) InsertPair(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertPair", reflect.TypeOf((*MockCache)(nil).InsertPair), arg0)
 }
 
 // InsertTransaction mocks base method
@@ -140,20 +123,6 @@ func (m *MockCache) OrderBookRowsLength() int {
 func (mr *MockCacheMockRecorder) OrderBookRowsLength() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrderBookRowsLength", reflect.TypeOf((*MockCache)(nil).OrderBookRowsLength))
-}
-
-// PairsLength mocks base method
-func (m *MockCache) PairsLength() int {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PairsLength")
-	ret0, _ := ret[0].(int)
-	return ret0
-}
-
-// PairsLength indicates an expected call of PairsLength
-func (mr *MockCacheMockRecorder) PairsLength() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PairsLength", reflect.TypeOf((*MockCache)(nil).PairsLength))
 }
 
 // Purge mocks base method

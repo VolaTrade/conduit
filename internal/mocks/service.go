@@ -5,9 +5,7 @@
 package mocks
 
 import (
-	context "context"
 	gomock "github.com/golang/mock/gomock"
-	models "github.com/volatrade/conduit/internal/models"
 	socket "github.com/volatrade/conduit/internal/socket"
 	reflect "reflect"
 	sync "sync"
@@ -48,20 +46,6 @@ func (mr *MockServiceMockRecorder) BuildOrderBookChannels(arg0 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildOrderBookChannels", reflect.TypeOf((*MockService)(nil).BuildOrderBookChannels), arg0)
 }
 
-// BuildPairUrls mocks base method
-func (m *MockService) BuildPairUrls() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BuildPairUrls")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// BuildPairUrls indicates an expected call of BuildPairUrls
-func (mr *MockServiceMockRecorder) BuildPairUrls() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildPairUrls", reflect.TypeOf((*MockService)(nil).BuildPairUrls))
-}
-
 // BuildTransactionChannels mocks base method
 func (m *MockService) BuildTransactionChannels(arg0 int) {
 	m.ctrl.T.Helper()
@@ -74,94 +58,54 @@ func (mr *MockServiceMockRecorder) BuildTransactionChannels(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildTransactionChannels", reflect.TypeOf((*MockService)(nil).BuildTransactionChannels), arg0)
 }
 
-// CheckForDatabasePriveleges mocks base method
-func (m *MockService) CheckForDatabasePriveleges(arg0 *sync.WaitGroup) {
+// InsertPairsFromBinanceToCache mocks base method
+func (m *MockService) InsertPairsFromBinanceToCache() error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CheckForDatabasePriveleges", arg0)
-}
-
-// CheckForDatabasePriveleges indicates an expected call of CheckForDatabasePriveleges
-func (mr *MockServiceMockRecorder) CheckForDatabasePriveleges(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckForDatabasePriveleges", reflect.TypeOf((*MockService)(nil).CheckForDatabasePriveleges), arg0)
-}
-
-// CheckForExit mocks base method
-func (m *MockService) CheckForExit(arg0 *sync.WaitGroup, arg1 func()) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CheckForExit", arg0, arg1)
-}
-
-// CheckForExit indicates an expected call of CheckForExit
-func (mr *MockServiceMockRecorder) CheckForExit(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckForExit", reflect.TypeOf((*MockService)(nil).CheckForExit), arg0, arg1)
-}
-
-// GetOrderBookChannel mocks base method
-func (m *MockService) GetOrderBookChannel(arg0 int) chan *models.OrderBookRow {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrderBookChannel", arg0)
-	ret0, _ := ret[0].(chan *models.OrderBookRow)
+	ret := m.ctrl.Call(m, "InsertPairsFromBinanceToCache")
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// GetOrderBookChannel indicates an expected call of GetOrderBookChannel
-func (mr *MockServiceMockRecorder) GetOrderBookChannel(arg0 interface{}) *gomock.Call {
+// InsertPairsFromBinanceToCache indicates an expected call of InsertPairsFromBinanceToCache
+func (mr *MockServiceMockRecorder) InsertPairsFromBinanceToCache() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrderBookChannel", reflect.TypeOf((*MockService)(nil).GetOrderBookChannel), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertPairsFromBinanceToCache", reflect.TypeOf((*MockService)(nil).InsertPairsFromBinanceToCache))
 }
 
-// GetSocketsArrayLength mocks base method
-func (m *MockService) GetSocketsArrayLength() int {
+// ListenAndHandleDataChannels mocks base method
+func (m *MockService) ListenAndHandleDataChannels(arg0 int, arg1 *sync.WaitGroup, arg2 chan bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSocketsArrayLength")
-	ret0, _ := ret[0].(int)
-	return ret0
+	m.ctrl.Call(m, "ListenAndHandleDataChannels", arg0, arg1, arg2)
 }
 
-// GetSocketsArrayLength indicates an expected call of GetSocketsArrayLength
-func (mr *MockServiceMockRecorder) GetSocketsArrayLength() *gomock.Call {
+// ListenAndHandleDataChannels indicates an expected call of ListenAndHandleDataChannels
+func (mr *MockServiceMockRecorder) ListenAndHandleDataChannels(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSocketsArrayLength", reflect.TypeOf((*MockService)(nil).GetSocketsArrayLength))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenAndHandleDataChannels", reflect.TypeOf((*MockService)(nil).ListenAndHandleDataChannels), arg0, arg1, arg2)
 }
 
-// GetTransactionChannel mocks base method
-func (m *MockService) GetTransactionChannel(arg0 int) chan *models.Transaction {
+// ListenForDatabasePriveleges mocks base method
+func (m *MockService) ListenForDatabasePriveleges(arg0 *sync.WaitGroup) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransactionChannel", arg0)
-	ret0, _ := ret[0].(chan *models.Transaction)
-	return ret0
+	m.ctrl.Call(m, "ListenForDatabasePriveleges", arg0)
 }
 
-// GetTransactionChannel indicates an expected call of GetTransactionChannel
-func (mr *MockServiceMockRecorder) GetTransactionChannel(arg0 interface{}) *gomock.Call {
+// ListenForDatabasePriveleges indicates an expected call of ListenForDatabasePriveleges
+func (mr *MockServiceMockRecorder) ListenForDatabasePriveleges(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionChannel", reflect.TypeOf((*MockService)(nil).GetTransactionChannel), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenForDatabasePriveleges", reflect.TypeOf((*MockService)(nil).ListenForDatabasePriveleges), arg0)
 }
 
-// ListenAndHandle mocks base method
-func (m *MockService) ListenAndHandle(arg0 chan *models.Transaction, arg1 chan *models.OrderBookRow, arg2 int, arg3 *sync.WaitGroup, arg4 chan bool) {
+// ListenForExit mocks base method
+func (m *MockService) ListenForExit(arg0 *sync.WaitGroup, arg1 func()) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ListenAndHandle", arg0, arg1, arg2, arg3, arg4)
+	m.ctrl.Call(m, "ListenForExit", arg0, arg1)
 }
 
-// ListenAndHandle indicates an expected call of ListenAndHandle
-func (mr *MockServiceMockRecorder) ListenAndHandle(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+// ListenForExit indicates an expected call of ListenForExit
+func (mr *MockServiceMockRecorder) ListenForExit(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenAndHandle", reflect.TypeOf((*MockService)(nil).ListenAndHandle), arg0, arg1, arg2, arg3, arg4)
-}
-
-// ReportRunning mocks base method
-func (m *MockService) ReportRunning(arg0 *sync.WaitGroup, arg1 context.Context) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ReportRunning", arg0, arg1)
-}
-
-// ReportRunning indicates an expected call of ReportRunning
-func (mr *MockServiceMockRecorder) ReportRunning(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportRunning", reflect.TypeOf((*MockService)(nil).ReportRunning), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenForExit", reflect.TypeOf((*MockService)(nil).ListenForExit), arg0, arg1)
 }
 
 // SpawnSocketRoutines mocks base method

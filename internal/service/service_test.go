@@ -66,7 +66,7 @@ func TestTransactionChannelsToCache(t *testing.T) {
 	quit := make(chan bool)
 
 	wg.Add(1)
-	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
+	go ts.service.ListenAndHandleDataChannels(0, &wg, quit)
 	txChannel := ts.service.GetTransactionChannel(0)
 
 	for i := 0; i < 100; i++ {
@@ -88,7 +88,7 @@ func TestOrderBookChannelsToCache(t *testing.T) {
 	quit := make(chan bool)
 
 	wg.Add(1)
-	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
+	go ts.service.ListenAndHandleDataChannels(0, &wg, quit)
 	obChannel := ts.service.GetOrderBookChannel(0)
 
 	for i := 0; i < 100; i++ {
@@ -131,7 +131,7 @@ func TestCheckForDatabasePriveleges(t *testing.T) {
 	println("Directory ---> ", dir)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go ts.service.CheckForDatabasePriveleges(&wg)
+	go ts.service.ListenForDatabasePriveleges(&wg)
 	wg.Wait()
 
 	assert.Equal(t, 0, ts.cache.TransactionsLength())

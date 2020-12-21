@@ -83,21 +83,30 @@ func (ts *ConduitService) handleOrderBookRow(tx *models.OrderBookRow, index int)
 }
 
 //InsertPairsFromBinanceToCache reads all trading pairs from Binance and then proceeds to store them as keys in cache
-func (ts *ConduitService) InsertPairsFromBinanceToCache() error {
+func (cs *ConduitService) InsertPairsFromBinanceToCache() error {
 
-	tradingPairs, err := ts.requests.GetActiveBinanceExchangePairs()
+	tradingPairs, err := cs.requests.GetActiveBinanceExchangePairs()
 
 	if err != nil {
-		ts.logger.Errorw(err.Error())
+		cs.logger.Errorw(err.Error())
 		return err
 	}
 
 	for _, pair := range tradingPairs {
 
 		if pair == "btcusdt" || pair == "ethusdt" || pair == "xrpusdt" {
-			ts.cache.InsertEntry(pair)
+			cs.cache.InsertEntry(pair)
 		}
 	}
 
 	return nil
+}
+
+func (cs *ConduitService) GetOrderBookChannel(index int) chan *models.OrderBookRow {
+
+	return cs.orderBookChannels[index]
+}
+
+func (cs *ConduitService) GetTransactionChannel(index int) chan *models.Transaction {
+	return cs.transactionChannels[index]
 }
