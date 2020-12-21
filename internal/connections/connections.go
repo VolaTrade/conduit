@@ -8,7 +8,7 @@ import (
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/postgres"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 )
 
 var Module = wire.NewSet(
@@ -27,13 +27,11 @@ type ConnectionArray struct {
 	Arr []*postgres.DB
 }
 
-func New(cfg *postgres.Config, statz *stats.StatsD) *ConnectionArray {
+func New(cfg *postgres.Config, kstats *stats.Stats) *ConnectionArray {
 	arr := make([]*postgres.DB, 3)
 
 	for i := 0; i < 3; i++ {
-		temp_stats := stats.StatsD{}
-		temp_stats.Client = statz.Client.Clone()
-		tempDB := postgres.New(cfg, &temp_stats)
+		tempDB := postgres.New(cfg, kstats)
 		arr[i] = tempDB
 	}
 

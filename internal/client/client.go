@@ -1,11 +1,10 @@
 //go:generate mockgen -package=mocks -destination=../mocks/client.go github.com/volatrade/conduit/internal/client Client
 
-
 package client
 
 import (
 	"github.com/google/wire"
-	"github.com/volatrade/conduit/k-stats"
+	stats "github.com/volatrade/k-stats"
 )
 
 var Module = wire.NewSet(
@@ -17,9 +16,9 @@ type Client interface {
 }
 
 type ApiClient struct {
-	statsd *stats.StatsD
+	kstats *stats.Stats
 }
 
-func New(stats *stats.StatsD) *ApiClient {
-	return &ApiClient{statsd: stats}
+func New(stats *stats.Stats) *ApiClient {
+	return &ApiClient{kstats: stats}
 }

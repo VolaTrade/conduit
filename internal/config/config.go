@@ -7,7 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/volatrade/conduit/internal/postgres"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -40,7 +40,7 @@ func NewConfig(fileName FilePath) *Config {
 	// }
 	env := os.Getenv("ENV")
 
-	if env != "DEV" && env != "PRD" {
+	if env != "DEV" && env != "PRD" && env != "INTEG" {
 		log.Println("ENV ==>", env)
 		log.Fatal("ENV var in config.env isn't set properly")
 	}

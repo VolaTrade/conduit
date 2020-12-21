@@ -13,7 +13,7 @@ import (
 	"github.com/volatrade/conduit/internal/connections"
 	"github.com/volatrade/conduit/internal/driver"
 	"github.com/volatrade/conduit/internal/service"
-	"github.com/volatrade/conduit/internal/stats"
+	"github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -23,17 +23,17 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, error) {
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
 	statsConfig := config.NewStatsConfig(configConfig)
-	statsD, err := stats.New(statsConfig)
+	statsStats, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, err
 	}
-	connectionArray := connections.New(postgresConfig, statsD)
+	connectionArray := connections.New(postgresConfig, statsStats)
 	conduitCache := cache.New()
-	apiClient := client.New(statsD)
+	apiClient := client.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitService := service.New(connectionArray, conduitCache, apiClient, statsD, slackLogger)
-	conduitDriver := driver.New(conduitService, statsD)
+	conduitService := service.New(connectionArray, conduitCache, apiClient, statsStats, slackLogger)
+	conduitDriver := driver.New(conduitService, statsStats)
 	return conduitDriver, nil
 }
 

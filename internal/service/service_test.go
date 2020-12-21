@@ -13,7 +13,7 @@ import (
 	"github.com/volatrade/conduit/internal/mocks"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/service"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 )
 
 type testSuite struct {
@@ -49,9 +49,9 @@ func TestMain(m *testing.M) {
 
 }
 
-//TODO remove return after stats updates 
+//TODO remove return after stats updates
 func TestTransactionChannelsToCache(t *testing.T) {
-	return 
+	return
 	ts := createTestSuite(t)
 
 	ts.service.BuildTransactionChannels(1)
@@ -73,9 +73,9 @@ func TestTransactionChannelsToCache(t *testing.T) {
 	assert.True(t, ts.cache.TransactionsLength() == 100)
 }
 
-//TODO remove return after stats updates 
+//TODO remove return after stats updates
 func TestOrderBookChannelsToCache(t *testing.T) {
-	return 
+	return
 	ts := createTestSuite(t)
 
 	ts.service.BuildTransactionChannels(1)

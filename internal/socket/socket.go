@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/volatrade/conduit/internal/models"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 )
 
 type (
@@ -18,11 +18,11 @@ type (
 		OrderBookChannel      chan *models.OrderBookRow
 		transactionConnection *websocket.Conn
 		orderBookConnection   *websocket.Conn
-		statsd                *stats.StatsD
+		kstats                *stats.Stats
 	}
 )
 
-func NewSocket(txUrl string, obUrl string, pair string, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.StatsD) (*BinanceSocket, error) {
+func NewSocket(txUrl string, obUrl string, pair string, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats) (*BinanceSocket, error) {
 
 	socket := &BinanceSocket{
 		transactionUrl:        txUrl,
@@ -32,7 +32,7 @@ func NewSocket(txUrl string, obUrl string, pair string, txChannel chan *models.T
 		orderBookConnection:   nil,
 		TransactionChannel:    txChannel,
 		OrderBookChannel:      obChannel,
-		statsd:                statz,
+		kstats:                statz,
 	}
 	return socket, nil
 }
@@ -54,7 +54,7 @@ func (bs *BinanceSocket) ReadMessage(messageType string) ([]byte, error) {
 	//println("Message received -->", message)
 
 	//println("URl --->", bs.orderBookUrl)
-	bs.statsd.Client.Increment(fmt.Sprintf("conduit.socket_reads.%s", bs.Pair))
+	bs.kstats.Increment(fmt.Sprintf("conduit.socket_reads.%s", bs.Pair), 1.0)
 	return message, err
 }
 
