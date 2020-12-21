@@ -16,7 +16,7 @@ import (
 	"github.com/volatrade/conduit/internal/connections"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/socket"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -47,20 +47,20 @@ type (
 		connections         connections.Connections
 		exch                client.Client
 		slack               slack.Slack
-		statsd              *stats.StatsD
+		kstats              *stats.Stats
 		transactionChannels []chan *models.Transaction
 		orderBookChannels   []chan *models.OrderBookRow
 		writeToDB           bool
 	}
 )
 
-func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.StatsD, slackz slack.Slack) *ConduitService {
+func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, stats *stats.Stats, slackz slack.Slack) *ConduitService {
 
 	return &ConduitService{
 		cache:       ch,
 		connections: conns,
 		exch:        cl,
-		statsd:      stats,
+		kstats:      stats,
 		writeToDB:   false,
 		id:          fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute()),
 		slack:       slackz,
@@ -69,7 +69,7 @@ func New(conns connections.Connections, ch cache.Cache, cl *client.ApiClient, st
 
 func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
-	ts.statsd.Client.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 1)
+	ts.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 1.0) //should this Gauge be 1?
 
 	for {
 
@@ -77,7 +77,7 @@ func (ts *ConduitService) ReportRunning(wg *sync.WaitGroup, ctx context.Context)
 
 		case <-ctx.Done():
 			println("Reporting zero")
-			ts.statsd.Client.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 0)
+			ts.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", ts.id), 0.0)
 			return
 
 		}
@@ -192,9 +192,7 @@ func (ts *ConduitService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSo
 
 		transactionURL, orderBookURL, pair := ts.GetUrlsAndPair(i)
 
-		temp_stats := stats.StatsD{}                 //fix me
-		temp_stats.Client = ts.statsd.Client.Clone() // fix me.. I am uneccesary
-		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], &temp_stats)
+		socket, err := socket.NewSocket(transactionURL, orderBookURL, pair, ts.transactionChannels[j], ts.orderBookChannels[j], ts.kstats)
 
 		if err != nil {
 			fmt.Println(err)
@@ -214,11 +212,11 @@ func (ts *ConduitService) GetSocketsArrayLength() int {
 func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertTransactionToDataBase(tx, index)
-		ts.statsd.Client.Increment(".conduit.sqlinserts.tx")
+		ts.kstats.Increment(".conduit.sqlinserts.tx", 1.0)
 
 	} else {
 		ts.cache.InsertTransaction(tx)
-		ts.statsd.Client.Increment(".conduit.cacheinserts.tx")
+		ts.kstats.Increment(".conduit.cacheinserts.tx", 1.0)
 
 	}
 }
@@ -226,11 +224,11 @@ func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {
 func (ts *ConduitService) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if ts.writeToDB {
 		ts.connections.InsertOrderBookRowToDataBase(tx, index)
-		ts.statsd.Client.Increment(".conduit.sqlinserts.ob")
+		ts.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
 
 	} else {
 		ts.cache.InsertOrderBookRow(tx)
-		ts.statsd.Client.Increment(".conduit.cacheinserts.ob")
+		ts.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
 
 	}
 }

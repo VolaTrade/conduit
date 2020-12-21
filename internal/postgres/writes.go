@@ -23,7 +23,7 @@ func (postgres *DB) InsertOrderBookRow(obUpdate *models.OrderBookRow) error {
 	}
 
 	if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-		postgres.statz.Client.Increment(fmt.Sprintf("conduit.duplicate_inserts.%s", obUpdate.Pair))
+		postgres.kstats.Increment(fmt.Sprintf("conduit.duplicate_inserts.%s", obUpdate.Pair), 1.0)
 	}
 
 	return nil
@@ -43,7 +43,7 @@ func (postgres *DB) InsertTransaction(transaction *models.Transaction) error {
 		return err
 	}
 	if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-		postgres.statz.Client.Increment(fmt.Sprintf("conduit.duplicate_inserts.%s", transaction.Pair))
+		postgres.kstats.Increment(fmt.Sprintf("conduit.duplicate_inserts.%s", transaction.Pair), 1.0)
 	}
 
 	return err
@@ -72,7 +72,7 @@ func (postgres *DB) BulkInsertTransactions(transactionList []*models.Transaction
 		}
 
 		if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-			postgres.statz.Client.Increment(fmt.Sprintf("conduit.duplicate_inserts.tx.%s", transaction.Pair))
+			postgres.kstats.Increment(fmt.Sprintf("conduit.duplicate_inserts.tx.%s", transaction.Pair), 1.0)
 		}
 		if err != nil {
 			tx.Rollback()
@@ -110,7 +110,7 @@ func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow
 		}
 
 		if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-			postgres.statz.Client.Increment(fmt.Sprintf("conduit.duplicate_inserts.ob.%s", orderBookRow.Pair))
+			postgres.kstats.Increment(fmt.Sprintf("conduit.duplicate_inserts.ob.%s", orderBookRow.Pair), 1.0)
 		}
 		if err != nil {
 			tx.Rollback()

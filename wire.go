@@ -10,7 +10,7 @@ import (
 	"github.com/volatrade/conduit/internal/connections"
 	"github.com/volatrade/conduit/internal/driver"
 	"github.com/volatrade/conduit/internal/service"
-	"github.com/volatrade/conduit/internal/stats"
+	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
