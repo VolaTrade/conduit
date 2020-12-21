@@ -14,29 +14,35 @@ import (
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/service"
 	"github.com/volatrade/conduit/internal/stats"
+	logger "github.com/volatrade/currie-logs"
 )
 
 type testSuite struct {
 	mockController  *gomock.Controller
-	mockConnections *mocks.MockConnections
+	mockConnections *mocks.MockStorageConnections
 	service         *service.ConduitService
 	cache           cache.Cache
-	client          *mocks.MockClient
+	mockRequests    *mocks.MockRequests
 }
 
 func createTestSuite(t *testing.T) testSuite {
 	mockController := gomock.NewController(t)
 	fakeStats, _ := stats.New(&stats.Config{Host: "localhost", Port: 8080, Env: "DEV"})
-	cache := cache.New()
-	mockConnections := mocks.NewMockConnections(mockController)
 
-	svc := service.New(mockConnections, cache, nil, fakeStats, nil)
+	cache := cache.New(logger.NewNoop())
+
+	mockConnections := mocks.NewMockStorageConnections(mockController)
+
+	mockRequests := mocks.NewMockRequests(mockController)
+
+	svc := service.New(mockConnections, cache, nil, fakeStats, nil, logger.NewNoop())
 
 	return testSuite{
 		mockController:  mockController,
 		service:         svc,
 		mockConnections: mockConnections,
 		cache:           cache,
+		mockRequests:    mockRequests,
 	}
 
 }
@@ -49,9 +55,9 @@ func TestMain(m *testing.M) {
 
 }
 
-//TODO remove return after stats updates 
+//TODO remove return after stats updates
 func TestTransactionChannelsToCache(t *testing.T) {
-	return 
+	return
 	ts := createTestSuite(t)
 
 	ts.service.BuildTransactionChannels(1)
@@ -61,7 +67,6 @@ func TestTransactionChannelsToCache(t *testing.T) {
 
 	wg.Add(1)
 	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
-	println("HERE")
 	txChannel := ts.service.GetTransactionChannel(0)
 
 	for i := 0; i < 100; i++ {
@@ -73,9 +78,9 @@ func TestTransactionChannelsToCache(t *testing.T) {
 	assert.True(t, ts.cache.TransactionsLength() == 100)
 }
 
-//TODO remove return after stats updates 
+//TODO remove return after stats updates
 func TestOrderBookChannelsToCache(t *testing.T) {
-	return 
+	return
 	ts := createTestSuite(t)
 
 	ts.service.BuildTransactionChannels(1)
@@ -85,7 +90,6 @@ func TestOrderBookChannelsToCache(t *testing.T) {
 
 	wg.Add(1)
 	go ts.service.ListenAndHandle(ts.service.GetTransactionChannel(0), ts.service.GetOrderBookChannel(0), 0, &wg, quit)
-	println("HERE")
 	obChannel := ts.service.GetOrderBookChannel(0)
 
 	for i := 0; i < 100; i++ {
@@ -134,13 +138,6 @@ func TestCheckForDatabasePriveleges(t *testing.T) {
 	assert.Equal(t, 0, ts.cache.TransactionsLength())
 	assert.Equal(t, 0, ts.cache.TransactionsLength())
 	os.Remove("start")
-}
-
-func TestBuildPairUrls(t *testing.T) {
-	ts := createTestSuite(t)
-
-	res := ts.service.BuildPairUrls()
-	assert.True(t, res == nil)
 }
 
 func TestBuildOrderBookChannels(t *testing.T) {

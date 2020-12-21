@@ -1,4 +1,4 @@
-//go:generate mockgen -package=mocks -destination=../mocks/connections.go github.com/volatrade/conduit/internal/connections Connections
+//go:generate mockgen -package=mocks -destination=../mocks/store.go github.com/volatrade/conduit/internal/store StorageConnections
 
 package store
 

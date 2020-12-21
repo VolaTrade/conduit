@@ -71,6 +71,8 @@ github.com/volatrade/currie-logs v0.0.2 h1:eFJhWy9Kys3Vw0sftdauqty5h1UMs+zhXHr/S
 github.com/volatrade/currie-logs v0.0.2/go.mod h1:He7KroLJoT56e3blB5nNGDIuOeg6D4RvIDxYomVvdwo=
 github.com/volatrade/currie-logs v0.0.3 h1:LjxFOPPVxIK+ESpOQUoaeEgqy7IYtner245/khxutM0=
 github.com/volatrade/currie-logs v0.0.3/go.mod h1:He7KroLJoT56e3blB5nNGDIuOeg6D4RvIDxYomVvdwo=
+github.com/volatrade/currie-logs v0.0.4 h1:DR882dZNe3aUcXa823AYB4uKvcDv1h8wLrAp55NuPa0=
+github.com/volatrade/currie-logs v0.0.4/go.mod h1:He7KroLJoT56e3blB5nNGDIuOeg6D4RvIDxYomVvdwo=
 github.com/volatrade/utilities v0.0.0-20200917055431-bc1341e02872 h1:+EB2xex97esOyCRXmPXtrrn0FtTaZdxJfg5mEod65cM=
 github.com/volatrade/utilities v0.0.0-20200917055431-bc1341e02872/go.mod h1:5SYTOLmtjW0oSi3DQU/05g9IwzgtcH+04EJdabsr3EQ=
 github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496 h1:cNZVKHmIglYOp7Z+58Elx4m8kZ8RzoogL2Z5lOZo8cc=

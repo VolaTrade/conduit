@@ -7,10 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/models"
+	log "github.com/volatrade/currie-logs"
 )
 
+var logger = log.NewNoop()
+
 func TestInsertTransactionValueGetAndLength(t *testing.T) {
-	c := cache.New()
+	c := cache.New(logger)
 
 	c.InsertTransaction(&models.Transaction{Price: 19})
 	assert.True(t, c.TransactionsLength() == 1)
@@ -24,7 +27,7 @@ func TestInsertTransactionValueGetAndLength(t *testing.T) {
 }
 
 func TestInsertOrderBookValueGetAndLength(t *testing.T) {
-	c := cache.New()
+	c := cache.New(logger)
 
 	c.InsertOrderBookRow(&models.OrderBookRow{Id: 19})
 	assert.True(t, c.OrderBookRowsLength() == 1)
@@ -35,7 +38,7 @@ func TestInsertOrderBookValueGetAndLength(t *testing.T) {
 	assert.True(t, c.GetAllOrderBookRows()[0].Id == 19)
 	assert.True(t, c.GetAllOrderBookRows()[1].Id == 34)
 
-	c = cache.New()
+	c = cache.New(logger)
 
 	for i := 1; i <= 39; i += 1 {
 		c.InsertOrderBookRow(&models.OrderBookRow{Id: i})
@@ -46,7 +49,7 @@ func TestInsertOrderBookValueGetAndLength(t *testing.T) {
 }
 
 func TestPurge(t *testing.T) {
-	c := cache.New()
+	c := cache.New(logger)
 
 	c.InsertOrderBookRow(&models.OrderBookRow{Id: 19})
 	c.InsertOrderBookRow(&models.OrderBookRow{Id: 34})
@@ -63,7 +66,7 @@ func TestPurge(t *testing.T) {
 }
 
 func TestTransactionUrlsInsertAndGet(t *testing.T) {
-	c := cache.New()
+	c := cache.New(logger)
 	pairs := []string{"ethusdt", "BTcUSdt"}
 
 	for _, pair := range pairs {

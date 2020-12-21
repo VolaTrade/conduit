@@ -119,6 +119,7 @@ func (ts *ConduitService) CheckForExit(wg *sync.WaitGroup, exit func()) {
 	defer wg.Done()
 	for {
 		if _, err := os.Stat("finish"); err == nil {
+			ts.logger.Infow("Finish signal recieved")
 			exit()
 			return
 		}

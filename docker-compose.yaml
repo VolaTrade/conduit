@@ -1,11 +1,11 @@
 version: "3.8"
 
 services:
-        filebeat:
-                image: "docker.elastic.co/beats/filebeat:7.2.0"
-                user: root
-                volumes:
-                        - $PWD/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-                        - /var/lib/docker:/var/lib/docker:ro
-                        - /var/run/docker.sock:/var/run/docker.sock
-
+  loki:
+    container_name: loki
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=local-config.yaml
+    volumes:
+      - ./volumes/loki/etc:/etc/loki

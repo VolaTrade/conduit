@@ -90,7 +90,7 @@ func NewSlackConfig(cfg *Config) *slack.Config {
 
 func NewLoggerConfig(cfg *Config) *logger.Config {
 	log.Println("Logger config --->", cfg.LoggerConfig)
-	return &cfg.LoggerConfig
+	return nil
 }
 
 // func NewDriverConfig(cfg *Config) *driver.Config {
