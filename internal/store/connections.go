@@ -3,6 +3,8 @@
 package store
 
 import (
+	"log"
+
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/store/postgres"
@@ -29,7 +31,7 @@ type (
 	}
 )
 
-func New(cfg *postgres.Config, kstats *stats.Stats) *ConduitStorageConnections {
+func New(cfg *postgres.Config, kstats *stats.Stats) (*ConduitStorageConnections, func()) {
 	arr := make([]*postgres.DB, 3)
 
 	for i := 0; i < 3; i++ {
@@ -37,7 +39,17 @@ func New(cfg *postgres.Config, kstats *stats.Stats) *ConduitStorageConnections {
 		arr[i] = tempDB
 	}
 
-	return &ConduitStorageConnections{postgresConnections: arr}
+	close := func() {
+
+		for _, conn := range arr {
+			if err := conn.Close(); err != nil {
+				log.Printf("Error obtained closing connection: %+v", err)
+			}
+		}
+
+	}
+
+	return &ConduitStorageConnections{postgresConnections: arr}, close
 }
 
 func (ca *ConduitStorageConnections) MakeConnections() {

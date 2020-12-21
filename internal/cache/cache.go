@@ -3,7 +3,6 @@
 package cache
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -27,20 +26,18 @@ type (
 	Cache interface {
 		GetAllOrderBookRows() []*models.OrderBookRow
 		GetAllTransactions() []*models.Transaction
-		GetPair(index int) (string, error)
-		GetTransactionOrderBookUrls(index int) (string, string, error)
 		InsertOrderBookRow(obRow *models.OrderBookRow)
 		InsertTransaction(transact *models.Transaction)
-		InsertPair(pair string)
+		InsertEntry(pair string)
+		GetEntries() []*models.CacheEntry
 		OrderBookRowsLength() int
-		PairsLength() int
 		Purge()
 		TransactionsLength() int
 	}
 
 	ConduitCache struct {
 		logger        *log.Logger
-		pairs         []string
+		entries       []*models.CacheEntry
 		transactions  []*models.Transaction
 		orderBookData []*models.OrderBookRow
 		txMux         sync.Mutex
@@ -49,10 +46,10 @@ type (
 )
 
 func New(logger *log.Logger) *ConduitCache {
-	
+
 	return &ConduitCache{
 		logger:        logger,
-		pairs:         make([]string, 0),
+		entries:       make([]*models.CacheEntry, 0),
 		transactions:  make([]*models.Transaction, 0),
 		orderBookData: make([]*models.OrderBookRow, 0),
 	}
@@ -69,14 +66,6 @@ func getOrderBookUrlString(pair string) string {
 	return socketUrl.String()
 }
 
-func (tc *ConduitCache) GetTransactionOrderBookUrls(index int) (string, string, error) {
-
-	if index < 0 || index >= len(tc.pairs) {
-		return "", "", errors.New(OUT_OF_BOUNDS_ERROR)
-	}
-	return getTransactionUrlString(tc.pairs[index]), getOrderBookUrlString(tc.pairs[index]), nil
-}
-
 func (tc *ConduitCache) GetAllTransactions() []*models.Transaction {
 	return tc.transactions
 }
@@ -85,14 +74,46 @@ func (tc *ConduitCache) GetAllOrderBookRows() []*models.OrderBookRow {
 	return tc.orderBookData
 }
 
-func (tc *ConduitCache) GetPair(index int) (string, error) {
-	if index < 0 || index >= len(tc.pairs) {
-		return "", errors.New(OUT_OF_BOUNDS_ERROR)
-	}
+func (cc *ConduitCache) InsertEntry(pair string) {
 
-	return tc.pairs[index], nil
+	entry := &models.CacheEntry{Pair: pair, TxUrl: getTransactionUrlString(pair), ObUrl: getOrderBookUrlString(pair)}
+	cc.entries = append(cc.entries, entry)
 }
 
+func (cc *ConduitCache) InsertTransaction(transact *models.Transaction) {
+
+	if transact == nil {
+		return
+	}
+
+	cc.txMux.Lock()
+	defer cc.txMux.Unlock()
+	cc.transactions = append(cc.transactions, transact)
+	cc.logger.Debugw("cache insertion", "type", "transaction", "current length", cc.OrderBookRowsLength())
+}
+
+func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
+	if obRow == nil {
+		return
+	}
+
+	cc.obMux.Lock()
+	defer cc.obMux.Unlock()
+	cc.orderBookData = append(cc.orderBookData, obRow)
+
+	cc.logger.Debugw("cache insertion", "type", "orderbook snapshot", "current length", cc.OrderBookRowsLength())
+}
+
+func (cc *ConduitCache) Purge() {
+	cc.transactions = nil
+	cc.orderBookData = nil
+}
+
+func (cc *ConduitCache) GetEntries() []*models.CacheEntry {
+	return cc.entries
+}
+
+//TransactionsLength used for testing && debuging
 func (tc *ConduitCache) TransactionsLength() int {
 	if tc.transactions != nil {
 		return len(tc.transactions)
@@ -100,48 +121,11 @@ func (tc *ConduitCache) TransactionsLength() int {
 	return 0
 }
 
+//OrderBookRowsLength used for testing && debuging
 func (tc *ConduitCache) OrderBookRowsLength() int {
 
 	if tc.orderBookData != nil {
 		return len(tc.orderBookData)
 	}
 	return 0
-}
-
-func (tc *ConduitCache) PairsLength() int {
-	return len(tc.pairs)
-}
-
-func (tc *ConduitCache) InsertPair(pair string) {
-	tc.pairs = append(tc.pairs, pair)
-
-}
-
-func (tc *ConduitCache) InsertTransaction(transact *models.Transaction) {
-
-	if transact == nil {
-		return
-	}
-
-	tc.txMux.Lock()
-	defer tc.txMux.Unlock()
-	tc.transactions = append(tc.transactions, transact)
-}
-
-func (tc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
-	if obRow == nil {
-		return
-	}
-
-	tc.obMux.Lock()
-	defer tc.obMux.Unlock()
-	tc.orderBookData = append(tc.orderBookData, obRow)
-
-	tc.logger.Infow("Cache Length", "value", tc.OrderBookRowsLength())
-}
-
-func (tc *ConduitCache) Purge() {
-	tc.transactions = nil
-	tc.orderBookData = nil
-	tc.pairs = nil
 }

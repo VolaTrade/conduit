@@ -10,6 +10,7 @@ import (
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
 	"github.com/volatrade/conduit/internal/driver"
+	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/service"
 	"github.com/volatrade/conduit/internal/store"
@@ -28,10 +29,11 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	conduitStorageConnections := store.New(postgresConfig, statsStats)
+	conduitStorageConnections, cleanup := store.New(postgresConfig, statsStats)
 	loggerConfig := config.NewLoggerConfig(configConfig)
-	loggerLogger, cleanup, err := logger.New(loggerConfig)
+	loggerLogger, cleanup2, err := logger.New(loggerConfig)
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
 	conduitCache := cache.New(loggerLogger)
@@ -39,8 +41,10 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
 	conduitService := service.New(conduitStorageConnections, conduitCache, conduitRequests, statsStats, slackLogger, loggerLogger)
-	conduitDriver := driver.New(conduitService, statsStats)
+	session := models.NewSession(loggerLogger)
+	conduitDriver := driver.New(conduitService, statsStats, session, loggerLogger)
 	return conduitDriver, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

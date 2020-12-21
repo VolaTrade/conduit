@@ -32,8 +32,8 @@ type (
 	}
 )
 
-func New(cfg *Config, statsdClient *stats.Stats) *DB {
-	postgres := &DB{config: cfg, kstats: statsdClient}
+func New(cfg *Config, kstats *stats.Stats) *DB {
+	postgres := &DB{config: cfg, kstats: kstats}
 
 	return postgres
 }

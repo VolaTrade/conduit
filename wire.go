@@ -7,6 +7,7 @@ import (
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
 	"github.com/volatrade/conduit/internal/driver"
+	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/service"
 	"github.com/volatrade/conduit/internal/store"
@@ -63,6 +64,7 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 			config.NewLoggerConfig,
 			logger.New,
 			stats.New,
+			models.NewSession,
 			storageModule,
 			slackModule,
 			requestsModule,

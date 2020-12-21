@@ -58,7 +58,6 @@ func TestMain(m *testing.M) {
 
 //TODO remove return after stats updates
 func TestTransactionChannelsToCache(t *testing.T) {
-	return
 	ts := createTestSuite(t)
 
 	ts.service.BuildTransactionChannels(1)
@@ -81,7 +80,6 @@ func TestTransactionChannelsToCache(t *testing.T) {
 
 //TODO remove return after stats updates
 func TestOrderBookChannelsToCache(t *testing.T) {
-	return
 	ts := createTestSuite(t)
 
 	ts.service.BuildTransactionChannels(1)
