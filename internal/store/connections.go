@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/store/postgres"
+	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 )
 
@@ -31,11 +32,11 @@ type (
 	}
 )
 
-func New(cfg *postgres.Config, kstats *stats.Stats) (*ConduitStorageConnections, func()) {
+func New(cfg *postgres.Config, kstats *stats.Stats, logger *logger.Logger) (*ConduitStorageConnections, func()) {
 	arr := make([]*postgres.DB, 3)
 
 	for i := 0; i < 3; i++ {
-		tempDB := postgres.New(cfg, kstats)
+		tempDB := postgres.New(cfg, kstats, logger)
 		arr[i] = tempDB
 	}
 

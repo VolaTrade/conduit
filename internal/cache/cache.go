@@ -45,6 +45,7 @@ type (
 	}
 )
 
+//New ... constructor
 func New(logger *log.Logger) *ConduitCache {
 
 	return &ConduitCache{
@@ -55,53 +56,64 @@ func New(logger *log.Logger) *ConduitCache {
 	}
 
 }
+
+//getTransactionUrlString builds transaction websocket url from pair
 func getTransactionUrlString(pair string) string {
 	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@trade")
 	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
 	return socketUrl.String()
 }
+
+//getOrderBookUrlString builds orderbook websocket url from pair
 func getOrderBookUrlString(pair string) string {
 	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@depth10@1000ms")
 	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
 	return socketUrl.String()
 }
 
-func (tc *ConduitCache) GetAllTransactions() []*models.Transaction {
-	return tc.transactions
+//GetAllTransactions returns cache slice of Transaction model struct
+func (cc *ConduitCache) GetAllTransactions() []*models.Transaction {
+	return cc.transactions
 }
 
-func (tc *ConduitCache) GetAllOrderBookRows() []*models.OrderBookRow {
-	return tc.orderBookData
+//GetAllOrderBookRows returns cache slice of OrderBookRow model struct
+func (cc *ConduitCache) GetAllOrderBookRows() []*models.OrderBookRow {
+	return cc.orderBookData
 }
 
+//InsertEntry takes pair, builds URLs, appends data to Entry model struct, then adds struct to cache
 func (cc *ConduitCache) InsertEntry(pair string) {
 
 	entry := &models.CacheEntry{Pair: pair, TxUrl: getTransactionUrlString(pair), ObUrl: getOrderBookUrlString(pair)}
 	cc.entries = append(cc.entries, entry)
 }
 
+//InsertTransaction inserts Transaction model struct to cache
 func (cc *ConduitCache) InsertTransaction(transact *models.Transaction) {
 
 	if transact == nil {
+		cc.logger.Infow("Nil value passed in")
 		return
 	}
 
+	cc.logger.Debugw("cache insertion", "type", "transaction", "cache length", cc.OrderBookRowsLength())
 	cc.txMux.Lock()
 	defer cc.txMux.Unlock()
 	cc.transactions = append(cc.transactions, transact)
-	cc.logger.Debugw("cache insertion", "type", "transaction", "current length", cc.OrderBookRowsLength())
 }
 
+//InsertOrderBookRow inserts OrderBookRow model struct to cache
 func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 	if obRow == nil {
+		cc.logger.Infow("Nil value passed in")
 		return
 	}
 
+	cc.logger.Infow("cache insertion", "type", "orderbook snapshot", "cache length", cc.OrderBookRowsLength())
 	cc.obMux.Lock()
 	defer cc.obMux.Unlock()
 	cc.orderBookData = append(cc.orderBookData, obRow)
 
-	cc.logger.Debugw("cache insertion", "type", "orderbook snapshot", "current length", cc.OrderBookRowsLength())
 }
 
 func (cc *ConduitCache) Purge() {
@@ -109,6 +121,7 @@ func (cc *ConduitCache) Purge() {
 	cc.orderBookData = nil
 }
 
+//GetEntries returns slice of CacheEntry struct
 func (cc *ConduitCache) GetEntries() []*models.CacheEntry {
 	return cc.entries
 }

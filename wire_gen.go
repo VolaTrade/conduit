@@ -29,13 +29,12 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	conduitStorageConnections, cleanup := store.New(postgresConfig, statsStats)
 	loggerConfig := config.NewLoggerConfig(configConfig)
-	loggerLogger, cleanup2, err := logger.New(loggerConfig)
+	loggerLogger, cleanup, err := logger.New(loggerConfig)
 	if err != nil {
-		cleanup()
 		return nil, nil, err
 	}
+	conduitStorageConnections, cleanup2 := store.New(postgresConfig, statsStats, loggerLogger)
 	conduitCache := cache.New(loggerLogger)
 	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)

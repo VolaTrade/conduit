@@ -64,37 +64,3 @@ func TestPurge(t *testing.T) {
 	assert.True(t, c.OrderBookRowsLength() == 0)
 
 }
-
-// func TestTransactionUrlsInsertAndGet(t *testing.T) {
-// 	c := cache.New(logger)
-// 	pairs := []string{"ethusdt", "BTcUSdt"}
-
-// 	for _, pair := range pairs {
-// 		c.InsertPair(pair)
-// 	}
-
-// 	var txUrl string
-// 	var odUrl string
-// 	var err error
-
-// 	txUrl, odUrl, err = c.GetTransactionOrderBookUrls(0)
-
-// 	assert.Nil(t, err)
-// 	assert.True(t, txUrl == "wss://stream.binance.com:9443/ws/ethusdt@trade")
-// 	assert.True(t, odUrl == "wss://stream.binance.com:9443/ws/ethusdt@depth10@1000ms")
-
-// 	txUrl, odUrl, err = c.GetTransactionOrderBookUrls(1)
-
-// 	assert.Nil(t, err)
-// 	assert.True(t, txUrl == "wss://stream.binance.com:9443/ws/btcusdt@trade")
-// 	assert.True(t, odUrl == "wss://stream.binance.com:9443/ws/btcusdt@depth10@1000ms")
-
-// 	txUrl, odUrl, err = c.GetTransactionOrderBookUrls(5)
-
-// 	assert.True(t, txUrl == "")
-// 	assert.True(t, odUrl == "")
-// 	assert.True(t, err.Error() == cache.OUT_OF_BOUNDS_ERROR)
-
-// 	assert.True(t, c.PairsLength() == 2)
-
-// }

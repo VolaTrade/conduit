@@ -7,6 +7,7 @@ import (
 	"github.com/google/wire"
 	_ "github.com/jackc/pgx/stdlib" //driver
 	"github.com/jmoiron/sqlx"
+	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 )
 
@@ -29,10 +30,11 @@ type (
 		DB     *sqlx.DB
 		config *Config
 		kstats *stats.Stats
+		logger *logger.Logger
 	}
 )
 
-func New(cfg *Config, kstats *stats.Stats) *DB {
+func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) *DB {
 	postgres := &DB{config: cfg, kstats: kstats}
 
 	return postgres
