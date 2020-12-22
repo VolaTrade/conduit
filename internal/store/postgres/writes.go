@@ -105,6 +105,7 @@ func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow
 		result, err := stmt.Exec(orderBookRow)
 
 		if err != nil {
+			postgres.logger.Errorw(err.Error(), "description", "executing query")
 			tx.Rollback()
 			return err
 		}

@@ -29,9 +29,6 @@ ecr-push-image:
 ecr-login:
 	aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_URI}
 
-run:
-	python3 control_panel/driver.py
-
 tag:
 	git tag ${NEW_VERSION} && echo ${NEW_VERSION} >> version
 

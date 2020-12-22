@@ -2,15 +2,16 @@ package socket
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/gorilla/websocket"
 	"github.com/volatrade/conduit/internal/models"
+	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 )
 
 type (
 	BinanceSocket struct {
+		logger                *logger.Logger
 		transactionUrl        string
 		orderBookUrl          string
 		Pair                  string
@@ -22,11 +23,12 @@ type (
 	}
 )
 
-func NewSocket(txUrl string, obUrl string, pair string, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats) (*BinanceSocket, error) {
+func NewSocket(txUrl string, obUrl string, pair string, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats, logger *logger.Logger) (*BinanceSocket, error) {
 
 	socket := &BinanceSocket{
 		transactionUrl:        txUrl,
 		orderBookUrl:          obUrl,
+		logger:                logger,
 		Pair:                  pair,
 		transactionConnection: nil,
 		orderBookConnection:   nil,
@@ -59,13 +61,12 @@ func (bs *BinanceSocket) ReadMessage(messageType string) ([]byte, error) {
 }
 
 func (bs *BinanceSocket) Connect() error {
-	log.Println("establishing connection w/ socket for ->", bs.transactionUrl)
 	txConn, _, err := websocket.DefaultDialer.Dial(bs.transactionUrl, nil)
 
 	if err != nil {
 		return err
 	}
-	log.Println("conn established for transaction socket")
+	bs.logger.Infow("Connection established", "type", "transaction socket", "pair", bs.Pair)
 	bs.transactionConnection = txConn
 
 	obConn, _, err := websocket.DefaultDialer.Dial(bs.orderBookUrl, nil)
@@ -74,7 +75,7 @@ func (bs *BinanceSocket) Connect() error {
 		return err
 	}
 
-	log.Println("conn established for order book socket")
+	bs.logger.Infow("Connection established", "type", "orderbook socket", "pair", bs.Pair)
 	bs.orderBookConnection = obConn
 
 	return nil

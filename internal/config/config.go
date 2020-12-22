@@ -6,7 +6,8 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
-	"github.com/volatrade/conduit/internal/postgres"
+	"github.com/volatrade/conduit/internal/store/postgres"
+	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
@@ -83,6 +84,10 @@ func NewStatsConfig(cfg *Config) *stats.Config {
 func NewSlackConfig(cfg *Config) *slack.Config {
 	log.Println("Slack config --->", cfg.SlackConfig)
 	return &cfg.SlackConfig
+}
+
+func NewLoggerConfig(cfg *Config) *logger.Config {
+	return nil
 }
 
 // func NewDriverConfig(cfg *Config) *driver.Config {

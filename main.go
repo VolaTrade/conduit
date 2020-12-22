@@ -10,16 +10,17 @@ import (
 
 func main() {
 
-	driver, err := InitializeAndRun("config.env")
+	driver, end, err := InitializeAndRun("config.env")
 
 	if err != nil {
 		fmt.Println(err)
+		end()
 		os.Exit(2)
 	}
 
+	defer end()
 	c := make(chan os.Signal)
 	quit := make(chan bool)
-
 	var wg sync.WaitGroup
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -27,9 +28,9 @@ func main() {
 		quit <- true
 		os.Exit(1)
 	}()
-	driver.InitService()
-	driver.RunListenerRoutines(&wg, quit)
-	driver.Run(&wg)
+	driver.BuildDataChannels()
+	driver.RunDataStreamListenerRoutines(&wg, quit)
+	driver.RunSocketRecievingRoutines(&wg)
 
 	wg.Wait()
 }

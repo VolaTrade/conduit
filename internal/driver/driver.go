@@ -2,6 +2,7 @@ package driver
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/service"
 	"github.com/volatrade/conduit/internal/socket"
+	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 )
 
@@ -19,8 +21,10 @@ var Module = wire.NewSet(
 
 type (
 	ConduitDriver struct {
-		svc    service.Service
-		kstats *stats.Stats
+		svc     service.Service
+		kstats  *stats.Stats
+		session *models.Session
+		logger  *logger.Logger
 	}
 )
 
@@ -29,18 +33,18 @@ const (
 )
 
 type Driver interface {
-	RunListenerRoutines(wg *sync.WaitGroup, ch chan bool)
-	Run(wg *sync.WaitGroup)
-	InitService()
+	RunDataStreamListenerRoutines(wg *sync.WaitGroup, ch chan bool)
+	RunSocketRecievingRoutines(wg *sync.WaitGroup)
+	BuildDataChannels()
 }
 
-func New(svc service.Service, stats *stats.Stats) *ConduitDriver {
-	return &ConduitDriver{svc: svc, kstats: stats}
+func New(svc service.Service, stats *stats.Stats, sess *models.Session, logger *logger.Logger) *ConduitDriver {
+	return &ConduitDriver{svc: svc, kstats: stats, session: sess, logger: logger}
 }
 
-//InitService initializes pairUrl list in cache and builds transactionChannels
-func (td *ConduitDriver) InitService() {
-	if err := td.svc.BuildPairUrls(); err != nil {
+//BuildDataChannels ...
+func (td *ConduitDriver) BuildDataChannels() {
+	if err := td.svc.InsertPairsFromBinanceToCache(); err != nil {
 		panic(err)
 	}
 	td.svc.BuildTransactionChannels(3)
@@ -48,37 +52,34 @@ func (td *ConduitDriver) InitService() {
 
 }
 
-func (td *ConduitDriver) RunListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
+func (td *ConduitDriver) RunDataStreamListenerRoutines(wg *sync.WaitGroup, ch chan bool) {
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
-		txChannel := td.svc.GetTransactionChannel(i)
-		obChannel := td.svc.GetOrderBookChannel(i)
-		go td.svc.ListenAndHandle(txChannel, obChannel, i, wg, ch) //Tells channels to listen for transaction data from sockets
+		go td.svc.ListenAndHandleDataChannels(i, wg, ch)
 	}
 }
 
-func (td *ConduitDriver) Run(wg *sync.WaitGroup) {
+func (td *ConduitDriver) RunSocketRecievingRoutines(wg *sync.WaitGroup) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	go td.svc.CheckForDatabasePriveleges(wg)
+	go td.svc.ListenForDatabasePriveleges(wg)
 	wg.Add(1)
 	sockets := td.svc.SpawnSocketRoutines(3)
-	go td.svc.ReportRunning(wg, ctx)
-	go td.svc.CheckForExit(wg, cancel)
+	go td.svc.ListenForExit(wg, cancel)
+	go td.reportRunning(wg, ctx)
+
 	for _, active_socket := range sockets {
 		wg.Add(1)
-		log.Println("Spawning routine for -->", active_socket)
 		go td.consumeTransferTransactionMessage(active_socket, wg)
 		go td.consumeTransferOrderBookMessage(active_socket, wg)
-		log.Println("Spawned spawned")
 	}
 
 }
 
 func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.BinanceSocket, wg *sync.WaitGroup) {
 	defer wg.Done()
-	log.Println("Consuming and transferring messsage")
+	td.logger.Infow("Consuming and transferring messsage")
 	var err error
 	if err = socket.Connect(); err != nil {
 		//TODO add handling policy
@@ -118,8 +119,6 @@ func (td *ConduitDriver) consumeTransferTransactionMessage(socket *socket.Binanc
 			socket.TransactionChannel <- transaction
 		}
 
-		// TODO: Add order book insertions
-		// TODO: Add support for passing pair since we dont get it back from socket
 	}
 }
 
@@ -186,6 +185,23 @@ func (td *ConduitDriver) consumeTransferOrderBookMessage(socket *socket.BinanceS
 
 		} else {
 			socket.OrderBookChannel <- orderBookRow
+		}
+	}
+}
+
+func (cd *ConduitDriver) reportRunning(wg *sync.WaitGroup, ctx context.Context) {
+	defer wg.Done()
+	cd.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", cd.session.ID), 1.0) //should this Gauge be 1?
+
+	for {
+
+		select {
+
+		case <-ctx.Done():
+			println("Reporting zero")
+			cd.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", cd.session.ID), 0.0)
+			return
+
 		}
 	}
 }
