@@ -40,7 +40,7 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
 	conduitService := service.New(conduitStorageConnections, conduitCache, conduitRequests, statsStats, slackLogger, loggerLogger)
-	session := models.NewSession(loggerLogger)
+	session := models.NewSession(loggerLogger, statsConfig)
 	conduitDriver := driver.New(conduitService, statsStats, session, loggerLogger)
 	return conduitDriver, func() {
 		cleanup2()

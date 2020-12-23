@@ -27,26 +27,26 @@ func (ts *ConduitService) BuildOrderBookChannels(size int) {
 	ts.orderBookChannels = queues
 }
 
-func (ts *ConduitService) SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket { // --> SpawnSocketManagers
+func (ts *ConduitService) RunSocketRoutines(psqlCount int) []*socket.ConduitSocketManager { // --> SpawnSocketManagers
 
-	sockets := make([]*socket.BinanceSocket, 0)
+	shepards := make([]*socket.ConduitSocketManager, 0)
 	j := 0
 	entries := ts.cache.GetEntries()
 	for _, entry := range entries {
 		if j >= psqlCount {
 			j = 0
 		}
-		socket, err := socket.NewSocket(entry.TxUrl, entry.ObUrl, entry.Pair, ts.transactionChannels[j], ts.orderBookChannels[j], ts.kstats, ts.logger) //socket --> socket manager
+		manager, err := socket.NewSocketManager(entry, ts.transactionChannels[j], ts.orderBookChannels[j], ts.kstats, ts.logger) //socket --> socket manager
 
 		if err != nil {
 			ts.logger.Errorw(err.Error())
 
 		}
-		sockets = append(sockets, socket)
+		shepards = append(shepards, manager)
 		j++
 	}
 
-	ts.logger.Infow("Spawned socket routines", "count", len(sockets))
+	ts.logger.Infow("Spawned socket routines", "count", len(shepards))
 
-	return sockets
+	return shepards 
 }

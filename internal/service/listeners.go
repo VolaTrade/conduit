@@ -25,6 +25,7 @@ func (ts *ConduitService) ListenAndHandleDataChannels(index int, wg *sync.WaitGr
 
 //TODO there's a better way to structure this
 func (ts *ConduitService) ListenForDatabasePriveleges(wg *sync.WaitGroup) {
+	wg.Add(1)
 	defer wg.Done()
 	var err error
 	for {

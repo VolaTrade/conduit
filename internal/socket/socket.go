@@ -1,86 +1,97 @@
 package socket
 
 import (
-	"fmt"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/volatrade/conduit/internal/models"
 	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
 )
 
-type (
-	BinanceSocket struct {
-		logger                *logger.Logger
-		transactionUrl        string
-		orderBookUrl          string
-		Pair                  string
-		TransactionChannel    chan *models.Transaction
-		OrderBookChannel      chan *models.OrderBookRow
-		transactionConnection *websocket.Conn
-		orderBookConnection   *websocket.Conn
-		kstats                *stats.Stats
-	}
+const (
+	TIMEOUT = time.Second * 3
 )
 
-func NewSocket(txUrl string, obUrl string, pair string, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats, logger *logger.Logger) (*BinanceSocket, error) {
-
-	socket := &BinanceSocket{
-		transactionUrl:        txUrl,
-		orderBookUrl:          obUrl,
-		logger:                logger,
-		Pair:                  pair,
-		transactionConnection: nil,
-		orderBookConnection:   nil,
-		TransactionChannel:    txChannel,
-		OrderBookChannel:      obChannel,
-		kstats:                statz,
-	}
-	return socket, nil
+type ConduitSocket struct {
+	parentChannel chan bool
+	mux           *sync.Mutex
+	logger        *logger.Logger
+	conn          *websocket.Conn
+	url           string
+	healthy       bool
 }
 
-func (bs *BinanceSocket) ReadMessage(messageType string) ([]byte, error) {
+func NewSocket(url string, logger *logger.Logger, channel chan bool) (*ConduitSocket, error) {
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 
-	var err error
-	var message []byte
-	if messageType == "TX" {
-		_, message, err = bs.transactionConnection.ReadMessage()
-
-	} else {
-		_, message, err = bs.orderBookConnection.ReadMessage()
-	}
 	if err != nil {
 		return nil, err
 	}
+	mux := &sync.Mutex{}
+	socket := &ConduitSocket{conn: conn, url: url, logger: logger, parentChannel: channel, healthy: true, mux: mux}
 
-	//println("Message received -->", message)
+	go socket.runKeepAlive()
 
-	//println("URl --->", bs.orderBookUrl)
-	bs.kstats.Increment(fmt.Sprintf("conduit.socket_reads.%s", bs.Pair), 1.0)
+	return socket, nil
+
+}
+
+func (cs *ConduitSocket) readMessage() ([]byte, error) {
+	cs.mux.Lock()
+	defer cs.mux.Unlock()
+	cs.conn.SetReadDeadline(time.Now().Add(TIMEOUT))
+
+	_, message, err := cs.conn.ReadMessage()
+
 	return message, err
+
 }
 
-func (bs *BinanceSocket) Connect() error {
-	txConn, _, err := websocket.DefaultDialer.Dial(bs.transactionUrl, nil)
+func (cs *ConduitSocket) runKeepAlive() {
 
-	if err != nil {
-		return err
+	cs.logger.Infow("keep alive", "url", cs.url)
+	ticker := time.NewTicker(time.Second * 15)
+	for {
+
+		if _, err := cs.readMessage(); err != nil {
+			cs.healthy = false
+			cs.logger.Errorw(err.Error(), "url", cs.url, "n")
+
+		}
+		select {
+
+		case <-cs.parentChannel:
+			cs.healthy = false
+			go cs.reconnect(3)
+			return
+
+		case <-ticker.C: //Ticker interval triggered
+			continue
+
+		}
 	}
-	bs.logger.Infow("Connection established", "type", "transaction socket", "pair", bs.Pair)
-	bs.transactionConnection = txConn
-
-	obConn, _, err := websocket.DefaultDialer.Dial(bs.orderBookUrl, nil)
-
-	if err != nil {
-		return err
-	}
-
-	bs.logger.Infow("Connection established", "type", "orderbook socket", "pair", bs.Pair)
-	bs.orderBookConnection = obConn
-
-	return nil
 }
 
-func (bs *BinanceSocket) CloseConnections() (error, error) {
-	return bs.transactionConnection.Close(), bs.orderBookConnection.Close()
+func (cs *ConduitSocket) reconnect(times int) {
+	cs.conn.Close()
+
+	if times == 0 {
+		cs.logger.Errorw("reconnection failed ... broken socket ... ")
+		cs.parentChannel <- false
+	}
+
+	cs.logger.Infow("attempting to reconnect to failed socket", "attempt", times)
+
+	conn, _, err := websocket.DefaultDialer.Dial(cs.url, nil)
+
+	if err != nil {
+		cs.logger.Infow("reconnection attempt failed", "attempt", times)
+		cs.reconnect(times - 1)
+
+	}
+	cs.logger.Infow("successfully restarted failed socket")
+	cs.conn = conn
+	cs.healthy = true
+	cs.runKeepAlive()
+
 }

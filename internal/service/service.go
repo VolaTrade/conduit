@@ -29,7 +29,7 @@ type (
 		ListenForDatabasePriveleges(wg *sync.WaitGroup)
 		ListenForExit(wg *sync.WaitGroup, exit func())
 		ListenAndHandleDataChannels(index int, wg *sync.WaitGroup, ch chan bool)
-		SpawnSocketRoutines(psqlCount int) []*socket.BinanceSocket
+		RunSocketRoutines(psqlCount int) []*socket.ConduitSocketManager
 	}
 
 	ConduitService struct {
@@ -47,7 +47,7 @@ type (
 
 func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger) *ConduitService {
 
-	return &ConduitService{
+	svc := &ConduitService{
 		logger:    logger,
 		cache:     ch,
 		dbStreams: conns,
@@ -56,6 +56,11 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 		writeToDB: false,
 		slack:     slackz,
 	}
+
+	svc.BuildTransactionChannels(3)
+	svc.BuildOrderBookChannels(3)
+
+	return svc
 }
 
 func (ts *ConduitService) handleTransaction(tx *models.Transaction, index int) {

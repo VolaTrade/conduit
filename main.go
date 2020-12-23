@@ -28,9 +28,8 @@ func main() {
 		quit <- true
 		os.Exit(1)
 	}()
-	driver.BuildDataChannels()
 	driver.RunDataStreamListenerRoutines(&wg, quit)
-	driver.RunSocketRecievingRoutines(&wg)
+	driver.Run(&wg)
 
 	wg.Wait()
 }

@@ -73,6 +73,7 @@ func getOrderBookUrlString(pair string) string {
 
 //GetAllTransactions returns cache slice of Transaction model struct
 func (cc *ConduitCache) GetAllTransactions() []*models.Transaction {
+	cc.logger.Infow("returning all transactions from cache", "length", len(cc.transactions))
 	return cc.transactions
 }
 

@@ -35,7 +35,7 @@ type (
 )
 
 func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) *DB {
-	postgres := &DB{config: cfg, kstats: kstats}
+	postgres := &DB{config: cfg, kstats: kstats, logger: logger}
 
 	return postgres
 }
