@@ -27,6 +27,10 @@ type (
 	}
 )
 
+//TODO add async startup for me
+// TODO add health check functionality to me
+//TODO add unit tests to me
+// TOOD add wait group && context to me
 func NewSocketManager(entry *models.CacheEntry, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats, logger *logger.Logger) (*ConduitSocketManager, error) {
 
 	manager := &ConduitSocketManager{
@@ -51,45 +55,44 @@ func NewSocketManager(entry *models.CacheEntry, txChannel chan *models.Transacti
 
 	go manager.consumeTransferTransactionMessage()
 	go manager.consumeTransferOrderBookMessage()
-	
 	return manager, nil
 }
 
-func (bs *ConduitSocketManager) EstablishConnections() error {
+func (csm *ConduitSocketManager) EstablishConnections() error {
 
-	txSocket, err := NewSocket(bs.entry.TxUrl, bs.logger, bs.txSocketChan)
+	txSocket, err := NewSocket(csm.entry.TxUrl, csm.logger, csm.txSocketChan)
 
 	if err != nil {
-		bs.logger.Errorw("Socket failed to connect", "type", "transaction primary socket", "pair", bs.entry.Pair)
+		csm.logger.Errorw("Socket failed to connect", "type", "transaction primary socket", "pair", csm.entry.Pair)
 		return err
 	}
 
-	txFailSafeSocket, err := NewSocket(bs.entry.TxUrl, bs.logger, bs.txFailSafeChan)
+	txFailSafeSocket, err := NewSocket(csm.entry.TxUrl, csm.logger, csm.txFailSafeChan)
 
 	if err != nil {
-		bs.logger.Errorw("Socket failed to connect", "type", "transaction failsafe socket", "pair", bs.entry.Pair)
+		csm.logger.Errorw("Socket failed to connect", "type", "transaction failsafe socket", "pair", csm.entry.Pair)
 		return err
 
 	}
 
-	obSocket, err := NewSocket(bs.entry.ObUrl, bs.logger, bs.obSocketChan)
+	obSocket, err := NewSocket(csm.entry.ObUrl, csm.logger, csm.obSocketChan)
 
 	if err != nil {
-		bs.logger.Errorw("Socket failed to connect", "type", "orderbook primary socket", "pair", bs.entry.Pair)
+		csm.logger.Errorw("Socket failed to connect", "type", "orderbook primary socket", "pair", csm.entry.Pair)
 		return err
 	}
 
-	obFailSafeSocket, err := NewSocket(bs.entry.ObUrl, bs.logger, bs.obFailSafeChan)
+	obFailSafeSocket, err := NewSocket(csm.entry.ObUrl, csm.logger, csm.obFailSafeChan)
 
 	if err != nil {
-		bs.logger.Errorw("Socket failed to connect", "type", "orderbook failsafe socket", "pair", bs.entry.Pair)
+		csm.logger.Errorw("Socket failed to connect", "type", "orderbook failsafe socket", "pair", csm.entry.Pair)
 		return err
 	}
 
-	bs.orderBookSocket = obSocket
-	bs.orderBookFailSafeSocket = obFailSafeSocket
-	bs.transactionSocket = txSocket
-	bs.transactionFailSafeSocket = txFailSafeSocket
+	csm.orderBookSocket = obSocket
+	csm.orderBookFailSafeSocket = obFailSafeSocket
+	csm.transactionSocket = txSocket
+	csm.transactionFailSafeSocket = txFailSafeSocket
 
 	return nil
 }
@@ -97,17 +100,11 @@ func (bs *ConduitSocketManager) EstablishConnections() error {
 func (csm *ConduitSocketManager) consumeTransferTransactionMessage() {
 	csm.logger.Infow("Consuming and transferring messsage")
 
-	hits := 0
-	time_start := time.Now()
+	ticker := time.NewTicker(time.Millisecond * 200)
+
 	for {
 
-		if time_elapsed := time.Since(time_start); time_elapsed <= time.Duration(time.Millisecond*200) {
-
-			continue
-		}
-
 		message, err := csm.transactionSocket.readMessage()
-		hits++
 
 		if err != nil {
 			csm.logger.Errorw(err.Error())
@@ -119,7 +116,6 @@ func (csm *ConduitSocketManager) consumeTransferTransactionMessage() {
 			csm.transactionSocket, csm.transactionFailSafeSocket = csm.transactionFailSafeSocket, csm.transactionSocket
 			csm.txSocketChan, csm.txFailSafeChan = csm.txFailSafeChan, csm.txSocketChan
 			// -------------
-
 			continue
 
 		}
@@ -136,24 +132,38 @@ func (csm *ConduitSocketManager) consumeTransferTransactionMessage() {
 			csm.txChannel <- transaction
 		}
 
+		select {
+
+		case <-ticker.C:
+			continue
+		}
+
 	}
+}
+
+func minuteTicker() *time.Ticker {
+	c := make(chan time.Time, 1)
+	t := &time.Ticker{C: c}
+	go func() {
+		for {
+			n := time.Now()
+			if n.Second() == 0 {
+				c <- n
+			}
+			time.Sleep(time.Second)
+		}
+	}()
+	return t
 }
 
 func (csm *ConduitSocketManager) consumeTransferOrderBookMessage() {
 	log.Println("Consuming and transferring messsage")
 
-	prev_min := time.Now().Minute() - 1
 	for {
 
-		curr_min := time.Now().Minute()
-
-		if prev_min == curr_min {
-			continue
-		}
 		message, err := csm.orderBookSocket.readMessage()
-		prev_min = curr_min
+
 		if err != nil {
-			//handle me
 			csm.logger.Errorw(err.Error(), csm.entry.Pair)
 			csm.kstats.Increment("conduit.errors.socket_read.ob", 1.0)
 
@@ -177,6 +187,13 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage() {
 
 		} else {
 			csm.obChannel <- orderBookRow
+		}
+
+		time.Sleep(time.Second * 2)
+		select {
+
+		case <-minuteTicker().C:
+			continue
 		}
 	}
 

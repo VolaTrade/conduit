@@ -1,4 +1,4 @@
-package service
+package streamprocessor
 
 import (
 	"github.com/volatrade/conduit/internal/models"
@@ -6,17 +6,17 @@ import (
 )
 
 //BuildTransactionChannels makes a slice of transaction struct channels
-func (ts *ConduitService) BuildTransactionChannels(size int) {
+func (csp *ConduitStreamProcessor) BuildTransactionChannels(size int) {
 	queues := make([]chan *models.Transaction, size)
 	for i := 0; i < size; i++ {
 		queue := make(chan *models.Transaction, 0)
 		queues[i] = queue
 	}
-	ts.transactionChannels = queues
+	csp.transactionChannels = queues
 }
 
 //BuildOrderBookChannels makes a slice of orderbook struct channels
-func (ts *ConduitService) BuildOrderBookChannels(size int) {
+func (csp *ConduitStreamProcessor) BuildOrderBookChannels(size int) {
 	queues := make([]chan *models.OrderBookRow, size)
 
 	for i := 0; i < size; i++ {
@@ -24,29 +24,30 @@ func (ts *ConduitService) BuildOrderBookChannels(size int) {
 		queues[i] = queue
 	}
 
-	ts.orderBookChannels = queues
+	csp.orderBookChannels = queues
 }
 
-func (ts *ConduitService) RunSocketRoutines(psqlCount int) []*socket.ConduitSocketManager { // --> SpawnSocketManagers
+//TODO add waitgroup to me ....
+func (csp *ConduitStreamProcessor) RunSocketRoutines(psqlCount int) []*socket.ConduitSocketManager { // --> SpawnSocketManagers
 
 	shepards := make([]*socket.ConduitSocketManager, 0)
 	j := 0
-	entries := ts.cache.GetEntries()
+	entries := csp.cache.GetEntries()
 	for _, entry := range entries {
 		if j >= psqlCount {
 			j = 0
 		}
-		manager, err := socket.NewSocketManager(entry, ts.transactionChannels[j], ts.orderBookChannels[j], ts.kstats, ts.logger) //socket --> socket manager
+		manager, err := socket.NewSocketManager(entry, csp.transactionChannels[j], csp.orderBookChannels[j], csp.kstats, csp.logger)
 
 		if err != nil {
-			ts.logger.Errorw(err.Error())
+			csp.logger.Errorw(err.Error())
 
 		}
 		shepards = append(shepards, manager)
 		j++
 	}
 
-	ts.logger.Infow("Spawned socket routines", "count", len(shepards))
+	csp.logger.Infow("Spawned socket routines", "count", len(shepards))
 
-	return shepards 
+	return shepards
 }

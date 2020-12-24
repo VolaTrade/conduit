@@ -56,7 +56,8 @@ func TestPurge(t *testing.T) {
 	c.InsertTransaction(&models.Transaction{Price: 40})
 	c.InsertTransaction(&models.Transaction{Price: 19})
 
-	c.Purge()
+	c.PurgeTransactions()
+	c.PurgeOrderBookRows()
 
 	assert.True(t, c.GetAllOrderBookRows() == nil)
 	assert.True(t, c.GetAllTransactions() == nil)

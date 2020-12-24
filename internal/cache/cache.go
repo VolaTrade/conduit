@@ -31,7 +31,8 @@ type (
 		InsertEntry(pair string)
 		GetEntries() []*models.CacheEntry
 		OrderBookRowsLength() int
-		Purge()
+		PurgeOrderBookRows()
+		PurgeTransactions()
 		TransactionsLength() int
 	}
 
@@ -117,9 +118,13 @@ func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 
 }
 
-func (cc *ConduitCache) Purge() {
+func (cc *ConduitCache) PurgeTransactions() {
 	cc.transactions = nil
+}
+
+func (cc *ConduitCache) PurgeOrderBookRows() {
 	cc.orderBookData = nil
+
 }
 
 //GetEntries returns slice of CacheEntry struct

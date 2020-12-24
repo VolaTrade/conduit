@@ -20,7 +20,7 @@ var (
 
 type (
 	StorageConnections interface {
-		MakeConnections()
+		MakeConnections() error
 		TransferTransactionCache(cacheData []*models.Transaction) error
 		TransferOrderBookCache(cacheData []*models.OrderBookRow) error
 		InsertTransactionToDataBase(transaction *models.Transaction, index int) error
@@ -41,37 +41,53 @@ func New(cfg *postgres.Config, kstats *stats.Stats, logger *logger.Logger) (*Con
 	}
 
 	close := func() {
+		log.Println("shutting down postgres connections")
 
-		for _, conn := range arr {
-			if err := conn.Close(); err != nil {
+		for _, db := range arr {
+
+			if db.DB == nil {
+				return
+			}
+
+			if err := db.Close(); err != nil {
 				log.Printf("Error obtained closing connection: %+v", err)
 			}
 		}
+
+		log.Println("postgres connections shutdown")
 
 	}
 
 	return &ConduitStorageConnections{postgresConnections: arr}, close
 }
 
-func (ca *ConduitStorageConnections) MakeConnections() {
+func (ca *ConduitStorageConnections) MakeConnections() error {
 
 	for i := 0; i < 3; i++ {
 		db, err := ca.postgresConnections[i].Connect()
 		if err != nil {
-			panic(err)
+			return err
 		}
 		ca.postgresConnections[i].DB = db
 
 	}
-
+	return nil
 }
 
 //TransferCache uses database connection at index 0 in connection array to transfer cache data to postgres
 func (csc *ConduitStorageConnections) TransferTransactionCache(cacheData []*models.Transaction) error {
+
+	if cacheData == nil {
+		return nil
+	}
 	return csc.postgresConnections[0].BulkInsertTransactions(cacheData)
 }
 
 func (csc *ConduitStorageConnections) TransferOrderBookCache(cacheData []*models.OrderBookRow) error {
+
+	if cacheData == nil {
+		return nil
+	}
 	return csc.postgresConnections[0].BulkInsertOrderBookRows(cacheData)
 }
 
