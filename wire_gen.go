@@ -12,8 +12,8 @@ import (
 	"github.com/volatrade/conduit/internal/driver"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
-	"github.com/volatrade/conduit/internal/service"
 	"github.com/volatrade/conduit/internal/store"
+	"github.com/volatrade/conduit/internal/streamprocessor"
 	"github.com/volatrade/currie-logs"
 	"github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
@@ -39,10 +39,11 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitService := service.New(conduitStorageConnections, conduitCache, conduitRequests, statsStats, slackLogger, loggerLogger)
-	session := models.NewSession(loggerLogger)
-	conduitDriver := driver.New(conduitService, statsStats, session, loggerLogger)
+	conduitStreamProcessor, cleanup3 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, statsStats, slackLogger, loggerLogger)
+	session := models.NewSession(loggerLogger, statsConfig)
+	conduitDriver := driver.New(conduitStreamProcessor, statsStats, session, loggerLogger)
 	return conduitDriver, func() {
+		cleanup3()
 		cleanup2()
 		cleanup()
 	}, nil
@@ -53,8 +54,8 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 //cacheModule binds Cache interface with ConduitCache struct from Cache package
 var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cache.ConduitCache)))
 
-//serviceModule binds Service interface with ConduitService struct from Service package
-var serviceModule = wire.NewSet(service.Module, wire.Bind(new(service.Service), new(*service.ConduitService)))
+//StreamModule binds StreamProcessor interface with ConduitStreamProcessor struct from StreamProcessor package
+var streamModule = wire.NewSet(streamprocessor.Module, wire.Bind(new(streamprocessor.StreamProcessor), new(*streamprocessor.ConduitStreamProcessor)))
 
 //storageModule binds StorageConnections interface with ConduitStorageConnections struct from Store package
 var storageModule = wire.NewSet(store.Module, wire.Bind(new(store.StorageConnections), new(*store.ConduitStorageConnections)))

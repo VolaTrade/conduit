@@ -31,7 +31,8 @@ type (
 		InsertEntry(pair string)
 		GetEntries() []*models.CacheEntry
 		OrderBookRowsLength() int
-		Purge()
+		PurgeOrderBookRows()
+		PurgeTransactions()
 		TransactionsLength() int
 	}
 
@@ -73,6 +74,7 @@ func getOrderBookUrlString(pair string) string {
 
 //GetAllTransactions returns cache slice of Transaction model struct
 func (cc *ConduitCache) GetAllTransactions() []*models.Transaction {
+	cc.logger.Infow("returning all transactions from cache", "length", len(cc.transactions))
 	return cc.transactions
 }
 
@@ -116,9 +118,13 @@ func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 
 }
 
-func (cc *ConduitCache) Purge() {
+func (cc *ConduitCache) PurgeTransactions() {
 	cc.transactions = nil
+}
+
+func (cc *ConduitCache) PurgeOrderBookRows() {
 	cc.orderBookData = nil
+
 }
 
 //GetEntries returns slice of CacheEntry struct

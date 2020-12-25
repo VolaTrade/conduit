@@ -125,16 +125,28 @@ func (mr *MockCacheMockRecorder) OrderBookRowsLength() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrderBookRowsLength", reflect.TypeOf((*MockCache)(nil).OrderBookRowsLength))
 }
 
-// Purge mocks base method
-func (m *MockCache) Purge() {
+// PurgeOrderBookRows mocks base method
+func (m *MockCache) PurgeOrderBookRows() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Purge")
+	m.ctrl.Call(m, "PurgeOrderBookRows")
 }
 
-// Purge indicates an expected call of Purge
-func (mr *MockCacheMockRecorder) Purge() *gomock.Call {
+// PurgeOrderBookRows indicates an expected call of PurgeOrderBookRows
+func (mr *MockCacheMockRecorder) PurgeOrderBookRows() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Purge", reflect.TypeOf((*MockCache)(nil).Purge))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PurgeOrderBookRows", reflect.TypeOf((*MockCache)(nil).PurgeOrderBookRows))
+}
+
+// PurgeTransactions mocks base method
+func (m *MockCache) PurgeTransactions() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PurgeTransactions")
+}
+
+// PurgeTransactions indicates an expected call of PurgeTransactions
+func (mr *MockCacheMockRecorder) PurgeTransactions() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PurgeTransactions", reflect.TypeOf((*MockCache)(nil).PurgeTransactions))
 }
 
 // TransactionsLength mocks base method

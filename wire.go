@@ -9,8 +9,8 @@ import (
 	"github.com/volatrade/conduit/internal/driver"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
-	"github.com/volatrade/conduit/internal/service"
 	"github.com/volatrade/conduit/internal/store"
+	sp "github.com/volatrade/conduit/internal/streamprocessor"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
@@ -22,10 +22,10 @@ var cacheModule = wire.NewSet(
 	wire.Bind(new(cache.Cache), new(*cache.ConduitCache)),
 )
 
-//serviceModule binds Service interface with ConduitService struct from Service package
-var serviceModule = wire.NewSet(
-	service.Module,
-	wire.Bind(new(service.Service), new(*service.ConduitService)),
+//StreamModule binds StreamProcessor interface with ConduitStreamProcessor struct from StreamProcessor package
+var streamModule = wire.NewSet(
+	sp.Module,
+	wire.Bind(new(sp.StreamProcessor), new(*sp.ConduitStreamProcessor)),
 )
 
 //storageModule binds StorageConnections interface with ConduitStorageConnections struct from Store package
@@ -69,7 +69,7 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 			slackModule,
 			requestsModule,
 			cacheModule,
-			serviceModule,
+			streamModule,
 			driverModule,
 		),
 	)

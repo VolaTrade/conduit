@@ -62,9 +62,11 @@ func (mr *MockStorageConnectionsMockRecorder) InsertTransactionToDataBase(arg0, 
 }
 
 // MakeConnections mocks base method
-func (m *MockStorageConnections) MakeConnections() {
+func (m *MockStorageConnections) MakeConnections() error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "MakeConnections")
+	ret := m.ctrl.Call(m, "MakeConnections")
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // MakeConnections indicates an expected call of MakeConnections

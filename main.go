@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,27 +11,31 @@ import (
 
 func main() {
 
-	driver, end, err := InitializeAndRun("config.env")
+	driver, shutdown, err := InitializeAndRun("config.env")
 
 	if err != nil {
 		fmt.Println(err)
-		end()
+		println("SHUTTTING DOWN")
+		shutdown()
 		os.Exit(2)
 	}
 
-	defer end()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	defer shutdown()
 	c := make(chan os.Signal)
-	quit := make(chan bool)
+
 	var wg sync.WaitGroup
+
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		quit <- true
 		os.Exit(1)
 	}()
-	driver.BuildDataChannels()
-	driver.RunDataStreamListenerRoutines(&wg, quit)
-	driver.RunSocketRecievingRoutines(&wg)
+	driver.RunDataStreamListenerRoutines(ctx, &wg)
+	driver.Run(ctx, &wg, cancel)
 
 	wg.Wait()
+
+	println("LEAVING")
 }
