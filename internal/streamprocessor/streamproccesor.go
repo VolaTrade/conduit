@@ -4,13 +4,12 @@ package streamprocessor
 import (
 	"context"
 	"log"
-	"sync"
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
-	"github.com/volatrade/conduit/internal/socket"
+	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
@@ -27,11 +26,12 @@ type (
 	StreamProcessor interface {
 		BuildTransactionChannels(count int)
 		BuildOrderBookChannels(count int)
+		GenerateSocketListeningRoutines(ctx context.Context)
 		InsertPairsFromBinanceToCache() error
-		ListenForDatabasePriveleges(ctx context.Context, wg *sync.WaitGroup)
-		ListenForExit(ctx context.Context, wg *sync.WaitGroup, exit func())
-		ListenAndHandleDataChannels(ctx context.Context, index int, wg *sync.WaitGroup)
-		RunSocketRoutines(psqlCount int) []*socket.ConduitSocketManager
+		ListenForDatabasePriveleges(ctx context.Context)
+		ListenForExit(exit func())
+		ListenAndHandleDataChannel(ctx context.Context, index int)
+		RunSocketRoutines(ctx context.Context)
 	}
 
 	ConduitStreamProcessor struct {
@@ -40,6 +40,7 @@ type (
 		dbStreams           store.StorageConnections
 		requests            requests.Requests
 		slack               slack.Slack
+		session             session.Session
 		kstats              *stats.Stats
 		transactionChannels []chan *models.Transaction
 		orderBookChannels   []chan *models.OrderBookRow
@@ -48,7 +49,7 @@ type (
 )
 
 //New constructor
-func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
+func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
 		logger:    logger,
@@ -58,10 +59,11 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 		kstats:    stats,
 		writeToDB: false,
 		slack:     slackz,
+		session:   session,
 	}
 
-	sp.BuildTransactionChannels(3)
-	sp.BuildOrderBookChannels(3)
+	sp.BuildTransactionChannels(session.GetConnectionCount())
+	sp.BuildOrderBookChannels(session.GetConnectionCount())
 
 	shutdown := func() {
 		log.Println("Shutting down stream proccessing layer")

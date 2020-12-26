@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
+	"time"
 )
 
 func main() {
 
-	driver, shutdown, err := InitializeAndRun("config.env")
+	dataStreamer, shutdown, err := InitializeAndRun("config.env")
 
 	if err != nil {
 		fmt.Println(err)
-		println("SHUTTTING DOWN")
 		shutdown()
 		os.Exit(2)
 	}
@@ -25,17 +24,38 @@ func main() {
 	defer shutdown()
 	c := make(chan os.Signal)
 
-	var wg sync.WaitGroup
-
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-c
-		os.Exit(1)
+
+		select {
+
+		case <-c:
+			cancel()
+			time.Sleep(time.Duration(2 * time.Second))
+			os.Exit(1)
+		}
 	}()
-	driver.RunDataStreamListenerRoutines(ctx, &wg)
-	driver.Run(ctx, &wg, cancel)
 
-	wg.Wait()
+	if err := dataStreamer.InsertPairsFromBinanceToCache(); err != nil {
+		panic(err)
+	}
+	dataStreamer.GenerateSocketListeningRoutines(ctx)
 
-	println("LEAVING")
+	go dataStreamer.ListenForDatabasePriveleges(ctx)
+	go dataStreamer.RunSocketRoutines(ctx)
+	go dataStreamer.ListenForExit(cancel)
+
+	select {
+
+	case <-c:
+		println("Received OS SIGKILL")
+		return
+
+	case <-ctx.Done():
+		println("Context shutdown")
+		time.Sleep(time.Duration(2 * time.Second))
+		return
+
+	}
+
 }

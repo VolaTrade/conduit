@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store/postgres"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
@@ -13,10 +14,10 @@ import (
 )
 
 type Config struct {
-	DbConfig    postgres.Config
-	StatsConfig stats.Config
-	SlackConfig slack.Config
-	//DriverConfig driver.Config
+	DbConfig      postgres.Config
+	StatsConfig   stats.Config
+	SlackConfig   slack.Config
+	SessionConfig session.Config
 }
 
 type FilePath string
@@ -34,11 +35,11 @@ func NewConfig(fileName FilePath) *Config {
 		log.Fatal(err)
 	}
 
-	// length, err := strconv.Atoi(os.Getenv("CONNECTION_LENGTH"))
+	connCount, err := strconv.Atoi(os.Getenv("STORAGE_CONNECTION_COUNT"))
 
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	if err != nil {
+		log.Fatal(err)
+	}
 	env := os.Getenv("ENV")
 
 	if env != "DEV" && env != "PRD" && env != "INTEG" {
@@ -64,9 +65,10 @@ func NewConfig(fileName FilePath) *Config {
 			Location: "conduit",
 			Env:      env,
 		},
-		// DriverConfig: driver.Config{
-		// 	Length: length,
-		// },
+		SessionConfig: session.Config{
+			StorageConnections: connCount,
+			Env:                env,
+		},
 	}
 }
 
@@ -90,7 +92,6 @@ func NewLoggerConfig(cfg *Config) *logger.Config {
 	return nil
 }
 
-// func NewDriverConfig(cfg *Config) *driver.Config {
-// 	log.Println("Driver config --->", cfg.DriverConfig)
-// 	return &driver.Config{3}
-// }
+func NewSessionConfig(cfg *Config) *session.Config {
+	return &cfg.SessionConfig
+}

@@ -1,6 +1,8 @@
 package streamprocessor
 
 import (
+	"context"
+
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/socket"
 )
@@ -28,26 +30,25 @@ func (csp *ConduitStreamProcessor) BuildOrderBookChannels(size int) {
 }
 
 //TODO add waitgroup to me ....
-func (csp *ConduitStreamProcessor) RunSocketRoutines(psqlCount int) []*socket.ConduitSocketManager { // --> SpawnSocketManagers
+func (csp *ConduitStreamProcessor) RunSocketRoutines(ctx context.Context) { // --> SpawnSocketManagers
 
 	shepards := make([]*socket.ConduitSocketManager, 0)
 	j := 0
+	connCount := csp.session.GetConnectionCount()
 	entries := csp.cache.GetEntries()
 	for _, entry := range entries {
-		if j >= psqlCount {
+		if j >= connCount {
 			j = 0
 		}
-		manager, err := socket.NewSocketManager(entry, csp.transactionChannels[j], csp.orderBookChannels[j], csp.kstats, csp.logger)
+		manager := socket.NewSocketManager(entry, csp.transactionChannels[j], csp.orderBookChannels[j], csp.kstats, csp.logger)
 
-		if err != nil {
-			csp.logger.Errorw(err.Error())
-
-		}
 		shepards = append(shepards, manager)
 		j++
 	}
 
-	csp.logger.Infow("Spawned socket routines", "count", len(shepards))
+	csp.logger.Infow("Built socket routines", "count", len(shepards))
 
-	return shepards
+	for _, manager := range shepards {
+		go manager.Run(ctx)
+	}
 }
