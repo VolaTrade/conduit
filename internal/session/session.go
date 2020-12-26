@@ -1,3 +1,4 @@
+//go:generate mockgen -package=mocks -destination=../mocks/session.go github.com/volatrade/conduit/internal/session Session
 package session
 
 import (

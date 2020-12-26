@@ -18,6 +18,7 @@ type testSuite struct {
 	service         *service.ConduitStreamProcessor
 	cache           cache.Cache
 	mockRequests    *mocks.MockRequests
+	mockSession     *mocks.MockSession
 }
 
 func createTestSuite(t *testing.T) testSuite {
@@ -30,8 +31,10 @@ func createTestSuite(t *testing.T) testSuite {
 	mockConnections := mocks.NewMockStorageConnections(mockController)
 
 	mockRequests := mocks.NewMockRequests(mockController)
+	mockSession := mocks.NewMockSession(mockController)
 
-	svc, _ := service.New(mockConnections, cache, nil, stats, nil, logger.NewNoop())
+	mockSession.EXPECT().GetConnectionCount().Return(0).Times(100)
+	svc, _ := service.New(mockConnections, cache, nil, mockSession, stats, nil, logger.NewNoop())
 
 	return testSuite{
 		mockController:  mockController,

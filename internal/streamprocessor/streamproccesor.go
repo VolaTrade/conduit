@@ -115,7 +115,7 @@ func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
 
 	for _, pair := range tradingPairs {
 
-		if pair == "btcusdt" || pair == "ethusdt" || pair == "xrpusdt" {
+		if pair == "btcusdt" || pair == "ethusdt" || pair == "xrpusdt" || pair == "ltcusdt" {
 			csp.cache.InsertEntry(pair)
 		}
 	}
