@@ -83,7 +83,7 @@ alias:
   - &deploy
     run:
       name: Updating version within ec2
-      command: ssh -o StrictHostKeyChecking=no ec2-user@18.237.5.40 "docker pull $ECR_URI/conduit:$CIRCLE_TAG && echo -n $ECR_URI/conduit:$CIRCLE_TAG > control_panel/image_version"
+      command: ssh -o StrictHostKeyChecking=no ubuntu@34.211.2.26 "docker pull $ECR_URI/conduit:$CIRCLE_TAG && echo -n $ECR_URI/conduit:$CIRCLE_TAG > control_panel/image_version"
   
   - &build_test_only_filters
     filters:
