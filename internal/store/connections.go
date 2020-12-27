@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
+	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store/postgres"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
@@ -28,14 +29,15 @@ type (
 	}
 
 	ConduitStorageConnections struct {
+		session             session.Session
 		postgresConnections []*postgres.DB
 	}
 )
 
-func New(cfg *postgres.Config, kstats *stats.Stats, logger *logger.Logger) (*ConduitStorageConnections, func()) {
-	arr := make([]*postgres.DB, 3)
+func New(cfg *postgres.Config, kstats *stats.Stats, logger *logger.Logger, sess session.Session) (*ConduitStorageConnections, func()) {
+	arr := make([]*postgres.DB, sess.GetConnectionCount())
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < sess.GetConnectionCount(); i++ {
 		tempDB := postgres.New(cfg, kstats, logger)
 		arr[i] = tempDB
 	}
@@ -58,12 +60,13 @@ func New(cfg *postgres.Config, kstats *stats.Stats, logger *logger.Logger) (*Con
 
 	}
 
-	return &ConduitStorageConnections{postgresConnections: arr}, close
+	return &ConduitStorageConnections{postgresConnections: arr, session: sess}, close
 }
 
 func (ca *ConduitStorageConnections) MakeConnections() error {
 
-	for i := 0; i < 3; i++ {
+	log.Println("MAKING DATABASE CONNECTIONS")
+	for i := 0; i < ca.session.GetConnectionCount(); i++ {
 		db, err := ca.postgresConnections[i].Connect()
 		if err != nil {
 			return err

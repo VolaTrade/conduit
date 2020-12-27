@@ -37,6 +37,7 @@ func main() {
 	}()
 
 	if err := dataStreamer.InsertPairsFromBinanceToCache(); err != nil {
+		
 		panic(err)
 	}
 	dataStreamer.GenerateSocketListeningRoutines(ctx)

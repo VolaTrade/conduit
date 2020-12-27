@@ -4,7 +4,6 @@ package session
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/google/wire"
@@ -21,7 +20,7 @@ var (
 type (
 	Session interface {
 		GetConnectionCount() int
-		ReportRunning(ctx context.Context, wg *sync.WaitGroup)
+		ReportRunning(ctx context.Context)
 	}
 
 	Config struct {
@@ -44,8 +43,7 @@ func New(logger *logger.Logger, cfg *Config, kstats *stats.Stats) *ConduitSessio
 
 }
 
-func (cs *ConduitSession) ReportRunning(ctx context.Context, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (cs *ConduitSession) ReportRunning(ctx context.Context) {
 	cs.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", cs.id), 1.0)
 
 	for {

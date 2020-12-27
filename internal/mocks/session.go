@@ -8,7 +8,6 @@ import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
-	sync "sync"
 )
 
 // MockSession is a mock of Session interface
@@ -49,13 +48,13 @@ func (mr *MockSessionMockRecorder) GetConnectionCount() *gomock.Call {
 }
 
 // ReportRunning mocks base method
-func (m *MockSession) ReportRunning(arg0 context.Context, arg1 *sync.WaitGroup) {
+func (m *MockSession) ReportRunning(arg0 context.Context) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ReportRunning", arg0, arg1)
+	m.ctrl.Call(m, "ReportRunning", arg0)
 }
 
 // ReportRunning indicates an expected call of ReportRunning
-func (mr *MockSessionMockRecorder) ReportRunning(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockSessionMockRecorder) ReportRunning(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportRunning", reflect.TypeOf((*MockSession)(nil).ReportRunning), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportRunning", reflect.TypeOf((*MockSession)(nil).ReportRunning), arg0)
 }
