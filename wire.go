@@ -6,14 +6,20 @@ import (
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
-	"github.com/volatrade/conduit/internal/driver"
-	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
+	"github.com/volatrade/conduit/internal/session"
+
 	"github.com/volatrade/conduit/internal/store"
 	sp "github.com/volatrade/conduit/internal/streamprocessor"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
+)
+
+//sessionModule binds Session interface with ConduitSession struct from session package
+var sessionModule = wire.NewSet(
+	session.Module,
+	wire.Bind(new(session.Session), new(*session.ConduitSession)),
 )
 
 //cacheModule binds Cache interface with ConduitCache struct from Cache package
@@ -40,37 +46,30 @@ var requestsModule = wire.NewSet(
 	wire.Bind(new(requests.Requests), new(*requests.ConduitRequests)),
 )
 
-//driver module binds Driver interface with ConduitDriver struct from driver package
-var driverModule = wire.NewSet(
-	driver.Module,
-	wire.Bind(new(driver.Driver), new(*driver.ConduitDriver)),
-)
-
 //slack module binds Slack interface with SlackLogger struct from github.com/volatrade/utilities package
 var slackModule = wire.NewSet(
 	slack.Module,
 	wire.Bind(new(slack.Slack), new(*slack.SlackLogger)),
 )
 
-func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
+func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 
 	panic(
 		wire.Build(
 			config.NewConfig,
-			//config.NewDriverConfig,
+			config.NewSessionConfig,
 			config.NewDBConfig,
 			config.NewStatsConfig,
 			config.NewSlackConfig,
 			config.NewLoggerConfig,
 			logger.New,
 			stats.New,
-			models.NewSession,
+			sessionModule,
 			storageModule,
 			slackModule,
 			requestsModule,
 			cacheModule,
 			streamModule,
-			driverModule,
 		),
 	)
 }

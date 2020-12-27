@@ -4,6 +4,8 @@ import (
 	"log"
 	"time"
 
+	"context"
+
 	"github.com/volatrade/conduit/internal/models"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
@@ -31,7 +33,7 @@ type (
 // TODO add health check functionality to me
 //TODO add unit tests to me
 // TOOD add wait group && context to me
-func NewSocketManager(entry *models.CacheEntry, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats, logger *logger.Logger) (*ConduitSocketManager, error) {
+func NewSocketManager(entry *models.CacheEntry, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats, logger *logger.Logger) *ConduitSocketManager {
 
 	manager := &ConduitSocketManager{
 		logger:                    logger,
@@ -49,25 +51,28 @@ func NewSocketManager(entry *models.CacheEntry, txChannel chan *models.Transacti
 		kstats:                    statz,
 	}
 
-	if err := manager.EstablishConnections(); err != nil {
-		return nil, err
-	}
-
-	go manager.consumeTransferTransactionMessage()
-	go manager.consumeTransferOrderBookMessage()
-	return manager, nil
+	return manager
 }
 
-func (csm *ConduitSocketManager) EstablishConnections() error {
+func (csm *ConduitSocketManager) Run(ctx context.Context) {
 
-	txSocket, err := NewSocket(csm.entry.TxUrl, csm.logger, csm.txSocketChan)
+	if err := csm.establishConnections(ctx); err != nil {
+		panic(err)
+	}
+	go csm.consumeTransferTransactionMessage(ctx)
+	go csm.consumeTransferOrderBookMessage(ctx)
+
+}
+func (csm *ConduitSocketManager) establishConnections(ctx context.Context) error {
+
+	txSocket, err := NewSocket(ctx, csm.entry.TxUrl, csm.logger, csm.txSocketChan)
 
 	if err != nil {
 		csm.logger.Errorw("Socket failed to connect", "type", "transaction primary socket", "pair", csm.entry.Pair)
 		return err
 	}
 
-	txFailSafeSocket, err := NewSocket(csm.entry.TxUrl, csm.logger, csm.txFailSafeChan)
+	txFailSafeSocket, err := NewSocket(ctx, csm.entry.TxUrl, csm.logger, csm.txFailSafeChan)
 
 	if err != nil {
 		csm.logger.Errorw("Socket failed to connect", "type", "transaction failsafe socket", "pair", csm.entry.Pair)
@@ -75,14 +80,14 @@ func (csm *ConduitSocketManager) EstablishConnections() error {
 
 	}
 
-	obSocket, err := NewSocket(csm.entry.ObUrl, csm.logger, csm.obSocketChan)
+	obSocket, err := NewSocket(ctx, csm.entry.ObUrl, csm.logger, csm.obSocketChan)
 
 	if err != nil {
 		csm.logger.Errorw("Socket failed to connect", "type", "orderbook primary socket", "pair", csm.entry.Pair)
 		return err
 	}
 
-	obFailSafeSocket, err := NewSocket(csm.entry.ObUrl, csm.logger, csm.obFailSafeChan)
+	obFailSafeSocket, err := NewSocket(ctx, csm.entry.ObUrl, csm.logger, csm.obFailSafeChan)
 
 	if err != nil {
 		csm.logger.Errorw("Socket failed to connect", "type", "orderbook failsafe socket", "pair", csm.entry.Pair)
@@ -97,9 +102,8 @@ func (csm *ConduitSocketManager) EstablishConnections() error {
 	return nil
 }
 
-func (csm *ConduitSocketManager) consumeTransferTransactionMessage() {
+func (csm *ConduitSocketManager) consumeTransferTransactionMessage(ctx context.Context) {
 	csm.logger.Infow("Consuming and transferring messsage")
-
 	ticker := time.NewTicker(time.Millisecond * 200)
 
 	for {
@@ -107,10 +111,12 @@ func (csm *ConduitSocketManager) consumeTransferTransactionMessage() {
 		message, err := csm.transactionSocket.readMessage()
 
 		if err != nil {
-			csm.logger.Errorw(err.Error())
+			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "transaction")
 			csm.kstats.Increment("conduit.errors.socket_read.tx", 1.0)
 			//---- tell socket to try reconnecting ---
 			csm.txSocketChan <- false
+
+			csm.logger.Infow("Performing context swap", "pair", csm.entry.Pair, "type", "transaction")
 
 			// ---- swap ---
 			csm.transactionSocket, csm.transactionFailSafeSocket = csm.transactionFailSafeSocket, csm.transactionSocket
@@ -125,7 +131,7 @@ func (csm *ConduitSocketManager) consumeTransferTransactionMessage() {
 		var transaction *models.Transaction
 
 		if transaction, err = models.UnmarshalTransactionJSON(message); err != nil {
-			csm.logger.Errorw(err.Error())
+			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "transaction")
 			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
@@ -136,6 +142,10 @@ func (csm *ConduitSocketManager) consumeTransferTransactionMessage() {
 
 		case <-ticker.C:
 			continue
+
+		case <-ctx.Done():
+			csm.logger.Infow("received finish signal")
+			return
 		}
 
 	}
@@ -156,7 +166,7 @@ func minuteTicker() *time.Ticker {
 	return t
 }
 
-func (csm *ConduitSocketManager) consumeTransferOrderBookMessage() {
+func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Context) {
 	log.Println("Consuming and transferring messsage")
 
 	for {
@@ -164,13 +174,14 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage() {
 		message, err := csm.orderBookSocket.readMessage()
 
 		if err != nil {
-			csm.logger.Errorw(err.Error(), csm.entry.Pair)
+			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "orderbook")
 			csm.kstats.Increment("conduit.errors.socket_read.ob", 1.0)
 
 			//---- tell socket to try reconnecting ---
 			csm.obSocketChan <- false
 
 			// ---- context swap ---
+			csm.logger.Infow("Performing context swap", "pair", csm.entry.Pair, "type", "orderbook")
 			csm.orderBookSocket, csm.orderBookFailSafeSocket = csm.orderBookFailSafeSocket, csm.orderBookSocket
 			csm.obSocketChan, csm.obFailSafeChan = csm.obFailSafeChan, csm.obSocketChan
 			// -------------
@@ -182,7 +193,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage() {
 		var orderBookRow *models.OrderBookRow
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, csm.entry.Pair); err != nil {
-			log.Println(err.Error(), csm.entry.Pair)
+			log.Println(err.Error(), "pair", csm.entry.Pair, "type", "transaction")
 			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
@@ -190,10 +201,15 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage() {
 		}
 
 		time.Sleep(time.Second * 2)
+
 		select {
 
 		case <-minuteTicker().C:
 			continue
+
+		case <-ctx.Done():
+			csm.logger.Infow("received finish signal")
+			return
 		}
 	}
 

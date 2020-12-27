@@ -9,9 +9,8 @@ import (
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
-	"github.com/volatrade/conduit/internal/driver"
-	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
+	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store"
 	"github.com/volatrade/conduit/internal/streamprocessor"
 	"github.com/volatrade/currie-logs"
@@ -21,7 +20,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
+func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, func(), error) {
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
 	statsConfig := config.NewStatsConfig(configConfig)
@@ -37,12 +36,12 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 	conduitStorageConnections, cleanup2 := store.New(postgresConfig, statsStats, loggerLogger)
 	conduitCache := cache.New(loggerLogger)
 	conduitRequests := requests.New(statsStats)
+	sessionConfig := config.NewSessionConfig(configConfig)
+	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitStreamProcessor, cleanup3 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, statsStats, slackLogger, loggerLogger)
-	session := models.NewSession(loggerLogger, statsConfig)
-	conduitDriver := driver.New(conduitStreamProcessor, statsStats, session, loggerLogger)
-	return conduitDriver, func() {
+	conduitStreamProcessor, cleanup3 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
+	return conduitStreamProcessor, func() {
 		cleanup3()
 		cleanup2()
 		cleanup()
@@ -50,6 +49,9 @@ func InitializeAndRun(cfg config.FilePath) (driver.Driver, func(), error) {
 }
 
 // wire.go:
+
+//sessionModule binds Session interface with ConduitSession struct from session package
+var sessionModule = wire.NewSet(session.Module, wire.Bind(new(session.Session), new(*session.ConduitSession)))
 
 //cacheModule binds Cache interface with ConduitCache struct from Cache package
 var cacheModule = wire.NewSet(cache.Module, wire.Bind(new(cache.Cache), new(*cache.ConduitCache)))
@@ -62,9 +64,6 @@ var storageModule = wire.NewSet(store.Module, wire.Bind(new(store.StorageConnect
 
 //requestsModule module binds Requests interface with ConduitRequests struct from requests package
 var requestsModule = wire.NewSet(requests.Module, wire.Bind(new(requests.Requests), new(*requests.ConduitRequests)))
-
-//driver module binds Driver interface with ConduitDriver struct from driver package
-var driverModule = wire.NewSet(driver.Module, wire.Bind(new(driver.Driver), new(*driver.ConduitDriver)))
 
 //slack module binds Slack interface with SlackLogger struct from github.com/volatrade/utilities package
 var slackModule = wire.NewSet(slack.Module, wire.Bind(new(slack.Slack), new(*slack.SlackLogger)))

@@ -1,15 +1,13 @@
 package streamprocessor
+
 import (
 	"context"
 	"os"
-	"sync"
 	"time"
 )
 
-//ListenAndHandleDataChannels waits for transaction or orderbook to come in from their respective channel before invoking handler function
-func (csp *ConduitStreamProcessor) ListenAndHandleDataChannels(ctx context.Context, index int, wg *sync.WaitGroup) {
-	wg.Add(1)
-	defer wg.Done()
+//ListenAndHandleDataChannel waits for transaction or orderbook to come in from their respective channel before invoking handler function
+func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Context, index int) {
 
 	txChannel, obChannel := csp.transactionChannels[index], csp.orderBookChannels[index]
 	for {
@@ -22,6 +20,7 @@ func (csp *ConduitStreamProcessor) ListenAndHandleDataChannels(ctx context.Conte
 			csp.handleOrderBookRow(orderBookRow, index)
 
 		case <-ctx.Done():
+			csp.logger.Infow("received finish signal")
 			return
 		}
 
@@ -29,9 +28,7 @@ func (csp *ConduitStreamProcessor) ListenAndHandleDataChannels(ctx context.Conte
 }
 
 //ListenForDatabasePriveleges checks every fifteen seconds for prevalance of touch file, signals database writing when found
-func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Context, wg *sync.WaitGroup) {
-	wg.Add(1)
-	defer wg.Done()
+func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Context) {
 
 	ticker := time.NewTicker(time.Duration(time.Second * 15))
 	attempts := 3
@@ -74,6 +71,7 @@ func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Conte
 			continue
 
 		case <-ctx.Done():
+			csp.logger.Infow("received finish signal")
 			return
 
 		}
@@ -81,9 +79,7 @@ func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Conte
 }
 
 //ListenForExit checks every fifteen seconds for prevalance of finish file
-func (csp *ConduitStreamProcessor) ListenForExit(ctx context.Context, wg *sync.WaitGroup, exit func()) {
-	wg.Add(1)
-	defer wg.Done()
+func (csp *ConduitStreamProcessor) ListenForExit(exit func()) {
 
 	ticker := time.NewTicker(time.Duration(time.Second * 15))
 
@@ -97,9 +93,12 @@ func (csp *ConduitStreamProcessor) ListenForExit(ctx context.Context, wg *sync.W
 		select {
 		case <-ticker.C:
 			continue
-
-		case <-ctx.Done():
-			return
 		}
+	}
+}
+
+func (csp *ConduitStreamProcessor) GenerateSocketListeningRoutines(ctx context.Context) {
+	for i := 0; i < csp.session.GetConnectionCount(); i++ {
+		go csp.ListenAndHandleDataChannel(ctx, i)
 	}
 }
