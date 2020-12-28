@@ -62,12 +62,12 @@ func (cs *ConduitSocket) readMessage() ([]byte, error) {
 func (cs *ConduitSocket) runKeepAlive() {
 
 	cs.logger.Infow("keep alive", "url", cs.url)
-	ticker := time.NewTicker(time.Second * 15)
+	ticker := time.NewTicker(time.Second * 30)
 	for {
 
 		if _, err := cs.readMessage(); err != nil || !cs.healthy {
 			cs.healthy = false
-			cs.logger.Errorw(err.Error(), "url", cs.url, "n")
+			cs.logger.Errorw(err.Error(), "url", cs.url)
 			go cs.reconnect(3)
 			return
 		}
