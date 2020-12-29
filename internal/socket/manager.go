@@ -171,6 +171,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 
 	for {
 
+		csm.logger.Infow("Reading order book message", "pair", csm.entry.Pair)
 		message, err := csm.orderBookSocket.readMessage()
 
 		if err != nil {
