@@ -48,9 +48,12 @@ func NewSocket(ctx context.Context, url string, logger *logger.Logger, channel c
 }
 
 func (cs *ConduitSocket) readMessage() ([]byte, error) {
-
+	start := time.Now()
 	cs.mux.Lock()
+
+	defer cs.logger.Infow("read message complete", "time", time.Since(start), "url", cs.url)
 	defer cs.mux.Unlock()
+
 	cs.conn.SetReadDeadline(time.Now().Add(TIMEOUT))
 
 	_, message, err := cs.conn.ReadMessage()
@@ -65,12 +68,16 @@ func (cs *ConduitSocket) runKeepAlive() {
 	ticker := time.NewTicker(time.Second * 30)
 	for {
 
+		cs.logger.Infow("Writing message to stay alive", "pair", cs.url)
+		start := time.Now()
 		if err := cs.conn.WriteMessage(websocket.PongMessage, []byte("")); err != nil || !cs.healthy {
 			cs.healthy = false
 			cs.logger.Errorw(err.Error(), "url", cs.url)
 			go cs.reconnect(3)
 			return
 		}
+
+		cs.logger.Infow("write message complete", "time", time.Since(start), "url", cs.url)
 		select {
 
 		case <-cs.parentChannel:
