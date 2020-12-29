@@ -158,8 +158,9 @@ func minuteTicker() *time.Ticker {
 			n := time.Now()
 			if n.Second() == 0 {
 				c <- n
+				time.Sleep(time.Millisecond * 500)
 			}
-			time.Sleep(time.Second)
+			time.Sleep(time.Millisecond * 500)
 		}
 	}()
 	return t
@@ -201,10 +202,11 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 
 		time.Sleep(time.Second * 2)
 
+		csm.logger.Infow("Going into waiting", csm.entry.Pair)
 		select {
 
 		case <-minuteTicker().C:
-			csm.logger.Infow("Got ticker signal for orderbook data")
+			csm.logger.Infow("Got ticker signal for orderbook data", "pair", csm.entry.Pair)
 			continue
 
 		case <-ctx.Done():
