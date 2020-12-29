@@ -18,7 +18,7 @@ TODO
 */
 
 const (
-	TIMEOUT = time.Second
+	TIMEOUT = time.Second * 2
 )
 
 type ConduitSocket struct {
