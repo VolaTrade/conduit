@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"log"
 	"time"
 
 	"context"
@@ -167,7 +166,7 @@ func minuteTicker() *time.Ticker {
 }
 
 func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Context) {
-	log.Println("Consuming and transferring messsage")
+	csm.logger.Infow("Consuming and transferring orderbook message")
 
 	for {
 
@@ -193,7 +192,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 		var orderBookRow *models.OrderBookRow
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, csm.entry.Pair); err != nil {
-			log.Println(err.Error(), "pair", csm.entry.Pair, "type", "transaction")
+			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "transaction")
 			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
@@ -205,6 +204,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 		select {
 
 		case <-minuteTicker().C:
+			csm.logger.Infow("Got ticker signal for orderbook data")
 			continue
 
 		case <-ctx.Done():

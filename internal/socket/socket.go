@@ -18,7 +18,7 @@ TODO
 */
 
 const (
-	TIMEOUT = time.Second
+	TIMEOUT = time.Second * 2
 )
 
 type ConduitSocket struct {
@@ -65,7 +65,7 @@ func (cs *ConduitSocket) runKeepAlive() {
 	ticker := time.NewTicker(time.Second * 30)
 	for {
 
-		if err := cs.conn.WriteMessage(websocket.PongMessage, []byte("unsolicited pong frames are allowed")); err != nil || !cs.healthy {
+		if err := cs.conn.WriteMessage(websocket.PongMessage, []byte("")); err != nil || !cs.healthy {
 			cs.healthy = false
 			cs.logger.Errorw(err.Error(), "url", cs.url)
 			go cs.reconnect(3)
