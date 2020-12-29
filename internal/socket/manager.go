@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"log"
 	"time"
 
 	"context"
