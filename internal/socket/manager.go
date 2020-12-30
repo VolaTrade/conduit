@@ -143,7 +143,7 @@ func (csm *ConduitSocketManager) consumeTransferTransactionMessage(ctx context.C
 			continue
 
 		case <-ctx.Done():
-			csm.logger.Infow("received finish signal")
+			//csm.logger.Infow("received finish signal")
 			return
 		}
 
@@ -174,6 +174,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 		csm.logger.Infow("Reading order book message", "pair", csm.entry.Pair)
 		message, err := csm.orderBookSocket.readMessage()
 
+		csm.logger.Infow("Checking for error", "pair", csm.entry.Pair)
 		if err != nil {
 			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "orderbook")
 			csm.kstats.Increment("conduit.errors.socket_read.ob", 1.0)
@@ -189,7 +190,10 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 			continue
 		}
 
+		timeNow := time.Now()
+		csm.logger.Infow("Incrementing", "pair", csm.entry.Pair)
 		csm.kstats.Increment("conduit.socket_reads.ob", 1.0)
+		csm.logger.Infow("Increment complete", "time", time.Since(timeNow).String())
 
 		var orderBookRow *models.OrderBookRow
 
@@ -198,12 +202,13 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
+			csm.logger.Infow("Sending orderbook data to channel")
 			csm.obChannel <- orderBookRow
 		}
 
 		time.Sleep(time.Second * 2)
 
-		csm.logger.Infow("Going into waiting", csm.entry.Pair)
+		csm.logger.Infow("Going into select", "pair", csm.entry.Pair)
 		select {
 
 		case <-minuteTicker().C:
