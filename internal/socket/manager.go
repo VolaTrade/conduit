@@ -174,7 +174,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 		csm.logger.Infow("Reading order book message", "pair", csm.entry.Pair)
 		message, err := csm.orderBookSocket.readMessage()
 
-		csm.logger.Infow("Checking for error", "pair", csm.entry.Pair)
+		csm.logger.Infow("Message read.. checking for error", "pair", csm.entry.Pair)
 		if err != nil {
 			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "orderbook")
 			csm.kstats.Increment("conduit.errors.socket_read.ob", 1.0)
@@ -198,17 +198,18 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 		var orderBookRow *models.OrderBookRow
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, csm.entry.Pair); err != nil {
-			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "transaction")
+			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "orderbook")
 			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
-			csm.logger.Infow("Sending orderbook data to channel")
+			csm.logger.Infow("Sending orderbook data to channel", "pair", csm.entry.Pair, "type", "orderbook")
 			csm.obChannel <- orderBookRow
+			csm.logger.Infow("Data sent through channel", "pair", csm.entry.Pair, "type", "orderbook")
 		}
 
 		time.Sleep(time.Second * 2)
 
-		csm.logger.Infow("Going into select", "pair", csm.entry.Pair)
+		csm.logger.Infow("Going into select", "pair", csm.entry.Pair, "type", "orderbook")
 		select {
 
 		case <-minuteTicker().C:
