@@ -103,8 +103,7 @@ func (csm *ConduitSocketManager) establishConnections(ctx context.Context) error
 
 func (csm *ConduitSocketManager) consumeTransferTransactionMessage(ctx context.Context) {
 	csm.logger.Infow("Consuming and transferring messsage")
-	ticker := time.NewTicker(time.Millisecond * 200)
-
+	mt := minuteTicker()
 	for {
 
 		message, err := csm.transactionSocket.readMessage()
@@ -139,7 +138,7 @@ func (csm *ConduitSocketManager) consumeTransferTransactionMessage(ctx context.C
 
 		select {
 
-		case <-ticker.C:
+		case <-mt.C:
 			continue
 
 		case <-ctx.Done():
@@ -158,7 +157,7 @@ func minuteTicker() *time.Ticker {
 			n := time.Now()
 			if n.Second() == 0 {
 				c <- n
-				time.Sleep(time.Millisecond * 500)
+				time.Sleep(time.Second * 1)
 			}
 			time.Sleep(time.Millisecond * 500)
 		}
@@ -168,7 +167,7 @@ func minuteTicker() *time.Ticker {
 
 func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Context) {
 	csm.logger.Infow("Consuming and transferring orderbook message")
-
+	mt := minuteTicker()
 	for {
 
 		csm.logger.Infow("Reading order book message", "pair", csm.entry.Pair)
@@ -212,7 +211,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 		csm.logger.Infow("Going into select", "pair", csm.entry.Pair, "type", "orderbook")
 		select {
 
-		case <-minuteTicker().C:
+		case <-mt.C:
 			csm.logger.Infow("Got ticker signal for orderbook data", "pair", csm.entry.Pair)
 			continue
 
