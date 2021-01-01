@@ -9,6 +9,7 @@ import (
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
+	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store"
@@ -24,24 +25,33 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
 	statsConfig := config.NewStatsConfig(configConfig)
-	statsStats, err := stats.New(statsConfig)
+	statsStats, cleanup, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, nil, err
 	}
 	loggerConfig := config.NewLoggerConfig(configConfig)
-	loggerLogger, cleanup, err := logger.New(loggerConfig)
+	loggerLogger, cleanup2, err := logger.New(loggerConfig)
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
 	sessionConfig := config.NewSessionConfig(configConfig)
 	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
-	conduitStorageConnections, cleanup2 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
+	conduitStorageConnections, cleanup3 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
 	conduitCache := cache.New(loggerLogger)
 	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitStreamProcessor, cleanup3 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
+	cortexClient, err := cortex.New()
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	conduitStreamProcessor, cleanup4 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
 	return conduitStreamProcessor, func() {
+		cleanup4()
 		cleanup3()
 		cleanup2()
 		cleanup()
@@ -61,6 +71,9 @@ var streamModule = wire.NewSet(streamprocessor.Module, wire.Bind(new(streamproce
 
 //storageModule binds StorageConnections interface with ConduitStorageConnections struct from Store package
 var storageModule = wire.NewSet(store.Module, wire.Bind(new(store.StorageConnections), new(*store.ConduitStorageConnections)))
+
+//storageModule binds StorageConnections interface with ConduitStorageConnections struct from Store package
+var cortexModule = wire.NewSet(cortex.Module, wire.Bind(new(cortex.Cortex), new(*cortex.CortexClient)))
 
 //requestsModule module binds Requests interface with ConduitRequests struct from requests package
 var requestsModule = wire.NewSet(requests.Module, wire.Bind(new(requests.Requests), new(*requests.ConduitRequests)))

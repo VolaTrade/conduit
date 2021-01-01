@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
@@ -35,6 +36,7 @@ type (
 	}
 
 	ConduitStreamProcessor struct {
+		cortex              cortex.Cortex
 		logger              *logger.Logger
 		cache               cache.Cache
 		dbStreams           store.StorageConnections
@@ -49,7 +51,7 @@ type (
 )
 
 //New constructor
-func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
+func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger, cortex cortex.Cortex) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
 		logger:    logger,
@@ -60,6 +62,7 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 		writeToDB: false,
 		slack:     slackz,
 		session:   session,
+		cortex:    cortex,
 	}
 
 	sp.BuildTransactionChannels(session.GetConnectionCount())
@@ -91,15 +94,18 @@ func (csp *ConduitStreamProcessor) handleTransaction(tx *models.Transaction, ind
 }
 
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
-func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, index int) {
+	//send data to cortex
+
+	csp.cortex.SendOrderBookRow(ob)
+
 	if csp.writeToDB {
-		csp.dbStreams.InsertOrderBookRowToDataBase(tx, index)
+		csp.dbStreams.InsertOrderBookRowToDataBase(ob, index)
 		csp.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
 
 	} else {
-		csp.cache.InsertOrderBookRow(tx)
+		csp.cache.InsertOrderBookRow(ob)
 		csp.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
-
 	}
 }
 
