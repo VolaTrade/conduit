@@ -2,11 +2,14 @@ package cortex
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
-	client "github.com/volatrade/cortex/external/conduit"
+	conduitpb "github.com/volatrade/cortex/external/conduit"
+	logger "github.com/volatrade/currie-logs"
+	stats "github.com/volatrade/k-stats"
 	"google.golang.org/grpc"
 )
 
@@ -14,26 +17,52 @@ var Module = wire.NewSet(
 	New,
 )
 
-type Cortex interface {
-	SendOrderBookRow(ob *models.OrderBookRow)
-}
-
-type CortexClient struct {
-	Client client.ConduitServiceClient
-}
-
-func New() (*CortexClient, error) {
-	conn, err := grpc.Dial(":9000", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: %s", err)
-		return nil, err
+type (
+	Cortex interface {
+		SendOrderBookRow(ob *models.OrderBookRow) error
 	}
 
-	con := client.NewConduitServiceClient(conn)
+	Config struct {
+		Port int
+	}
 
-	return &CortexClient{Client: con}, err
+	CortexClient struct {
+		client conduitpb.ConduitServiceClient
+		conn   *grpc.ClientConn
+		config *Config
+		kstats *stats.Stats
+		logger *logger.Logger
+	}
+)
+
+func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) (*CortexClient, func(), error) {
+
+	log.Println("creating client connection to cortex -> port:", cfg.Port)
+	conn, err := grpc.Dial(fmt.Sprintf(":%d", cfg.Port), grpc.WithInsecure())
+	if err != nil {
+		log.Printf("did not connect: %s", err)
+		return nil, nil, err
+	}
+	client := conduitpb.NewConduitServiceClient(conn)
+
+	end := func() {
+		if conn != nil {
+			if err := conn.Close(); err != nil {
+				log.Printf("Error closing client connection to cortex: %v", err)
+			}
+			log.Println("Successful Shutdown of client connection to cortex")
+		}
+	}
+
+	return &CortexClient{client: client, conn: conn, config: cfg, kstats: kstats, logger: logger}, end, nil
 }
 
-func (cc *CortexClient) SendOrderBookRow(ob *models.OrderBookRow) {
-	cc.Client.HandleOrderBookRow(context.Background(), &client.OrderBookRowRequest{Data: ob.Pair})
+func (cc *CortexClient) SendOrderBookRow(ob *models.OrderBookRow) error {
+	res, err := cc.client.HandleOrderBookRow(context.Background(), &conduitpb.OrderBookRowRequest{Data: ob.Pair})
+	if err != nil {
+		return fmt.Errorf("%+v.%s", res, err)
+	}
+	cc.kstats.Increment(fmt.Sprintf("%+v", res), 1.0)
+	log.Printf("Response from server: %+v", res)
+	return nil
 }
