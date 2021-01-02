@@ -24,6 +24,7 @@ type (
 
 	Config struct {
 		Port int
+		Host string
 	}
 
 	CortexClient struct {
@@ -38,7 +39,7 @@ type (
 func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) (*CortexClient, func(), error) {
 
 	log.Println("creating client connection to cortex -> port:", cfg.Port)
-	conn, err := grpc.Dial(fmt.Sprintf(":%d", cfg.Port), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		log.Printf("did not connect: %s", err)
 		return nil, nil, err
@@ -62,7 +63,7 @@ func (cc *CortexClient) SendOrderBookRow(ob *models.OrderBookRow) error {
 	if err != nil {
 		return fmt.Errorf("%+v.%s", res, err)
 	}
-	cc.kstats.Increment(fmt.Sprintf("%+v", res), 1.0)
-	log.Printf("Response from server: %+v", res)
+	cc.kstats.Increment(".cortex_requests", 1.0)
+	cc.logger.Infow("Response from server: %+v", res)
 	return nil
 }

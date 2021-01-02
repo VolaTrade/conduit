@@ -99,14 +99,11 @@ func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, i
 	//send data to cortex
 
 	start := time.Now()
-	err := csp.cortexClient.SendOrderBookRow(ob)
-	elapsed := time.Since(start)
-
-	if err != nil {
+	if err := csp.cortexClient.SendOrderBookRow(ob); err != nil {
 		csp.logger.Errorw(err.Error())
 		csp.kstats.Increment(".conduit.sent_obrow.cortex.error", 1.0)
 	} else {
-		csp.kstats.TimingDuration(".conduit.sent_obrow.cortex.time_duration", elapsed)
+		csp.kstats.TimingDuration(".conduit.sent_obrow.cortex.time_duration", time.Since(start))
 	}
 
 	if csp.writeToDB {
