@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/volatrade/cortex v0.0.1
 	github.com/volatrade/currie-logs v0.0.4
-	github.com/volatrade/k-stats v0.0.3
+	github.com/volatrade/k-stats v0.0.4
 	github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496
 	google.golang.org/grpc v1.34.0
 )

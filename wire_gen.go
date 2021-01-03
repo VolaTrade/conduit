@@ -42,15 +42,17 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	cortexClient, err := cortex.New()
+	cortexConfig := config.NewCortexConfig(configConfig)
+	cortexClient, cleanup4, err := cortex.New(cortexConfig, statsStats, loggerLogger)
 	if err != nil {
 		cleanup3()
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-	conduitStreamProcessor, cleanup4 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
+	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
 	return conduitStreamProcessor, func() {
+		cleanup5()
 		cleanup4()
 		cleanup3()
 		cleanup2()

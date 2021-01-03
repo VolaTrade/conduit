@@ -65,6 +65,7 @@ func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 		wire.Build(
 			config.NewConfig,
 			config.NewSessionConfig,
+			config.NewCortexConfig,
 			config.NewDBConfig,
 			config.NewStatsConfig,
 			config.NewSlackConfig,
