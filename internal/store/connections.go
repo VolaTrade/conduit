@@ -38,8 +38,13 @@ func New(cfg *postgres.Config, kstats *stats.Stats, logger *logger.Logger, sess 
 	arr := make([]*postgres.DB, sess.GetConnectionCount())
 
 	for i := 0; i < sess.GetConnectionCount(); i++ {
-		tempDB := postgres.New(cfg, kstats, logger)
-		arr[i] = tempDB
+		temp_stats, err := stats.Clone(kstats)
+		if err != nil {
+			logger.Errorw("Failed to clone kstats client: %s", err)
+		} else {
+			tempDB := postgres.New(cfg, temp_stats, logger)
+			arr[i] = tempDB
+		}
 	}
 
 	close := func() {
