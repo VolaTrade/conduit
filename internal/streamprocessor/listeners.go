@@ -31,6 +31,7 @@ func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Contex
 func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Context) {
 
 	ticker := time.NewTicker(time.Duration(time.Second * 15))
+	defer ticker.Stop()
 	attempts := 3
 
 	for {
@@ -82,7 +83,7 @@ func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Conte
 func (csp *ConduitStreamProcessor) ListenForExit(exit func()) {
 
 	ticker := time.NewTicker(time.Duration(time.Second * 15))
-
+	defer ticker.Stop()
 	for {
 		if _, err := os.Stat("finish"); err == nil {
 			csp.logger.Infow("Finish signal recieved")
