@@ -104,6 +104,7 @@ func (csm *ConduitSocketManager) establishConnections(ctx context.Context) error
 func (csm *ConduitSocketManager) consumeTransferTransactionMessage(ctx context.Context) {
 	csm.logger.Infow("Consuming and transferring messsage")
 	mt := minuteTicker()
+	defer mt.Stop()
 	for {
 
 		message, err := csm.transactionSocket.readMessage()
@@ -168,6 +169,7 @@ func minuteTicker() *time.Ticker {
 func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Context) {
 	csm.logger.Infow("Consuming and transferring orderbook message")
 	mt := minuteTicker()
+	defer mt.Stop()
 	for {
 
 		csm.logger.Infow("Reading order book message", "pair", csm.entry.Pair)

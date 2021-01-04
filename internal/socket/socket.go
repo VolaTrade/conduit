@@ -12,9 +12,7 @@ import (
 
 /*
 TODO
-1. Add context to me XXX
-2. unit test me
-3. add select for context channel XXX
+unit test me
 */
 
 const (
@@ -66,6 +64,7 @@ func (cs *ConduitSocket) runKeepAlive() {
 
 	cs.logger.Infow("keep alive", "url", cs.url)
 	ticker := time.NewTicker(time.Second * 30)
+	defer ticker.Stop()
 	for {
 
 		cs.logger.Infow("Writing message to stay alive", "pair", cs.url)
