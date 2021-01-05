@@ -9,6 +9,7 @@ import (
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 
+	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/store"
 	sp "github.com/volatrade/conduit/internal/streamprocessor"
 	logger "github.com/volatrade/currie-logs"
@@ -40,6 +41,12 @@ var storageModule = wire.NewSet(
 	wire.Bind(new(store.StorageConnections), new(*store.ConduitStorageConnections)),
 )
 
+//storageModule binds StorageConnections interface with ConduitStorageConnections struct from Store package
+var cortexModule = wire.NewSet(
+	cortex.Module,
+	wire.Bind(new(cortex.Cortex), new(*cortex.CortexClient)),
+)
+
 //requestsModule module binds Requests interface with ConduitRequests struct from requests package
 var requestsModule = wire.NewSet(
 	requests.Module,
@@ -58,12 +65,14 @@ func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 		wire.Build(
 			config.NewConfig,
 			config.NewSessionConfig,
+			config.NewCortexConfig,
 			config.NewDBConfig,
 			config.NewStatsConfig,
 			config.NewSlackConfig,
 			config.NewLoggerConfig,
 			logger.New,
 			stats.New,
+			cortexModule,
 			sessionModule,
 			storageModule,
 			slackModule,
