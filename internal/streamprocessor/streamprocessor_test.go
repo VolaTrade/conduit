@@ -6,7 +6,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/volatrade/conduit/internal/cache"
-	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/mocks"
 	service "github.com/volatrade/conduit/internal/streamprocessor"
 	logger "github.com/volatrade/currie-logs"
@@ -27,8 +26,7 @@ func createTestSuite(t *testing.T) testSuite {
 
 	cache := cache.New(logger.NewNoop())
 
-	statz, _, _ := stats.New(&stats.Config{Env: "DEV"})
-	cortex, _, _ := cortex.New(&cortex.Config{Port: 1}, stats.NewNoop(), logger.NewNoop())
+	stats, _ := stats.New(&stats.Config{Env: "DEV"})
 
 	mockConnections := mocks.NewMockStorageConnections(mockController)
 
@@ -36,7 +34,7 @@ func createTestSuite(t *testing.T) testSuite {
 	mockSession := mocks.NewMockSession(mockController)
 
 	mockSession.EXPECT().GetConnectionCount().Return(0).Times(100)
-	svc, _ := service.New(mockConnections, cache, nil, mockSession, statz, nil, logger.NewNoop(), cortex)
+	svc, _ := service.New(mockConnections, cache, nil, mockSession, stats, nil, logger.NewNoop())
 
 	return testSuite{
 		mockController:  mockController,
