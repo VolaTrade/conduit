@@ -106,18 +106,17 @@ func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, i
 //InsertPairsFromBinanceToCache reads all trading pairs from Binance and then proceeds to store them as keys in cache
 func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
 
-	tradingPairs, err := csp.requests.GetActiveBinanceExchangePairs()
+	// tradingPairs, err := csp.requests.GetActiveBinanceExchangePairs()
 
-	if err != nil {
-		csp.logger.Errorw(err.Error())
-		return err
-	}
+	// if err != nil {
+	// 	csp.logger.Errorw(err.Error())
+	// 	return err
+	// }
+
+	tradingPairs := []string{"btcusdt", "ethusdt", "xrpusdt", "ltcusdt"}
 
 	for _, pair := range tradingPairs {
-
-		if pair == "btcusdt" || pair == "ethusdt" || pair == "xrpusdt" || pair == "ltcusdt" {
-			csp.cache.InsertEntry(pair)
-		}
+		csp.cache.InsertEntry(pair)
 	}
 
 	return nil
