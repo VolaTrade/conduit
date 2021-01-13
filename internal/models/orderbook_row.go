@@ -12,30 +12,30 @@ type OrderBookRes struct {
 }
 
 type OrderBookRow struct {
-	Id        int             `db:"id"`
-	Bids      json.RawMessage `db:"bids"`
-	Asks      json.RawMessage `db:"asks"`
-	Timestamp time.Time       `db:"timestamp"`
-	Pair      string          `db:"pair"`
+	Id        int        `db:"id"`
+	Bids      [][]string `db:"bids"`
+	Asks      [][]string `db:"asks"`
+	Timestamp time.Time  `db:"timestamp"`
+	Pair      string     `db:"pair"`
 }
 
 func NewOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, error) {
-	bids, err := json.Marshal(jsonResponse.Bids)
-	if err != nil {
-		return nil, err
-	}
+	// bids, err := json.Marshal(jsonResponse.Bids)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	asks, err := json.Marshal(jsonResponse.Asks)
-	if err != nil {
-		return nil, err
-	}
+	// asks, err := json.Marshal(jsonResponse.Asks)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &OrderBookRow{
 		Id:        jsonResponse.Id,
 		Timestamp: time.Now(),
 		Pair:      pair,
-		Asks:      asks,
-		Bids:      bids,
+		Asks:      jsonResponse.Asks,
+		Bids:      jsonResponse.Bids,
 	}, nil
 }
 
