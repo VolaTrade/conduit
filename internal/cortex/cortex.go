@@ -2,12 +2,13 @@ package cortex
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
-	conduitpb "github.com/volatrade/cortex/external/conduit"
+	conduitpb "github.com/volatrade/cortex/protobufs/conduit"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"google.golang.org/grpc"
@@ -39,7 +40,7 @@ type (
 func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) (*CortexClient, func(), error) {
 
 	log.Println("creating client connection to cortex -> port:", cfg.Port)
-	conn, err := grpc.Dial(fmt.Sprintf(":%d", cfg.Port))
+	conn, err := grpc.Dial(fmt.Sprintf(":%d", cfg.Port), grpc.WithInsecure())
 	if err != nil {
 		log.Printf("did not connect: %s", err)
 		return nil, nil, err
@@ -59,7 +60,12 @@ func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) (*CortexClient
 }
 
 func (cc *CortexClient) SendOrderBookRow(ob *models.OrderBookRow) error {
-	res, err := cc.client.HandleOrderBookRow(context.Background(), &conduitpb.OrderBookRowRequest{Data: ob.Pair})
+	var rawOb []bytes
+	if rawOb, err := json.Marshal(ob); err != null {
+		return err
+	}
+	res, err := cc.client.HandleOrderBookRow(context.Background(),
+		&conduitpb.OrderBookRowRequest{Data: rawOb})
 	if err != nil {
 		return fmt.Errorf("%+v.%s", res, err)
 	}
