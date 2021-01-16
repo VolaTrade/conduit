@@ -15,19 +15,23 @@ type OrderBookRes struct {
 
 func UnmarshalDBOrderBookRow(obRow *OrderBookRow) (*OrderBookRes, error) {
 
-	var obRes OrderBookRes
-	err := json.Unmarshal(obRow.Bids, &obRes.Bids)
+	var obBids [][]string
+	err := json.Unmarshal(obRow.Bids, &obBids)
 	if err != nil {
 		return nil, err
 	}
 
-	err1 := json.Unmarshal(obRow.Asks, &obRes.Asks)
+	var obAsks [][]string
+	err1 := json.Unmarshal(obRow.Asks, &obAsks)
 	if err1 != nil {
 		return nil, err
 	}
-	obRes.Id = obRow.Id
-	obRes.Timestamp = obRow.Timestamp
-	obRes.Pair = obRow.Pair
 
-	return &obRes, nil
+	return &OrderBookRes{
+		Id:        obRow.Id,
+		Bids:      obBids,
+		Asks:      obAsks,
+		Timestamp: obRow.Timestamp,
+		Pair:      obRow.Pair,
+	}, nil
 }
