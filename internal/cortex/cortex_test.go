@@ -32,7 +32,7 @@ type testSuite struct {
 func createTestSuite(t *testing.T) testSuite {
 	mockLogger := logger.NewNoop()
 	mockStats := kstats.NewNoop()
-	cfg = &cortex.Config{Port: 9000, Host: "localhost"}
+	cfg := &cortex.Config{Port: 9000, Host: "localhost"}
 	cortexClient, _, _ := cortex.New(cfg, mockStats, mockLogger)
 	return testSuite{
 		cfg:          cfg,

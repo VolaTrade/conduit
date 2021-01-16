@@ -219,6 +219,12 @@ github.com/valyala/quicktemplate v1.2.0/go.mod h1:EH+4AkTd43SvgIbQHYu59/cJyxDoOV
 github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV9WzVtRmSR+PDvWpU/qWl4Wa5LApYYX4ZtKbio=
 github.com/volatrade/cortex v0.0.4 h1:nI8sq6K6bqprZ26te7IsanNIQVs9ZzPutfEyl8kUxAQ=
 github.com/volatrade/cortex v0.0.4/go.mod h1:3hENMjCmszDxwVZ4tNIS43YQhEUAbr0uY0/hv6/b3G0=
+github.com/volatrade/cortex v0.0.5 h1:6xxu0VW3iy1dr2cKnwrOpMyYpiE8je+k2FrUwaCPKXY=
+github.com/volatrade/cortex v0.0.5/go.mod h1:3hENMjCmszDxwVZ4tNIS43YQhEUAbr0uY0/hv6/b3G0=
+github.com/volatrade/cortex v0.0.6 h1:5o7dpDKNXHrr/KoZPtHIhMqiwj+l8i+Iys63odOzpVc=
+github.com/volatrade/cortex v0.0.6/go.mod h1:3hENMjCmszDxwVZ4tNIS43YQhEUAbr0uY0/hv6/b3G0=
+github.com/volatrade/cortex v0.0.7 h1:NkmHHYbI0GEkNpzWDd+e8P9lK2IifijGRhuYHA12fqw=
+github.com/volatrade/cortex v0.0.7/go.mod h1:3hENMjCmszDxwVZ4tNIS43YQhEUAbr0uY0/hv6/b3G0=
 github.com/volatrade/currie-logs v0.0.4 h1:DR882dZNe3aUcXa823AYB4uKvcDv1h8wLrAp55NuPa0=
 github.com/volatrade/currie-logs v0.0.4/go.mod h1:He7KroLJoT56e3blB5nNGDIuOeg6D4RvIDxYomVvdwo=
 github.com/volatrade/k-stats v0.0.2 h1:ACyrvtkdGb4XQpx7GUeJDlzqdnkMJFXLnqN1BdWBc24=

@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/volatrade/conduit/internal/cache"
+	cortex "github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/mocks"
 	service "github.com/volatrade/conduit/internal/streamprocessor"
 	logger "github.com/volatrade/currie-logs"
@@ -19,6 +20,7 @@ type testSuite struct {
 	cache           cache.Cache
 	mockRequests    *mocks.MockRequests
 	mockSession     *mocks.MockSession
+	cortex          cortex.Cortex
 }
 
 func createTestSuite(t *testing.T) testSuite {
@@ -26,15 +28,17 @@ func createTestSuite(t *testing.T) testSuite {
 
 	cache := cache.New(logger.NewNoop())
 
-	stats, _ := stats.New(&stats.Config{Env: "DEV"})
+	stats, _, _ := stats.New(&stats.Config{Env: "DEV"})
 
 	mockConnections := mocks.NewMockStorageConnections(mockController)
 
 	mockRequests := mocks.NewMockRequests(mockController)
 	mockSession := mocks.NewMockSession(mockController)
 
+	cortexClient, _, _ := cortex.New(&cortex.Config{Port: 0}, stats, logger.NewNoop())
+
 	mockSession.EXPECT().GetConnectionCount().Return(0).Times(100)
-	svc, _ := service.New(mockConnections, cache, nil, mockSession, stats, nil, logger.NewNoop())
+	svc, _ := service.New(mockConnections, cache, nil, mockSession, stats, nil, logger.NewNoop(), cortexClient)
 
 	return testSuite{
 		mockController:  mockController,
