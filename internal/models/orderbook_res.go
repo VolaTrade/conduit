@@ -6,7 +6,7 @@ import (
 )
 
 type OrderBookRes struct {
-	Id        int        `json:"lastUpdateId" db:"id"`
+	Id        int        `json:"last_update_id" db:"id"`
 	Bids      [][]string `json:"bids" db:"bids"`
 	Asks      [][]string `json:"asks" db:"asks"`
 	Timestamp time.Time  `json:"timestamp" db:"timestamp"`
