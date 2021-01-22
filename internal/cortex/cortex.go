@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/models"
-	conduitpb "github.com/volatrade/cortex/protobufs/conduit"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
+	conduitpb "github.com/volatrade/protobufs/conduit"
 	"google.golang.org/grpc"
 )
 
@@ -66,9 +66,11 @@ func (cc *CortexClient) SendOrderBookRow(ob *models.OrderBookRow) error {
 	res, err := cc.client.HandleOrderBookRow(context.Background(),
 		&conduitpb.OrderBookRowRequest{Data: rawOb})
 	if err != nil {
-		return fmt.Errorf("%+v.%s", res, err)
+		println("Are we erroring everytime?")
+		return fmt.Errorf("response: %+v, error: %s", res, err)
 	}
 	cc.kstats.Increment(".cortex_requests", 1.0)
-	cc.logger.Infow("Response from server: %+v", res)
+	stringy := fmt.Sprintf("Response from server: %+v", res)
+	cc.logger.Infow(stringy)
 	return nil
 }

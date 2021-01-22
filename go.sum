@@ -198,6 +198,7 @@ github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DM
 github.com/spf13/viper v1.4.0/go.mod h1:PTJ7Z/lr49W6bUbkmS1V3by4uWynFiR9p7+dSq/yZzE=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.2.0 h1:Hbg2NidpLE8veEBkEZTL3CvlkUIVzuU9jDplZO54c48=
 github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoHMkEqE=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
@@ -231,6 +232,8 @@ github.com/volatrade/k-stats v0.0.2 h1:ACyrvtkdGb4XQpx7GUeJDlzqdnkMJFXLnqN1BdWBc
 github.com/volatrade/k-stats v0.0.2/go.mod h1:wXTgUhUgsxvevQnFKt2bo95t7IyHIs6gy6Rdgi9Ryfs=
 github.com/volatrade/k-stats v0.0.4 h1:vt053G5WE+b9rADfsZpbyEGFoRHp7NkTyJQGnB7t7TI=
 github.com/volatrade/k-stats v0.0.4/go.mod h1:wXTgUhUgsxvevQnFKt2bo95t7IyHIs6gy6Rdgi9Ryfs=
+github.com/volatrade/protobufs v0.0.0 h1:jj3iPdm6d9iiS6xM+f0aCdzxykQKZBVPVaPjSrXhZLA=
+github.com/volatrade/protobufs v0.0.0/go.mod h1:eYx0/FCu734Kn8MQXwTG60tKKmiA2SGxv+OBB20W4uE=
 github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496 h1:cNZVKHmIglYOp7Z+58Elx4m8kZ8RzoogL2Z5lOZo8cc=
 github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496/go.mod h1:5SYTOLmtjW0oSi3DQU/05g9IwzgtcH+04EJdabsr3EQ=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
