@@ -4,10 +4,12 @@ package streamprocessor
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/google/wire"
 	redis "github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
+	cortex "github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
@@ -44,6 +46,7 @@ type (
 		slack               slack.Slack
 		session             session.Session
 		kstats              stats.Stats
+		cortexClient        cortex.Cortex
 		transactionChannels []chan *models.Transaction
 		orderBookChannels   []chan *models.OrderBookRow
 		writeToDB           bool
@@ -55,15 +58,16 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 	stats stats.Stats, slackz slack.Slack, logger *logger.Logger, aredis redis.Redis) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
-		logger:    logger,
-		cache:     ch,
-		dbStreams: conns,
-		requests:  cl,
-		kstats:    stats,
-		writeToDB: false,
-		slack:     slackz,
-		session:   session,
-		aredis:    aredis,
+		logger:       logger,
+		cache:        ch,
+		dbStreams:    conns,
+		requests:     cl,
+		kstats:       stats,
+		writeToDB:    false,
+		slack:        slackz,
+		session:      session,
+		aredis:       aredis,
+		cortexClient: cortexClient,
 	}
 
 	sp.BuildTransactionChannels(session.GetConnectionCount())
@@ -95,6 +99,13 @@ func (csp *ConduitStreamProcessor) handleTransaction(tx *models.Transaction, ind
 }
 
 func (csp *ConduitStreamProcessor) ProcessObRowToCortex(ob *models.OrderBookRow) error {
+	start := time.Now()
+	if err := csp.cortexClient.SendOrderBookRow(tx); err != nil {
+		csp.logger.Errorw(err.Error())
+		csp.kstats.Increment(".conduit.sent_obrow.cortex.error", 1.0)
+	} else {
+		csp.kstats.TimingDuration(".conduit.sent_obrow.cortex.time_duration", time.Since(start))
+	}
 
 	obRows, err := csp.aredis.LRange(context.Background(), ob.Pair, 0, -1)
 
@@ -104,16 +115,16 @@ func (csp *ConduitStreamProcessor) ProcessObRowToCortex(ob *models.OrderBookRow)
 	if len(obRows) == 30 {
 		//INSERT CORTEX SENDING LOGIC
 
-
-		//IF SEND SUCCESS... remove value 
+		//IF SEND SUCCESS... remove value
 
 	}
 
 }
 
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
-func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, index int) {
-	if csp.cache.SendObRowToCortex(ob.Pair) {
+func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+
+	if err := csp.ProcessObRowToCortex(ob); err != nil {
 
 	}
 

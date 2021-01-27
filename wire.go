@@ -7,6 +7,7 @@ import (
 	redis "github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
+	cortex "github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 
@@ -15,6 +16,12 @@ import (
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
+)
+
+//cortexModule binds Cortex interface with ConduitCortex struct from session package
+var cortexModule = wire.NewSet(
+	cortex.Module,
+	wire.Bind(new(cortex.Cortex), new(*cortex.CortexClient)),
 )
 
 //sessionModule binds Session interface with ConduitSession struct from session package
@@ -64,9 +71,11 @@ func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 			config.NewStatsConfig,
 			config.NewSlackConfig,
 			config.NewLoggerConfig,
+			config.NewCortexConfig,
 			logger.New,
 			redis.New,
 			stats.New,
+			cortexModule,
 			sessionModule,
 			storageModule,
 			slackModule,

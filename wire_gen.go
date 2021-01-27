@@ -10,6 +10,7 @@ import (
 	"github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
+	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store"
@@ -42,15 +43,24 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
+<<<<<<< HEAD
 	aredisConfig := config.NewRedisConfig(configConfig)
 	redis, cleanup4, err := aredis.New(aredisConfig, statsStats)
+=======
+	cortexConfig := config.NewCortexConfig(configConfig)
+	cortexClient, cleanup4, err := cortex.New(cortexConfig, statsStats, loggerLogger)
+>>>>>>> c1c5a87944113285e0c63da0ca788e5dd048a3b9
 	if err != nil {
 		cleanup3()
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
+<<<<<<< HEAD
 	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, redis)
+=======
+	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
+>>>>>>> c1c5a87944113285e0c63da0ca788e5dd048a3b9
 	return conduitStreamProcessor, func() {
 		cleanup5()
 		cleanup4()
@@ -61,6 +71,9 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 }
 
 // wire.go:
+
+//cortexModule binds Cortex interface with ConduitCortex struct from session package
+var cortexModule = wire.NewSet(cortex.Module, wire.Bind(new(cortex.Cortex), new(*cortex.CortexClient)))
 
 //sessionModule binds Session interface with ConduitSession struct from session package
 var sessionModule = wire.NewSet(session.Module, wire.Bind(new(session.Session), new(*session.ConduitSession)))

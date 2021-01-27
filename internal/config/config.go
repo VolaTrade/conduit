@@ -7,6 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 	redis "github.com/volatrade/a-redis"
+	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store/postgres"
 	logger "github.com/volatrade/currie-logs"
@@ -20,6 +21,7 @@ type Config struct {
 	StatsConfig   stats.Config
 	SlackConfig   slack.Config
 	SessionConfig session.Config
+	CortexConfig  cortex.Config
 }
 
 type FilePath string
@@ -32,6 +34,12 @@ func NewConfig(fileName FilePath) *Config {
 	}
 
 	port, err := strconv.Atoi(os.Getenv("STATS_PORT"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cortex_port, err := strconv.Atoi(os.Getenv("CORTEX_PORT"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -89,6 +97,10 @@ func NewConfig(fileName FilePath) *Config {
 			DB:       redisDb,
 			Env:      env,
 		},
+		CortexConfig: cortex.Config{
+			Host: os.Getenv("CORTEX_HOST"),
+			Port: cortex_port,
+		},
 	}
 }
 
@@ -119,4 +131,8 @@ func NewRedisConfig(cfg *Config) *redis.Config {
 func NewSessionConfig(cfg *Config) *session.Config {
 	log.Println("Session config --->", cfg.SessionConfig)
 	return &cfg.SessionConfig
+}
+
+func NewCortexConfig(cfg *Config) *cortex.Config {
+	return &cfg.CortexConfig
 }
