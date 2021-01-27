@@ -47,3 +47,26 @@ endif
 go-gen-mocks:
 	@echo "generating go mocks..."
 	@GO111MODULE=on go generate --run "mockgen*" ./...
+
+.PHONY: build-linux
+build-linux:
+	@echo "\033[0;34m» Building Conduit Linux Binary\033[0;39m"
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo -o bin/$(BIN_NAM)
+	@echo "\033[0;32m» Successfully Built Binary :) \033[0;39m"
+
+.PHONY: docker-up
+docker-up:
+	@echo "\033[0;34m» Creating Conduit Service Dependencies \033[0;39m"
+	docker-compose up -d
+
+.PHONY: docker-dev-build
+docker-dev-build: build-linux
+	@echo "\033[0;34m» Building Conduit Image \033[0;39m"
+	@docker build -t $(BIN_NAME)_dev -f Dockerfile.dev .  
+	@echo "\033[0;32m» Successfully Built Test Image :) \033[0;39m"
+
+
+.PHONY: docker-dev-run
+docker-dev-run:
+	@echo "\033[0;34m» Running Conduit Container\033[0;39m"
+	docker run --network $(BIN_NAME)-compose --name $(BIN_NAME) $(BIN_NAME)_dev:latest

@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	redis "github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
 	"github.com/volatrade/conduit/internal/requests"
@@ -59,10 +60,12 @@ func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 			config.NewConfig,
 			config.NewSessionConfig,
 			config.NewDBConfig,
+			config.NewRedisConfig,
 			config.NewStatsConfig,
 			config.NewSlackConfig,
 			config.NewLoggerConfig,
 			logger.New,
+			redis.New,
 			stats.New,
 			sessionModule,
 			storageModule,

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+	redis "github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store/postgres"
 	logger "github.com/volatrade/currie-logs"
@@ -15,6 +16,7 @@ import (
 
 type Config struct {
 	DbConfig      postgres.Config
+	RedisConfig   redis.Config
 	StatsConfig   stats.Config
 	SlackConfig   slack.Config
 	SessionConfig session.Config
@@ -36,6 +38,16 @@ func NewConfig(fileName FilePath) *Config {
 	}
 
 	connCount, err := strconv.Atoi(os.Getenv("STORAGE_CONNECTION_COUNT"))
+
+	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	redisDb, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if err != nil {
 		log.Fatal(err)
@@ -69,6 +81,14 @@ func NewConfig(fileName FilePath) *Config {
 			StorageConnections: connCount,
 			Env:                env,
 		},
+
+		RedisConfig: redis.Config{
+			Host:     os.Getenv("REDIS_HOST"),
+			Password: os.Getenv("REDIS_PASSWORD"),
+			Port:     redisPort,
+			DB:       redisDb,
+			Env:      env,
+		},
 	}
 }
 
@@ -91,7 +111,12 @@ func NewSlackConfig(cfg *Config) *slack.Config {
 func NewLoggerConfig(cfg *Config) *logger.Config {
 	return nil
 }
+func NewRedisConfig(cfg *Config) *redis.Config {
+	log.Println("Redis config --->", cfg.RedisConfig)
+	return &cfg.RedisConfig
+}
 
 func NewSessionConfig(cfg *Config) *session.Config {
+	log.Println("Session config --->", cfg.SessionConfig)
 	return &cfg.SessionConfig
 }

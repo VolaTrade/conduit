@@ -24,7 +24,7 @@ type (
 		orderBookFailSafeSocket   *ConduitSocket
 		txFailSafeChan            chan bool
 		orderBookSocket           *ConduitSocket
-		kstats                    *stats.Stats
+		kstats                    stats.Stats
 	}
 )
 
@@ -32,7 +32,7 @@ type (
 // TODO add health check functionality to me
 //TODO add unit tests to me
 // TOOD add wait group && context to me
-func NewSocketManager(entry *models.CacheEntry, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz *stats.Stats, logger *logger.Logger) *ConduitSocketManager {
+func NewSocketManager(entry *models.CacheEntry, txChannel chan *models.Transaction, obChannel chan *models.OrderBookRow, statz stats.Stats, logger *logger.Logger) *ConduitSocketManager {
 
 	manager := &ConduitSocketManager{
 		logger:                    logger,

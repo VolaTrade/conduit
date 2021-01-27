@@ -1,11 +1,27 @@
-version: "3.8"
+version: "3.5"
 
 services:
-  loki:
-    container_name: loki
-    image: grafana/loki:latest
+  conduit_redis:
+    container_name: conduit_redis
+    image: redis:5.0.3
     ports:
-      - "3100:3100"
-    command: -config.file=local-config.yaml
+      - "6379:6379"
+    networks:
+      - compose
+
+  conduit-postgres:
+    container_name: conduit_postgres
+    image: "postgres:13.1-alpine"
+    environment:
+      POSTGRES_USER: "cortexer"
+      POSTGRES_PASSWORD: "password"
+    ports:
+      - "5432:5432"
     volumes:
-      - ./volumes/loki/etc:/etc/loki
+        - ./ddl/ddl.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+        - compose
+
+networks:
+  compose:
+    name: conduit-compose

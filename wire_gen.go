@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	"github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
 	"github.com/volatrade/conduit/internal/requests"
@@ -24,24 +25,35 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
 	statsConfig := config.NewStatsConfig(configConfig)
-	statsStats, err := stats.New(statsConfig)
+	statsStats, cleanup, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, nil, err
 	}
 	loggerConfig := config.NewLoggerConfig(configConfig)
-	loggerLogger, cleanup, err := logger.New(loggerConfig)
+	loggerLogger, cleanup2, err := logger.New(loggerConfig)
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
 	sessionConfig := config.NewSessionConfig(configConfig)
 	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
-	conduitStorageConnections, cleanup2 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
+	conduitStorageConnections, cleanup3 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
 	conduitCache := cache.New(loggerLogger)
 	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitStreamProcessor, cleanup3 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
+	aredisConfig := config.NewRedisConfig(configConfig)
+	redis, cleanup4, err := aredis.New(aredisConfig, statsStats)
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, redis)
 	return conduitStreamProcessor, func() {
+		cleanup5()
+		cleanup4()
 		cleanup3()
 		cleanup2()
 		cleanup()

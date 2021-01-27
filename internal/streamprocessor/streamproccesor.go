@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/google/wire"
+	redis "github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
@@ -38,10 +39,11 @@ type (
 		logger              *logger.Logger
 		cache               cache.Cache
 		dbStreams           store.StorageConnections
+		aredis              redis.Redis
 		requests            requests.Requests
 		slack               slack.Slack
 		session             session.Session
-		kstats              *stats.Stats
+		kstats              stats.Stats
 		transactionChannels []chan *models.Transaction
 		orderBookChannels   []chan *models.OrderBookRow
 		writeToDB           bool
@@ -49,7 +51,8 @@ type (
 )
 
 //New constructor
-func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
+func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session,
+	stats stats.Stats, slackz slack.Slack, logger *logger.Logger, aredis redis.Redis) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
 		logger:    logger,
@@ -60,6 +63,7 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 		writeToDB: false,
 		slack:     slackz,
 		session:   session,
+		aredis:    aredis,
 	}
 
 	sp.BuildTransactionChannels(session.GetConnectionCount())
@@ -90,14 +94,35 @@ func (csp *ConduitStreamProcessor) handleTransaction(tx *models.Transaction, ind
 	}
 }
 
+func (csp *ConduitStreamProcessor) ProcessObRowToCortex(ob *models.OrderBookRow) error {
+
+	obRows, err := csp.aredis.LRange(context.Background(), ob.Pair, 0, -1)
+
+	if err != nil {
+		return err
+	}
+	if len(obRows) == 30 {
+		//INSERT CORTEX SENDING LOGIC
+
+
+		//IF SEND SUCCESS... remove value 
+
+	}
+
+}
+
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
-func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, index int) {
+	if csp.cache.SendObRowToCortex(ob.Pair) {
+
+	}
+
 	if csp.writeToDB {
-		csp.dbStreams.InsertOrderBookRowToDataBase(tx, index)
+		csp.dbStreams.InsertOrderBookRowToDataBase(ob, index)
 		csp.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
 
 	} else {
-		csp.cache.InsertOrderBookRow(tx)
+		csp.cache.InsertOrderBookRow(ob)
 		csp.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
 
 	}

@@ -33,6 +33,7 @@ type (
 		OrderBookRowsLength() int
 		PurgeOrderBookRows()
 		PurgeTransactions()
+		SendObRowToCortex(pair string) bool
 		TransactionsLength() int
 	}
 
@@ -43,6 +44,7 @@ type (
 		orderBookData []*models.OrderBookRow
 		txMux         sync.Mutex
 		obMux         sync.Mutex
+		cortexObRows  []string
 	}
 )
 
@@ -54,6 +56,7 @@ func New(logger *log.Logger) *ConduitCache {
 		entries:       make([]*models.CacheEntry, 0),
 		transactions:  make([]*models.Transaction, 0),
 		orderBookData: make([]*models.OrderBookRow, 0),
+		cortexObRows:  []string{"btcusdt"},
 	}
 
 }
@@ -116,6 +119,16 @@ func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 	defer cc.obMux.Unlock()
 	cc.orderBookData = append(cc.orderBookData, obRow)
 
+}
+
+func (cc *ConduitCache) SendObRowToCortex(pair string) bool {
+
+	for _, allowedPair := range cc.cortexObRows {
+		if allowedPair == pair {
+			return true
+		}
+	}
+	return false
 }
 
 func (cc *ConduitCache) PurgeTransactions() {

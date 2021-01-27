@@ -29,12 +29,12 @@ type (
 	DB struct {
 		DB     *sqlx.DB
 		config *Config
-		kstats *stats.Stats
+		kstats stats.Stats
 		logger *logger.Logger
 	}
 )
 
-func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) *DB {
+func New(cfg *Config, kstats stats.Stats, logger *logger.Logger) *DB {
 	postgres := &DB{config: cfg, kstats: kstats, logger: logger}
 
 	return postgres
