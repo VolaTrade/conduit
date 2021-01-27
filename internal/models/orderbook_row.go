@@ -5,21 +5,15 @@ import (
 	"time"
 )
 
-type OrderBookRes struct {
-	Id   int        `json:"lastUpdateId"`
-	Bids [][]string `json:"bids"`
-	Asks [][]string `json:"asks"`
-}
-
 type OrderBookRow struct {
-	Id        int             `db:"id"`
-	Bids      json.RawMessage `db:"bids"`
-	Asks      json.RawMessage `db:"asks"`
-	Timestamp time.Time       `db:"timestamp"`
-	Pair      string          `db:"pair"`
+	Id        int             `json:"last_update_id" db:"id"`
+	Bids      json.RawMessage `json:"bids" db:"bids"`
+	Asks      json.RawMessage `json:"asks" db:"asks"`
+	Timestamp time.Time       `json:"timestamp" db:"timestamp"`
+	Pair      string          `json:"pair" db:"pair"`
 }
 
-func NewOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, error) {
+func NewDBOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, error) {
 	bids, err := json.Marshal(jsonResponse.Bids)
 	if err != nil {
 		return nil, err
@@ -32,10 +26,10 @@ func NewOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, er
 
 	return &OrderBookRow{
 		Id:        jsonResponse.Id,
+		Bids:      bids,
+		Asks:      asks,
 		Timestamp: time.Now(),
 		Pair:      pair,
-		Asks:      asks,
-		Bids:      bids,
 	}, nil
 }
 
@@ -44,10 +38,10 @@ func UnmarshalOrderBookJSON(message []byte, pair string) (*OrderBookRow, error) 
 	if err := json.Unmarshal(message, &jsonResponse); err != nil {
 		return nil, err
 	}
-	ob, err := NewOrderBookRow(&jsonResponse, pair)
+
+	ob, err := NewDBOrderBookRow(&jsonResponse, pair)
 	if err != nil {
 		return nil, err
 	}
-
 	return ob, nil
 }

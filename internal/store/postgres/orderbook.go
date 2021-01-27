@@ -41,13 +41,14 @@ func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow
 
 	defer stmt.Close()
 
-	postgres.logger.Infow("bulk insert", "type", "orderbok", "size", len(orderBookRows))
+	postgres.logger.Infow("bulk insert", "type", "orderbook", "size", len(orderBookRows))
 
 	for _, orderBookRow := range orderBookRows {
 
 		if orderBookRow == nil {
 			continue
 		}
+
 		result, err := stmt.Exec(orderBookRow)
 
 		if err != nil {

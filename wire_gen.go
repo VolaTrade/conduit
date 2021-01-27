@@ -9,6 +9,7 @@ import (
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
+	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store"
@@ -24,24 +25,35 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
 	statsConfig := config.NewStatsConfig(configConfig)
-	statsStats, err := stats.New(statsConfig)
+	statsStats, cleanup, err := stats.New(statsConfig)
 	if err != nil {
 		return nil, nil, err
 	}
 	loggerConfig := config.NewLoggerConfig(configConfig)
-	loggerLogger, cleanup, err := logger.New(loggerConfig)
+	loggerLogger, cleanup2, err := logger.New(loggerConfig)
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
 	sessionConfig := config.NewSessionConfig(configConfig)
 	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
-	conduitStorageConnections, cleanup2 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
+	conduitStorageConnections, cleanup3 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
 	conduitCache := cache.New(loggerLogger)
 	conduitRequests := requests.New(statsStats)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitStreamProcessor, cleanup3 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
+	cortexConfig := config.NewCortexConfig(configConfig)
+	cortexClient, cleanup4, err := cortex.New(cortexConfig, statsStats, loggerLogger)
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
 	return conduitStreamProcessor, func() {
+		cleanup5()
+		cleanup4()
 		cleanup3()
 		cleanup2()
 		cleanup()
@@ -49,6 +61,9 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 }
 
 // wire.go:
+
+//cortexModule binds Cortex interface with ConduitCortex struct from session package
+var cortexModule = wire.NewSet(cortex.Module, wire.Bind(new(cortex.Cortex), new(*cortex.CortexClient)))
 
 //sessionModule binds Session interface with ConduitSession struct from session package
 var sessionModule = wire.NewSet(session.Module, wire.Bind(new(session.Session), new(*session.ConduitSession)))
