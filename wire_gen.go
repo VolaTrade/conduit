@@ -39,29 +39,30 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	sessionConfig := config.NewSessionConfig(configConfig)
 	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
 	conduitStorageConnections, cleanup3 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
-	conduitCache := cache.New(loggerLogger)
-	conduitRequests := requests.New(statsStats)
-	slackConfig := config.NewSlackConfig(configConfig)
-	slackLogger := slack.New(slackConfig)
-<<<<<<< HEAD
 	aredisConfig := config.NewRedisConfig(configConfig)
-	redis, cleanup4, err := aredis.New(aredisConfig, statsStats)
-=======
-	cortexConfig := config.NewCortexConfig(configConfig)
-	cortexClient, cleanup4, err := cortex.New(cortexConfig, statsStats, loggerLogger)
->>>>>>> c1c5a87944113285e0c63da0ca788e5dd048a3b9
+	redis, cleanup4, err := aredis.New(loggerLogger, aredisConfig, statsStats)
 	if err != nil {
 		cleanup3()
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-<<<<<<< HEAD
-	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, redis)
-=======
-	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
->>>>>>> c1c5a87944113285e0c63da0ca788e5dd048a3b9
+	conduitCache := cache.New(loggerLogger, redis)
+	conduitRequests := requests.New(statsStats)
+	slackConfig := config.NewSlackConfig(configConfig)
+	slackLogger := slack.New(slackConfig)
+	cortexConfig := config.NewCortexConfig(configConfig)
+	cortexClient, cleanup5, err := cortex.New(cortexConfig, statsStats, loggerLogger)
+	if err != nil {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	conduitStreamProcessor, cleanup6 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
 	return conduitStreamProcessor, func() {
+		cleanup6()
 		cleanup5()
 		cleanup4()
 		cleanup3()

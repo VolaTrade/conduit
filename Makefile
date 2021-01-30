@@ -69,4 +69,7 @@ docker-dev-build: build-linux
 .PHONY: docker-dev-run
 docker-dev-run:
 	@echo "\033[0;34m» Running Conduit Container\033[0;39m"
-	docker run --network $(BIN_NAME)-compose --name $(BIN_NAME) $(BIN_NAME)_dev:latest
+	docker run --name $(BIN_NAME) $(BIN_NAME)_dev:latest
+
+docker-dev-down:
+	docker rm conduit

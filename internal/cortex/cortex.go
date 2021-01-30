@@ -6,10 +6,9 @@ import (
 	"log"
 
 	"github.com/google/wire"
-	"github.com/volatrade/conduit/internal/models"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
-	conduitpb "github.com/volatrade/protobufs/conduit"
+	conduitpb "github.com/volatrade/protobufs/cortex/conduit"
 	"google.golang.org/grpc"
 )
 
@@ -19,7 +18,7 @@ var Module = wire.NewSet(
 
 type (
 	Cortex interface {
-		SendOrderBookRow(ob *models.OrderBookRow) error
+		SendOrderBookRows(obs []string) error
 	}
 	Config struct {
 		Port int
@@ -29,12 +28,12 @@ type (
 		client conduitpb.ConduitServiceClient
 		conn   *grpc.ClientConn
 		config *Config
-		kstats *stats.Stats
+		kstats stats.Stats
 		logger *logger.Logger
 	}
 )
 
-func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) (*CortexClient, func(), error) {
+func New(cfg *Config, kstats stats.Stats, logger *logger.Logger) (*CortexClient, func(), error) {
 
 	log.Println("creating client connection to cortex -> port:", cfg.Port)
 	conn, err := grpc.Dial(fmt.Sprintf(":%d", cfg.Port), grpc.WithInsecure())
@@ -54,11 +53,10 @@ func New(cfg *Config, kstats *stats.Stats, logger *logger.Logger) (*CortexClient
 	return &CortexClient{client: client, conn: conn, config: cfg, kstats: kstats, logger: logger}, end, nil
 }
 
-func (cc *CortexClient) SendOrderBookRows(obs []string) error {
+func (cc *CortexClient) SendOrderBookRows(obRows []string) error {
 
-	res, err := cc.client.HandleOrderBookRow(context.Background(), &conduitpb.OrderBookRowRequest{Data: rawOb})
+	res, err := cc.client.HandleOrderBookRow(context.Background(), &conduitpb.OrderBookRowRequest{Data: obRows})
 	if err != nil {
-		println("Are we erroring everytime?")
 		return fmt.Errorf("response: %+v, error: %s", res, err)
 	}
 	cc.kstats.Increment("cortex_requests", 1.0)

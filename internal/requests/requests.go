@@ -12,7 +12,6 @@ var Module = wire.NewSet(
 )
 
 type Requests interface {
-	GetActiveBinanceExchangePairs() ([]string, error)
 }
 
 type ConduitRequests struct {

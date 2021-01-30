@@ -36,12 +36,14 @@ func NewConfig(fileName FilePath) *Config {
 	port, err := strconv.Atoi(os.Getenv("STATS_PORT"))
 
 	if err != nil {
+		println("#1")
 		log.Fatal(err)
 	}
 
 	cortex_port, err := strconv.Atoi(os.Getenv("CORTEX_PORT"))
 
 	if err != nil {
+		println("#2")
 		log.Fatal(err)
 	}
 
@@ -49,14 +51,11 @@ func NewConfig(fileName FilePath) *Config {
 
 	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 	if err != nil {
+		println("#3")
 		log.Fatal(err)
 	}
 
 	redisDb, err := strconv.Atoi(os.Getenv("REDIS_DB"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	if err != nil {
 		log.Fatal(err)
 	}
