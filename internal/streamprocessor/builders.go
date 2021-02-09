@@ -7,15 +7,6 @@ import (
 	"github.com/volatrade/conduit/internal/socket"
 )
 
-//BuildTransactionChannels makes a slice of transaction struct channels
-func (csp *ConduitStreamProcessor) BuildTransactionChannels(size int) {
-	queues := make([]chan *models.Transaction, size)
-	for i := 0; i < size; i++ {
-		queue := make(chan *models.Transaction, 0)
-		queues[i] = queue
-	}
-	csp.transactionChannels = queues
-}
 
 //BuildOrderBookChannels makes a slice of orderbook struct channels
 func (csp *ConduitStreamProcessor) BuildOrderBookChannels(size int) {
@@ -40,7 +31,7 @@ func (csp *ConduitStreamProcessor) RunSocketRoutines(ctx context.Context) { // -
 		if j >= connCount {
 			j = 0
 		}
-		manager := socket.NewSocketManager(entry, csp.transactionChannels[j], csp.orderBookChannels[j], csp.kstats, csp.logger)
+		manager := socket.NewSocketManager(entry, csp.orderBookChannels[j], csp.kstats, csp.logger)
 
 		shepards = append(shepards, manager)
 		j++

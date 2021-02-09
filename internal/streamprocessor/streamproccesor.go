@@ -24,7 +24,6 @@ var (
 
 type (
 	StreamProcessor interface {
-		BuildTransactionChannels(count int)
 		BuildOrderBookChannels(count int)
 		GenerateSocketListeningRoutines(ctx context.Context)
 		InsertPairsFromBinanceToCache() error
@@ -42,7 +41,6 @@ type (
 		slack               slack.Slack
 		session             session.Session
 		kstats              *stats.Stats
-		transactionChannels []chan *models.Transaction
 		orderBookChannels   []chan *models.OrderBookRow
 		writeToDB           bool
 	}
@@ -62,14 +60,12 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 		session:   session,
 	}
 
-	sp.BuildTransactionChannels(session.GetConnectionCount())
 	sp.BuildOrderBookChannels(session.GetConnectionCount())
 
 	shutdown := func() {
 		log.Println("Shutting down stream proccessing layer")
 		log.Println("Closing data channels")
-		for i := 0; i < len(sp.transactionChannels); i++ {
-			close(sp.transactionChannels[i])
+		for i := 0; i < len(sp.orderBookChannels); i++ {
 			close(sp.orderBookChannels[i])
 		}
 		log.Println("Stream processing layer completed shutdown")
@@ -77,18 +73,6 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 	return sp, shutdown
 }
 
-//handleTransaction checks to see if tx is going to database or cache, then inserts accordingly
-func (csp *ConduitStreamProcessor) handleTransaction(tx *models.Transaction, index int) {
-	if csp.writeToDB {
-		csp.dbStreams.InsertTransactionToDataBase(tx, index)
-		csp.kstats.Increment(".conduit.sqlinserts.tx", 1.0)
-
-	} else {
-		csp.cache.InsertTransaction(tx)
-		csp.kstats.Increment(".conduit.cacheinserts.tx", 1.0)
-
-	}
-}
 
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
 func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
@@ -126,9 +110,4 @@ func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
 func (csp *ConduitStreamProcessor) GetOrderBookChannel(index int) chan *models.OrderBookRow {
 
 	return csp.orderBookChannels[index]
-}
-
-//GetOrderBookChannel returns tx channel .... USED FOR TESTING ONLY
-func (csp *ConduitStreamProcessor) GetTransactionChannel(index int) chan *models.Transaction {
-	return csp.transactionChannels[index]
 }

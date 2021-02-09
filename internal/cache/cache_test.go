@@ -12,20 +12,6 @@ import (
 
 var logger = log.NewNoop()
 
-func TestInsertTransactionValueGetAndLength(t *testing.T) {
-	c := cache.New(logger)
-
-	c.InsertTransaction(&models.Transaction{Price: 19})
-	assert.True(t, c.TransactionsLength() == 1)
-	assert.True(t, c.GetAllTransactions()[0].Price == 19)
-
-	c.InsertTransaction(&models.Transaction{Price: 40})
-	assert.True(t, 2 == c.TransactionsLength())
-	assert.True(t, c.GetAllTransactions()[0].Price == 19)
-	assert.True(t, c.GetAllTransactions()[1].Price == 40)
-
-}
-
 func TestInsertOrderBookValueGetAndLength(t *testing.T) {
 	c := cache.New(logger)
 
@@ -53,15 +39,10 @@ func TestPurge(t *testing.T) {
 
 	c.InsertOrderBookRow(&models.OrderBookRow{Id: 19})
 	c.InsertOrderBookRow(&models.OrderBookRow{Id: 34})
-	c.InsertTransaction(&models.Transaction{Price: 40})
-	c.InsertTransaction(&models.Transaction{Price: 19})
 
-	c.PurgeTransactions()
 	c.PurgeOrderBookRows()
 
 	assert.True(t, c.GetAllOrderBookRows() == nil)
-	assert.True(t, c.GetAllTransactions() == nil)
-	assert.True(t, c.TransactionsLength() == 0)
 	assert.True(t, c.OrderBookRowsLength() == 0)
 
 }
