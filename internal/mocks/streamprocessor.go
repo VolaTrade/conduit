@@ -45,18 +45,6 @@ func (mr *MockStreamProcessorMockRecorder) BuildOrderBookChannels(arg0 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildOrderBookChannels", reflect.TypeOf((*MockStreamProcessor)(nil).BuildOrderBookChannels), arg0)
 }
 
-// BuildTransactionChannels mocks base method
-func (m *MockStreamProcessor) BuildTransactionChannels(arg0 int) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "BuildTransactionChannels", arg0)
-}
-
-// BuildTransactionChannels indicates an expected call of BuildTransactionChannels
-func (mr *MockStreamProcessorMockRecorder) BuildTransactionChannels(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildTransactionChannels", reflect.TypeOf((*MockStreamProcessor)(nil).BuildTransactionChannels), arg0)
-}
-
 // GenerateSocketListeningRoutines mocks base method
 func (m *MockStreamProcessor) GenerateSocketListeningRoutines(arg0 context.Context) {
 	m.ctrl.T.Helper()

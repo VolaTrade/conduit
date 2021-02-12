@@ -47,20 +47,6 @@ func (mr *MockCacheMockRecorder) GetAllOrderBookRows() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllOrderBookRows", reflect.TypeOf((*MockCache)(nil).GetAllOrderBookRows))
 }
 
-// GetAllTransactions mocks base method
-func (m *MockCache) GetAllTransactions() []*models.Transaction {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllTransactions")
-	ret0, _ := ret[0].([]*models.Transaction)
-	return ret0
-}
-
-// GetAllTransactions indicates an expected call of GetAllTransactions
-func (mr *MockCacheMockRecorder) GetAllTransactions() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllTransactions", reflect.TypeOf((*MockCache)(nil).GetAllTransactions))
-}
-
 // GetEntries mocks base method
 func (m *MockCache) GetEntries() []*models.CacheEntry {
 	m.ctrl.T.Helper()
@@ -99,18 +85,6 @@ func (mr *MockCacheMockRecorder) InsertOrderBookRow(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOrderBookRow", reflect.TypeOf((*MockCache)(nil).InsertOrderBookRow), arg0)
 }
 
-// InsertTransaction mocks base method
-func (m *MockCache) InsertTransaction(arg0 *models.Transaction) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "InsertTransaction", arg0)
-}
-
-// InsertTransaction indicates an expected call of InsertTransaction
-func (mr *MockCacheMockRecorder) InsertTransaction(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertTransaction", reflect.TypeOf((*MockCache)(nil).InsertTransaction), arg0)
-}
-
 // OrderBookRowsLength mocks base method
 func (m *MockCache) OrderBookRowsLength() int {
 	m.ctrl.T.Helper()
@@ -135,30 +109,4 @@ func (m *MockCache) PurgeOrderBookRows() {
 func (mr *MockCacheMockRecorder) PurgeOrderBookRows() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PurgeOrderBookRows", reflect.TypeOf((*MockCache)(nil).PurgeOrderBookRows))
-}
-
-// PurgeTransactions mocks base method
-func (m *MockCache) PurgeTransactions() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PurgeTransactions")
-}
-
-// PurgeTransactions indicates an expected call of PurgeTransactions
-func (mr *MockCacheMockRecorder) PurgeTransactions() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PurgeTransactions", reflect.TypeOf((*MockCache)(nil).PurgeTransactions))
-}
-
-// TransactionsLength mocks base method
-func (m *MockCache) TransactionsLength() int {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TransactionsLength")
-	ret0, _ := ret[0].(int)
-	return ret0
-}
-
-// TransactionsLength indicates an expected call of TransactionsLength
-func (mr *MockCacheMockRecorder) TransactionsLength() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionsLength", reflect.TypeOf((*MockCache)(nil).TransactionsLength))
 }

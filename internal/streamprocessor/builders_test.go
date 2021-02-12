@@ -14,13 +14,6 @@ func TestBuildOrderBookChannels(t *testing.T) {
 	assert.True(t, c != nil)
 }
 
-func TestBuildTransactionChannels(t *testing.T) {
-	ts := createTestSuite(t)
-	ts.service.BuildTransactionChannels(3)
-	c := ts.service.GetTransactionChannel(2)
-	assert.True(t, c != nil)
-}
-
 // func TestSpawnSocketRoutines(t *testing.T) {
 // 	ts := createTestSuite(t)
 
