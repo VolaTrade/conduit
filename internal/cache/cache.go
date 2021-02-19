@@ -5,6 +5,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -217,7 +218,7 @@ func (cc *ConduitCache) GetOrderBookRowsFromRedis(key string) ([]string, error) 
 
 	if len(obRows) < 30 {
 		cc.logger.Infow("Redis orderbook list not long enough yet", "pair", key, "length", len(obRows))
-		return nil, nil
+		return nil, errors.New("List length in redis not long enough yet")
 	}
 
 	poppedVal, err := cc.aredis.LPop(context.Background(), key)

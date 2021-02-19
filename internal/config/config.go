@@ -26,6 +26,15 @@ type Config struct {
 
 type FilePath string
 
+func convertToInt(str string) int {
+	intRep, err := strconv.Atoi(str)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return intRep
+}
 func NewConfig(fileName FilePath) *Config {
 
 	if err := godotenv.Load(string(fileName)); err != nil {
@@ -33,32 +42,6 @@ func NewConfig(fileName FilePath) *Config {
 		log.Fatal(err)
 	}
 
-	port, err := strconv.Atoi(os.Getenv("STATS_PORT"))
-
-	if err != nil {
-		println("#1")
-		log.Fatal(err)
-	}
-
-	cortex_port, err := strconv.Atoi(os.Getenv("CORTEX_PORT"))
-
-	if err != nil {
-		println("#2")
-		log.Fatal(err)
-	}
-
-	connCount, err := strconv.Atoi(os.Getenv("STORAGE_CONNECTION_COUNT"))
-
-	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
-	if err != nil {
-		println("#3")
-		log.Fatal(err)
-	}
-
-	redisDb, err := strconv.Atoi(os.Getenv("REDIS_DB"))
-	if err != nil {
-		log.Fatal(err)
-	}
 	env := os.Getenv("ENV")
 
 	if env != "DEV" && env != "PRD" && env != "INTEG" {
@@ -76,7 +59,7 @@ func NewConfig(fileName FilePath) *Config {
 		},
 		StatsConfig: stats.Config{
 			Host: os.Getenv("STATS_HOST"),
-			Port: port,
+			Port: convertToInt(os.Getenv("STATS_PORT")),
 			Env:  env,
 		},
 		SlackConfig: slack.Config{
@@ -85,37 +68,34 @@ func NewConfig(fileName FilePath) *Config {
 			Env:      env,
 		},
 		SessionConfig: session.Config{
-			StorageConnections: connCount,
+			StorageConnections: convertToInt(os.Getenv("STORAGE_CONNECTION_COUNT")),
 			Env:                env,
 		},
 
 		RedisConfig: redis.Config{
 			Host:     os.Getenv("REDIS_HOST"),
 			Password: os.Getenv("REDIS_PASSWORD"),
-			Port:     redisPort,
-			DB:       redisDb,
+			Port:     convertToInt(os.Getenv("REDIS_PORT")),
+			DB:       convertToInt(os.Getenv("REDIS_DB")),
 			Env:      env,
 		},
 		CortexConfig: cortex.Config{
 			Host: os.Getenv("CORTEX_HOST"),
-			Port: cortex_port,
+			Port: convertToInt(os.Getenv("CORTEX_PORT")),
 		},
 	}
 }
 
 func NewDBConfig(cfg *Config) *postgres.Config {
-	log.Println("Database config ---> ", cfg.DbConfig)
 	return &cfg.DbConfig
 
 }
 
 func NewStatsConfig(cfg *Config) *stats.Config {
-	log.Println("Stats config --->", cfg.StatsConfig)
 	return &cfg.StatsConfig
 }
 
 func NewSlackConfig(cfg *Config) *slack.Config {
-	log.Println("Slack config --->", cfg.SlackConfig)
 	return &cfg.SlackConfig
 }
 
@@ -123,12 +103,10 @@ func NewLoggerConfig(cfg *Config) *logger.Config {
 	return nil
 }
 func NewRedisConfig(cfg *Config) *redis.Config {
-	log.Println("Redis config --->", cfg.RedisConfig)
 	return &cfg.RedisConfig
 }
 
 func NewSessionConfig(cfg *Config) *session.Config {
-	log.Println("Session config --->", cfg.SessionConfig)
 	return &cfg.SessionConfig
 }
 

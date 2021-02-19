@@ -44,7 +44,6 @@ func TestRollingCache(t *testing.T) {
 
 	for _, strRow := range rowsInRedis {
 
-		println("String row --->", strRow)
 		assert.False(t, strings.Contains(strRow, "\"last_update_id\":1,"))
 	}
 

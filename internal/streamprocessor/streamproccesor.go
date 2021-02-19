@@ -96,12 +96,12 @@ func (csp *ConduitStreamProcessor) handleTransaction(tx *models.Transaction, ind
 }
 
 func (csp *ConduitStreamProcessor) ProcessObRowsToCortex(ob *models.OrderBookRow) error {
-
-	obRows, err := csp.cache.UpdateGetOrderBookRows(ob)
-
-	if obRows == nil {
-		return nil
+	
+	if err := csp.cache.InsertOrderBookRowToRedis(ob); err != nil {
+		return err
 	}
+
+	obRows, err := csp.cache.GetOrderBookRowsFromRedis(ob.Pair)
 
 	if err != nil {
 		csp.kstats.Increment("conduit.sent_obrow.cortex.error", 1.0)

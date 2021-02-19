@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	redis "github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
 	cortex "github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/mocks"
@@ -25,8 +26,8 @@ type testSuite struct {
 
 func createTestSuite(t *testing.T) testSuite {
 	mockController := gomock.NewController(t)
-
-	cache := cache.New(logger.NewNoop())
+	redis, _, _ := redis.NewNoop()
+	cache := cache.New(logger.NewNoop(), redis)
 
 	stats, _, _ := stats.New(&stats.Config{Env: "DEV"})
 
@@ -35,7 +36,7 @@ func createTestSuite(t *testing.T) testSuite {
 	mockRequests := mocks.NewMockRequests(mockController)
 	mockSession := mocks.NewMockSession(mockController)
 
-	cortexClient, _, _ := cortex.New(&cortex.Config{Port: 0}, stats, logger.NewNoop())
+	cortexClient, _, _ := cortex.New(&cortex.Config{Port: 0}, stats, logger.NewNoop()) //This should be mocked
 
 	mockSession.EXPECT().GetConnectionCount().Return(0).Times(100)
 	svc, _ := service.New(mockConnections, cache, nil, mockSession, stats, nil, logger.NewNoop(), cortexClient)
