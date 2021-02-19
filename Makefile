@@ -1,24 +1,30 @@
 BIN_NAME=conduit
 GOMOCK := $(shell command -v mockgen 2> /dev/null)
 
+.PHONY: build 
 build:
 	@echo building binary...
 	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/${BIN_NAME}
 
+.PHONY: deps 
 deps:
 	git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/volatrade/".insteadOf "https://github.com/volatrade/" && go mod download
 
+.PHONY: test 
 test:
-	go test -cover ./...
+	cd internal && go test -cover ./...
 
+test-integration: docker-up
+	cd integration_tests && go test -cover ./... 
+	docker-compose down 
+
+.PHONY: docker-build 
 docker-build:
 	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
 
-start-dev:
-	docker compose -f docker-compose-dev.yaml up
-
-start-prod:
-	docker-compose -f docker-compose-prod.yaml up
+.PHONY: docker-up 
+docker-up:
+	docker-compose up -d 
 
 docker-run:
 	docker run --network="host" --log-opt max-size=10m --log-opt max-file=5 ${BIN_NAME}

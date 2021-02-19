@@ -5,6 +5,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -39,7 +40,8 @@ type (
 		PurgeTransactions()
 		RowValidForCortex(pair string) bool
 		TransactionsLength() int
-		UpdateGetOrderBookRows(ob *models.OrderBookRow) ([]string, error)
+		InsertOrderBookRowToRedis(ob *models.OrderBookRow) error
+		GetOrderBookRowsFromRedis(key string) ([]string, error)
 	}
 
 	ConduitCache struct {
@@ -181,7 +183,7 @@ func (tc *ConduitCache) OrderBookRowsLength() int {
 	return 0
 }
 
-func (cc *ConduitCache) UpdateGetOrderBookRows(ob *models.OrderBookRow) ([]string, error) {
+func (cc *ConduitCache) InsertOrderBookRowToRedis(ob *models.OrderBookRow) error {
 
 	println("Inserting into redis")
 
@@ -194,33 +196,38 @@ func (cc *ConduitCache) UpdateGetOrderBookRows(ob *models.OrderBookRow) ([]strin
 	bytes, err := json.Marshal(ob)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	cc.logger.Infow("Redis insertion", "key", ob.Pair, "data", string(bytes))
 
-	if err := cc.aredis.LPush(context.Background(), ob.Pair, bytes); err != nil {
-		return nil, err
+	if err := cc.aredis.RPush(context.Background(), ob.Pair, bytes); err != nil {
+		return err
 	}
 	println("Inserted")
-	obRows, err := cc.aredis.LRange(context.Background(), ob.Pair, 0, -1)
+
+	return nil
+}
+
+func (cc *ConduitCache) GetOrderBookRowsFromRedis(key string) ([]string, error) {
+	obRows, err := cc.aredis.LRange(context.Background(), key, 0, -1)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if len(obRows) < 30 {
-		cc.logger.Infow("Redis orderbook list not long enough yet", "pair", ob.Pair, "length", len(obRows))
-		return nil, nil
+		cc.logger.Infow("Redis orderbook list not long enough yet", "pair", key, "length", len(obRows))
+		return nil, errors.New("List length in redis not long enough yet")
 	}
 
-	poppedVal, err := cc.aredis.LPop(context.Background(), ob.Pair)
+	poppedVal, err := cc.aredis.LPop(context.Background(), key)
 	println("deleting")
 	if err != nil {
 		return nil, err
 	}
 
-	cc.logger.Infow("Popped value from redis list", "value", poppedVal, "pair", ob.Pair)
-	return obRows, nil
+	cc.logger.Infow("Popped value from redis list", "value", poppedVal, "pair", key)
+	return obRows[1:len(obRows)], nil
 
 }
