@@ -36,7 +36,7 @@ alias:
   - &test_code
     run:
       name: Running unit tests
-      command: go test -cover ./...
+      command: cd internal && go test -cover ./...
 
   - &build_container
     run:
