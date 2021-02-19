@@ -27,7 +27,7 @@ docker-up:
 	docker-compose up -d 
 
 docker-run:
-	docker run --network="host" --log-opt max-size=10m --log-opt max-file=5 ${BIN_NAME}
+	docker run --network=conduit-compose --log-opt max-size=10m --log-opt max-file=5 ${BIN_NAME}
 
 ecr-push-image:
 	docker push ${ECR_URI}/${BIN_NAME}
@@ -68,14 +68,8 @@ docker-up:
 .PHONY: docker-dev-build
 docker-dev-build: build-linux
 	@echo "\033[0;34m» Building Conduit Image \033[0;39m"
-	@docker build -t $(BIN_NAME)_dev -f Dockerfile.dev .  
+	@docker build -t ${BIN_NAME} -f Dockerfile.dev .  
 	@echo "\033[0;32m» Successfully Built Test Image :) \033[0;39m"
-
-
-.PHONY: docker-dev-run
-docker-dev-run:
-	@echo "\033[0;34m» Running Conduit Container\033[0;39m"
-	docker run --name $(BIN_NAME) $(BIN_NAME)_dev:latest
 
 docker-dev-down:
 	docker rm conduit
