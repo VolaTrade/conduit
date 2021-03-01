@@ -2,12 +2,10 @@ FROM alpine:3.12 as alpine
 
 RUN apk add -U --no-cache ca-certificates
 
-FROM scratch
-
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY ./bin/conduit /opt/conduit/conduit
+COPY ./bin/conduit /bin/conduit
 COPY config.env.dev config.env
 
 
-CMD ["/opt/conduit/conduit"]
+CMD ["/bin/conduit"]
