@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 )
 
@@ -9,7 +10,8 @@ type OrderBookRow struct {
 	Id        int             `json:"last_update_id" db:"id"`
 	Bids      json.RawMessage `json:"bids" db:"bids"`
 	Asks      json.RawMessage `json:"asks" db:"asks"`
-	Timestamp time.Time       `json:"timestamp" db:"timestamp"`
+	Time      time.Time       `json:"time"`
+	Timestamp string          `json:"timestamp" db:"timestamp"`
 	Pair      string          `json:"pair" db:"pair"`
 }
 
@@ -24,11 +26,19 @@ func NewDBOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, 
 		return nil, err
 	}
 
+	t := time.Now()
+	timestamp := t.Format("2006:01:02 15:04")
+
+	if err != nil {
+		log.Fatalf("Error forming custom timestamp: %s\n", err)
+	}
+
 	return &OrderBookRow{
 		Id:        jsonResponse.Id,
 		Bids:      bids,
 		Asks:      asks,
-		Timestamp: time.Now(),
+		Time:      t,
+		Timestamp: timestamp,
 		Pair:      pair,
 	}, nil
 }
