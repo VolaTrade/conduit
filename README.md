@@ -1,6 +1,6 @@
 # conduit
 
-A beatiful data pipeline implemented in golang that concurrently collects live transaction data for anything traded against bitcoin on Binance 
+A beatiful data pipeline implemented in golang that concurrently collects live orderbook data for anything traded against bitcoin on Binance 
 
 ### To run locally 
 	1. `cp config.env.template config.env`
@@ -38,8 +38,8 @@ Follow these steps to deploy:
 4. Push the tags via `git push origin ${NEW_VERSION}
 
 ### Testing 
-
-
+* Run `make test` to run all unit tests in `/internal`
+* Run `make integration-test` to run all integration tests 
 
 ### Documentation 
 [https://volatrade.atlassian.net/wiki/spaces/SOF/pages/245202945/Conduit-Guidebook] Guide Book

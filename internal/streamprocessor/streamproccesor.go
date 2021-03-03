@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
-	cortex "github.com/volatrade/conduit/internal/cortex"
+	"github.com/volatrade/conduit/internal/cortex"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
@@ -43,8 +43,8 @@ type (
 		requests            requests.Requests
 		slack               slack.Slack
 		session             session.Session
+		kstats              stats.Stats
 		cortexClient        cortex.Cortex
-		kstats              *stats.Stats
 		transactionChannels []chan *models.Transaction
 		orderBookChannels   []chan *models.OrderBookRow
 		writeToDB           bool
@@ -52,7 +52,8 @@ type (
 )
 
 //New constructor
-func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger, cortexClient cortex.Cortex) (*ConduitStreamProcessor, func()) {
+func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session,
+	stats stats.Stats, slackz slack.Slack, logger *logger.Logger, cortexClient cortex.Cortex) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
 		logger:       logger,
@@ -94,37 +95,58 @@ func (csp *ConduitStreamProcessor) handleTransaction(tx *models.Transaction, ind
 	}
 }
 
-//handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
-func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
+func (csp *ConduitStreamProcessor) ProcessObRowsToCortex(ob *models.OrderBookRow) error {
+	
+	if err := csp.cache.InsertOrderBookRowToRedis(ob); err != nil {
+		return err
+	}
+
+	obRows, err := csp.cache.GetOrderBookRowsFromRedis(ob.Pair)
+
+	if err != nil {
+		csp.kstats.Increment("conduit.sent_obrow.cortex.error", 1.0)
+		return err
+	}
 
 	start := time.Now()
-	if err := csp.cortexClient.SendOrderBookRow(tx); err != nil {
-		csp.logger.Errorw(err.Error())
-		csp.kstats.Increment(".conduit.sent_obrow.cortex.error", 1.0)
-	} else {
-		csp.kstats.TimingDuration(".conduit.sent_obrow.cortex.time_duration", time.Since(start))
+	defer csp.kstats.TimingDuration("conduit.sent_obrow.cortex.time_duration", time.Since(start))
+
+	if err := csp.cortexClient.SendOrderBookRows(obRows); err != nil {
+		csp.logger.Errorw(err.Error(), "error sending message")
+		csp.kstats.Increment("conduit.sent_obrow.cortex.error", 1.0)
+		return err
+	}
+
+	return nil
+}
+
+//handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
+func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, index int) {
+	start := time.Now()
+	defer csp.kstats.TimingDuration("conduit.orderbook_row_handling.time_duration", time.Since(start))
+	defer csp.logger.Infow("Orderbook handling logic TTL", "time", time.Since(start).String())
+
+	if csp.cache.RowValidForCortex(ob.Pair) {
+
+		if err := csp.ProcessObRowsToCortex(ob); err != nil {
+			csp.logger.Errorw(err.Error())
+		}
+
 	}
 
 	if csp.writeToDB {
-		csp.dbStreams.InsertOrderBookRowToDataBase(tx, index)
-		csp.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
+		csp.dbStreams.InsertOrderBookRowToDataBase(ob, index)
+		csp.kstats.Increment("conduit.sqlinserts.ob", 1.0)
 
 	} else {
-		csp.cache.InsertOrderBookRow(tx)
-		csp.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
+		csp.cache.InsertOrderBookRow(ob)
+		csp.kstats.Increment("conduit.cacheinserts.ob", 1.0)
 
 	}
 }
 
 //InsertPairsFromBinanceToCache reads all trading pairs from Binance and then proceeds to store them as keys in cache
 func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
-
-	// tradingPairs, err := csp.requests.GetActiveBinanceExchangePairs()
-
-	// if err != nil {
-	// 	csp.logger.Errorw(err.Error())
-	// 	return err
-	// }
 
 	tradingPairs := []string{"btcusdt", "ethusdt", "xrpusdt", "ltcusdt"}
 

@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	"github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
 	"github.com/volatrade/conduit/internal/cortex"
@@ -38,20 +39,30 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	sessionConfig := config.NewSessionConfig(configConfig)
 	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
 	conduitStorageConnections, cleanup3 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
-	conduitCache := cache.New(loggerLogger)
-	conduitRequests := requests.New(statsStats)
-	slackConfig := config.NewSlackConfig(configConfig)
-	slackLogger := slack.New(slackConfig)
-	cortexConfig := config.NewCortexConfig(configConfig)
-	cortexClient, cleanup4, err := cortex.New(cortexConfig, statsStats, loggerLogger)
+	aredisConfig := config.NewRedisConfig(configConfig)
+	redis, cleanup4, err := aredis.New(loggerLogger, aredisConfig, statsStats)
 	if err != nil {
 		cleanup3()
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
+	conduitCache := cache.New(loggerLogger, redis)
+	conduitRequests := requests.New(statsStats)
+	slackConfig := config.NewSlackConfig(configConfig)
+	slackLogger := slack.New(slackConfig)
+	cortexConfig := config.NewCortexConfig(configConfig)
+	cortexClient, cleanup5, err := cortex.New(cortexConfig, statsStats, loggerLogger)
+	if err != nil {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	conduitStreamProcessor, cleanup6 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
 	return conduitStreamProcessor, func() {
+		cleanup6()
 		cleanup5()
 		cleanup4()
 		cleanup3()

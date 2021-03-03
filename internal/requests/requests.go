@@ -12,13 +12,12 @@ var Module = wire.NewSet(
 )
 
 type Requests interface {
-	GetActiveBinanceExchangePairs() ([]string, error)
 }
 
 type ConduitRequests struct {
-	kstats *stats.Stats
+	kstats stats.Stats
 }
 
-func New(stats *stats.Stats) *ConduitRequests {
+func New(stats stats.Stats) *ConduitRequests {
 	return &ConduitRequests{kstats: stats}
 }

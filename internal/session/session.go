@@ -30,11 +30,11 @@ type (
 	ConduitSession struct {
 		id     string
 		cfg    *Config
-		kstats *stats.Stats
+		kstats stats.Stats
 	}
 )
 
-func New(logger *logger.Logger, cfg *Config, kstats *stats.Stats) *ConduitSession {
+func New(logger *logger.Logger, cfg *Config, kstats stats.Stats) *ConduitSession {
 	id := fmt.Sprintf("%d_%d", time.Now().Hour(), time.Now().Minute())
 	logger.SetConstantField("ConduitSession ID", id)
 	logger.SetConstantField("environment", cfg.Env)
