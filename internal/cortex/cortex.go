@@ -57,6 +57,7 @@ func (cc *CortexClient) SendOrderBookRows(obRows []string) error {
 
 	res, err := cc.client.HandleOrderBookRow(context.Background(), &conduitpb.OrderBookRowRequest{Data: obRows})
 	if err != nil {
+		cc.kstats.Increment("cortex.errors", 1)
 		return fmt.Errorf("response: %+v, error: %s", res, err)
 	}
 	cc.kstats.Increment("cortex_requests", 1.0)

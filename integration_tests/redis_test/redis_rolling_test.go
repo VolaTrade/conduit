@@ -12,11 +12,11 @@ import (
 
 func generateOrderBooksSlice(length int) []models.OrderBookRow {
 	obs := make([]models.OrderBookRow, length)
-	for i := 0; i < length; i++ {
+	for i := 1; i < length; i++ {
 
 		t := time.Now()
 		obs[i] = models.OrderBookRow{
-			Id:        i + 1,
+			Id:        i,
 			Bids:      nil,
 			Asks:      nil,
 			Time:      t,

@@ -223,7 +223,7 @@ func (cc *ConduitCache) GetOrderBookRowsFromRedis(key string) ([]string, error) 
 	}
 
 	poppedVal, err := cc.aredis.LPop(context.Background(), key)
-	println("deleting")
+
 	if err != nil {
 		return nil, err
 	}
