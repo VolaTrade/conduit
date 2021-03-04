@@ -63,7 +63,7 @@ build-linux:
 .PHONY: docker-up
 docker-up:
 	@echo "\033[0;34m» Creating Conduit Service Dependencies \033[0;39m"
-	docker-compose up 
+	docker-compose up -d
 
 .PHONY: docker-dev-build
 docker-dev-build: build-linux

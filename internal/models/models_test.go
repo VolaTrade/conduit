@@ -30,6 +30,8 @@ var idealOBRes = &models.OrderBookRes{
 	Pair: idealOBRow.Pair,
 }
 
+var socketTransaction = []byte(`{"e":"trade","E":1605862294342,"s":"BTCUSDT","t":473476704,"p":"18251.11000000","q":"0.08256400","b":3662513230,"a":3662513203,"T":1605862294341,"m":false,"M":true}`)
+
 func TestUnmarshalOrderBook(t *testing.T) {
 
 	rec, err := models.UnmarshalOrderBookJSON(socketMessage, "BTCUSDT")
@@ -68,4 +70,14 @@ func TestDBUnmarshalOrderBook(t *testing.T) {
 
 	assert.True(t, err == nil)
 	assert.EqualValues(t, idealOBRes, obRes, "Values should match")
+}
+
+func TestUnmarshalTransactionJSON(t *testing.T) {
+	message := socketTransaction
+	ts := int64(1605862294341 / 1000)
+	exp := &models.Transaction{Id: 3662513203, Timestamp: time.Unix(ts, 0), Pair: "BTCUSDT", Price: 18251.11000000, Quantity: 0.08256400, IsMaker: false}
+	ret, err := models.UnmarshalTransactionJSON(message)
+
+	assert.NoError(t, err)
+	assert.EqualValues(t, exp, ret)
 }
