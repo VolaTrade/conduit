@@ -134,6 +134,7 @@ func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 	cc.logger.Infow("cache insertion", "type", "orderbook snapshot", "cache length", cc.OrderBookRowsLength())
 	cc.obMux.Lock()
 	defer cc.obMux.Unlock()
+
 	cc.orderBookData = append(cc.orderBookData, obRow)
 
 }

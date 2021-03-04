@@ -14,11 +14,13 @@ func generateOrderBooksSlice(length int) []models.OrderBookRow {
 	obs := make([]models.OrderBookRow, length)
 	for i := 0; i < length; i++ {
 
+		t := time.Now()
 		obs[i] = models.OrderBookRow{
 			Id:        i + 1,
 			Bids:      nil,
 			Asks:      nil,
-			Timestamp: time.Now(),
+			Time:      t,
+			Timestamp: t.Format("2006:01:02 15:04"),
 			Pair:      "btcusdt",
 		}
 	}

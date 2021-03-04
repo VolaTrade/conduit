@@ -2,12 +2,14 @@ package models
 
 import (
 	"encoding/json"
+	"time"
 )
 
 type OrderBookRes struct {
 	Id        int        `json:"last_update_id" db:"id"`
 	Bids      [][]string `json:"bids" db:"bids"`
 	Asks      [][]string `json:"asks" db:"asks"`
+	Time      time.Time  `json:"time"`
 	Timestamp string     `json:"timestamp" db:"timestamp"`
 	Pair      string     `json:"pair" db:"pair"`
 }
@@ -30,6 +32,7 @@ func UnmarshalDBOrderBookRow(obRow *OrderBookRow) (*OrderBookRes, error) {
 		Id:        obRow.Id,
 		Bids:      obBids,
 		Asks:      obAsks,
+		Time:      obRow.Time,
 		Timestamp: obRow.Timestamp,
 		Pair:      obRow.Pair,
 	}, nil
