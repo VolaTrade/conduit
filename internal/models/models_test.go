@@ -39,9 +39,9 @@ func TestUnmarshalOrderBook(t *testing.T) {
 		panic(err)
 	}
 
-	rec.Time = time.Now()
-	idealOBRow.Time = rec.Time
-	tsStr := fmt.Sprintf(rec.Time.Format("2006:01:02 15:04"))
+	rec.CreationTime = time.Now()
+	idealOBRow.CreationTime = rec.CreationTime
+	tsStr := fmt.Sprintf(rec.CreationTime.Format("2006:01:02 15:04"))
 	rec.Timestamp = tsStr
 	idealOBRow.Timestamp = tsStr
 

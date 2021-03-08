@@ -7,12 +7,12 @@ import (
 )
 
 type OrderBookRow struct {
-	Id        int             `json:"last_update_id" db:"id"`
-	Bids      json.RawMessage `json:"bids" db:"bids"`
-	Asks      json.RawMessage `json:"asks" db:"asks"`
-	Time      time.Time       `json:"time"`
-	Timestamp string          `json:"timestamp" db:"timestamp"`
-	Pair      string          `json:"pair" db:"pair"`
+	Id           int             `json:"last_update_id" db:"id"`
+	Bids         json.RawMessage `json:"bids" db:"bids"`
+	Asks         json.RawMessage `json:"asks" db:"asks"`
+	CreationTime time.Time       `json:"time"`
+	Timestamp    string          `json:"timestamp" db:"timestamp"`
+	Pair         string          `json:"pair" db:"pair"`
 }
 
 func NewDBOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, error) {
@@ -34,12 +34,12 @@ func NewDBOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, 
 	}
 
 	return &OrderBookRow{
-		Id:        jsonResponse.Id,
-		Bids:      bids,
-		Asks:      asks,
-		Time:      t,
-		Timestamp: timestamp,
-		Pair:      pair,
+		Id:           jsonResponse.Id,
+		Bids:         bids,
+		Asks:         asks,
+		CreationTime: t,
+		Timestamp:    timestamp,
+		Pair:         pair,
 	}, nil
 }
 
