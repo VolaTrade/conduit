@@ -6,70 +6,59 @@ package mocks
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockStreamProcessor is a mock of StreamProcessor interface
+// MockStreamProcessor is a mock of StreamProcessor interface.
 type MockStreamProcessor struct {
 	ctrl     *gomock.Controller
 	recorder *MockStreamProcessorMockRecorder
 }
 
-// MockStreamProcessorMockRecorder is the mock recorder for MockStreamProcessor
+// MockStreamProcessorMockRecorder is the mock recorder for MockStreamProcessor.
 type MockStreamProcessorMockRecorder struct {
 	mock *MockStreamProcessor
 }
 
-// NewMockStreamProcessor creates a new mock instance
+// NewMockStreamProcessor creates a new mock instance.
 func NewMockStreamProcessor(ctrl *gomock.Controller) *MockStreamProcessor {
 	mock := &MockStreamProcessor{ctrl: ctrl}
 	mock.recorder = &MockStreamProcessorMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStreamProcessor) EXPECT() *MockStreamProcessorMockRecorder {
 	return m.recorder
 }
 
-// BuildOrderBookChannels mocks base method
+// BuildOrderBookChannels mocks base method.
 func (m *MockStreamProcessor) BuildOrderBookChannels(arg0 int) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "BuildOrderBookChannels", arg0)
 }
 
-// BuildOrderBookChannels indicates an expected call of BuildOrderBookChannels
+// BuildOrderBookChannels indicates an expected call of BuildOrderBookChannels.
 func (mr *MockStreamProcessorMockRecorder) BuildOrderBookChannels(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildOrderBookChannels", reflect.TypeOf((*MockStreamProcessor)(nil).BuildOrderBookChannels), arg0)
 }
 
-// BuildTransactionChannels mocks base method
-func (m *MockStreamProcessor) BuildTransactionChannels(arg0 int) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "BuildTransactionChannels", arg0)
-}
-
-// BuildTransactionChannels indicates an expected call of BuildTransactionChannels
-func (mr *MockStreamProcessorMockRecorder) BuildTransactionChannels(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildTransactionChannels", reflect.TypeOf((*MockStreamProcessor)(nil).BuildTransactionChannels), arg0)
-}
-
-// GenerateSocketListeningRoutines mocks base method
+// GenerateSocketListeningRoutines mocks base method.
 func (m *MockStreamProcessor) GenerateSocketListeningRoutines(arg0 context.Context) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "GenerateSocketListeningRoutines", arg0)
 }
 
-// GenerateSocketListeningRoutines indicates an expected call of GenerateSocketListeningRoutines
+// GenerateSocketListeningRoutines indicates an expected call of GenerateSocketListeningRoutines.
 func (mr *MockStreamProcessorMockRecorder) GenerateSocketListeningRoutines(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateSocketListeningRoutines", reflect.TypeOf((*MockStreamProcessor)(nil).GenerateSocketListeningRoutines), arg0)
 }
 
-// InsertPairsFromBinanceToCache mocks base method
+// InsertPairsFromBinanceToCache mocks base method.
 func (m *MockStreamProcessor) InsertPairsFromBinanceToCache() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertPairsFromBinanceToCache")
@@ -77,55 +66,55 @@ func (m *MockStreamProcessor) InsertPairsFromBinanceToCache() error {
 	return ret0
 }
 
-// InsertPairsFromBinanceToCache indicates an expected call of InsertPairsFromBinanceToCache
+// InsertPairsFromBinanceToCache indicates an expected call of InsertPairsFromBinanceToCache.
 func (mr *MockStreamProcessorMockRecorder) InsertPairsFromBinanceToCache() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertPairsFromBinanceToCache", reflect.TypeOf((*MockStreamProcessor)(nil).InsertPairsFromBinanceToCache))
 }
 
-// ListenAndHandleDataChannel mocks base method
+// ListenAndHandleDataChannel mocks base method.
 func (m *MockStreamProcessor) ListenAndHandleDataChannel(arg0 context.Context, arg1 int) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "ListenAndHandleDataChannel", arg0, arg1)
 }
 
-// ListenAndHandleDataChannel indicates an expected call of ListenAndHandleDataChannel
+// ListenAndHandleDataChannel indicates an expected call of ListenAndHandleDataChannel.
 func (mr *MockStreamProcessorMockRecorder) ListenAndHandleDataChannel(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenAndHandleDataChannel", reflect.TypeOf((*MockStreamProcessor)(nil).ListenAndHandleDataChannel), arg0, arg1)
 }
 
-// ListenForDatabasePriveleges mocks base method
+// ListenForDatabasePriveleges mocks base method.
 func (m *MockStreamProcessor) ListenForDatabasePriveleges(arg0 context.Context) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "ListenForDatabasePriveleges", arg0)
 }
 
-// ListenForDatabasePriveleges indicates an expected call of ListenForDatabasePriveleges
+// ListenForDatabasePriveleges indicates an expected call of ListenForDatabasePriveleges.
 func (mr *MockStreamProcessorMockRecorder) ListenForDatabasePriveleges(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenForDatabasePriveleges", reflect.TypeOf((*MockStreamProcessor)(nil).ListenForDatabasePriveleges), arg0)
 }
 
-// ListenForExit mocks base method
+// ListenForExit mocks base method.
 func (m *MockStreamProcessor) ListenForExit(arg0 func()) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "ListenForExit", arg0)
 }
 
-// ListenForExit indicates an expected call of ListenForExit
+// ListenForExit indicates an expected call of ListenForExit.
 func (mr *MockStreamProcessorMockRecorder) ListenForExit(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenForExit", reflect.TypeOf((*MockStreamProcessor)(nil).ListenForExit), arg0)
 }
 
-// RunSocketRoutines mocks base method
+// RunSocketRoutines mocks base method.
 func (m *MockStreamProcessor) RunSocketRoutines(arg0 context.Context) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RunSocketRoutines", arg0)
 }
 
-// RunSocketRoutines indicates an expected call of RunSocketRoutines
+// RunSocketRoutines indicates an expected call of RunSocketRoutines.
 func (mr *MockStreamProcessorMockRecorder) RunSocketRoutines(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunSocketRoutines", reflect.TypeOf((*MockStreamProcessor)(nil).RunSocketRoutines), arg0)

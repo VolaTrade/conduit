@@ -8,25 +8,25 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockRequests is a mock of Requests interface
+// MockRequests is a mock of Requests interface.
 type MockRequests struct {
 	ctrl     *gomock.Controller
 	recorder *MockRequestsMockRecorder
 }
 
-// MockRequestsMockRecorder is the mock recorder for MockRequests
+// MockRequestsMockRecorder is the mock recorder for MockRequests.
 type MockRequestsMockRecorder struct {
 	mock *MockRequests
 }
 
-// NewMockRequests creates a new mock instance
+// NewMockRequests creates a new mock instance.
 func NewMockRequests(ctrl *gomock.Controller) *MockRequests {
 	mock := &MockRequests{ctrl: ctrl}
 	mock.recorder = &MockRequestsMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRequests) EXPECT() *MockRequestsMockRecorder {
 	return m.recorder
 }

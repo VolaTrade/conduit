@@ -9,12 +9,9 @@ import (
 //ListenAndHandleDataChannel waits for transaction or orderbook to come in from their respective channel before invoking handler function
 func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Context, index int) {
 
-	txChannel, obChannel := csp.transactionChannels[index], csp.orderBookChannels[index]
+	obChannel := csp.orderBookChannels[index]
 	for {
 		select {
-
-		case transaction := <-txChannel:
-			csp.handleTransaction(transaction, index)
 
 		case orderBookRow := <-obChannel:
 			csp.handleOrderBookRow(orderBookRow, index)
@@ -51,12 +48,6 @@ func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Conte
 			}
 
 			csp.writeToDB = true
-			if err := csp.dbStreams.TransferTransactionCache(csp.cache.GetAllTransactions()); err != nil {
-				csp.logger.Errorw(err.Error(), "attempt", attempts)
-				attempts -= 1
-				continue
-			}
-			csp.cache.PurgeTransactions()
 			if err := csp.dbStreams.TransferOrderBookCache(csp.cache.GetAllOrderBookRows()); err != nil {
 				csp.logger.Errorw(err.Error(), "attempt", attempts)
 				attempts -= 1
