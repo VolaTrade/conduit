@@ -51,33 +51,3 @@ func TestUnmarshalOrderBook(t *testing.T) {
 	assert.True(t, err == nil)
 	assert.EqualValues(t, idealOBRow, rec, "Values should match")
 }
-
-func TestDBUnmarshalOrderBook(t *testing.T) {
-
-	obRes, err := models.UnmarshalDBOrderBookRow(idealOBRow)
-	if err != nil {
-		panic(err)
-	}
-
-	obRes.Time = time.Now()
-	idealOBRes.Time = obRes.Time
-	tsStr := fmt.Sprintf(time.Now().Format("2006:01:02 15:04"))
-	obRes.Timestamp = tsStr
-	idealOBRes.Timestamp = tsStr
-
-	fmt.Println("obRes: ", obRes)
-	fmt.Println("idealOBRes: ", idealOBRes)
-
-	assert.True(t, err == nil)
-	assert.EqualValues(t, idealOBRes, obRes, "Values should match")
-}
-
-func TestUnmarshalTransactionJSON(t *testing.T) {
-	message := socketTransaction
-	ts := int64(1605862294341 / 1000)
-	exp := &models.Transaction{Id: 3662513203, Timestamp: time.Unix(ts, 0), Pair: "BTCUSDT", Price: 18251.11000000, Quantity: 0.08256400, IsMaker: false}
-	ret, err := models.UnmarshalTransactionJSON(message)
-
-	assert.NoError(t, err)
-	assert.EqualValues(t, exp, ret)
-}
