@@ -26,7 +26,6 @@ var (
 
 type (
 	StreamProcessor interface {
-		BuildTransactionChannels(count int)
 		BuildOrderBookChannels(count int)
 		GenerateSocketListeningRoutines(ctx context.Context)
 		InsertPairsFromBinanceToCache() error
@@ -37,17 +36,16 @@ type (
 	}
 
 	ConduitStreamProcessor struct {
-		logger              *logger.Logger
-		cache               cache.Cache
-		dbStreams           store.StorageConnections
-		requests            requests.Requests
-		slack               slack.Slack
-		session             session.Session
-		kstats              stats.Stats
-		cortexClient        cortex.Cortex
-		transactionChannels []chan *models.Transaction
-		orderBookChannels   []chan *models.OrderBookRow
-		writeToDB           bool
+		logger            *logger.Logger
+		cache             cache.Cache
+		dbStreams         store.StorageConnections
+		requests          requests.Requests
+		slack             slack.Slack
+		session           session.Session
+		kstats            stats.Stats
+		cortexClient      cortex.Cortex
+		orderBookChannels []chan *models.OrderBookRow
+		writeToDB         bool
 	}
 )
 
@@ -67,14 +65,12 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 		cortexClient: cortexClient,
 	}
 
-	sp.BuildTransactionChannels(session.GetConnectionCount())
 	sp.BuildOrderBookChannels(session.GetConnectionCount())
 
 	shutdown := func() {
 		log.Println("Shutting down stream proccessing layer")
 		log.Println("Closing data channels")
-		for i := 0; i < len(sp.transactionChannels); i++ {
-			close(sp.transactionChannels[i])
+		for i := 0; i < len(sp.orderBookChannels); i++ {
 			close(sp.orderBookChannels[i])
 		}
 		log.Println("Stream processing layer completed shutdown")
@@ -82,21 +78,8 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 	return sp, shutdown
 }
 
-//handleTransaction checks to see if tx is going to database or cache, then inserts accordingly
-func (csp *ConduitStreamProcessor) handleTransaction(tx *models.Transaction, index int) {
-	if csp.writeToDB {
-		csp.dbStreams.InsertTransactionToDataBase(tx, index)
-		csp.kstats.Increment(".conduit.sqlinserts.tx", 1.0)
-
-	} else {
-		csp.cache.InsertTransaction(tx)
-		csp.kstats.Increment(".conduit.cacheinserts.tx", 1.0)
-
-	}
-}
-
 func (csp *ConduitStreamProcessor) ProcessObRowsToCortex(ob *models.OrderBookRow) error {
-	
+
 	if err := csp.cache.InsertOrderBookRowToRedis(ob); err != nil {
 		return err
 	}
@@ -161,9 +144,4 @@ func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
 func (csp *ConduitStreamProcessor) GetOrderBookChannel(index int) chan *models.OrderBookRow {
 
 	return csp.orderBookChannels[index]
-}
-
-//GetOrderBookChannel returns tx channel .... USED FOR TESTING ONLY
-func (csp *ConduitStreamProcessor) GetTransactionChannel(index int) chan *models.Transaction {
-	return csp.transactionChannels[index]
 }

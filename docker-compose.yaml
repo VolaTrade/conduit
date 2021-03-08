@@ -11,8 +11,8 @@ services:
     container_name: conduit_postgres
     image: "postgres:13.1-alpine"
     environment:
-      POSTGRES_USER: "cortexer"
-      POSTGRES_PASSWORD: "password"
+      POSTGRES_USER: conduiter
+      POSTGRES_PASSWORD: password
     volumes:
         - ./ddl/ddl.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
