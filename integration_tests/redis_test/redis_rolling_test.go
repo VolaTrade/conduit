@@ -16,12 +16,12 @@ func generateOrderBooksSlice(length int) []models.OrderBookRow {
 
 		t := time.Now()
 		obs[i] = models.OrderBookRow{
-			Id:        i,
-			Bids:      nil,
-			Asks:      nil,
-			Time:      t,
-			Timestamp: t.Format("2006:01:02 15:04"),
-			Pair:      "btcusdt",
+			Id:           i,
+			Bids:         nil,
+			Asks:         nil,
+			CreationTime: t,
+			Timestamp:    t.Format("2006:01:02 15:04"),
+			Pair:         "btcusdt",
 		}
 	}
 
