@@ -1,23 +1,27 @@
 version: "3.5"
-
 services:
   conduit_redis:
     container_name: conduit_redis
     image: redis:5.0.3
     networks:
       - compose
-
-  conduit-postgres:
+  conduit_postgres:
     container_name: conduit_postgres
     image: "postgres:13.1-alpine"
     environment:
-      POSTGRES_USER: conduiter
-      POSTGRES_PASSWORD: password
-    volumes:
-        - ./ddl/ddl.sql:/docker-entrypoint-initdb.d/init.sql
+      POSTGRES_USER: "conduiter"
+      POSTGRES_PASSWORD: "password"
     networks:
         - compose
-
+  postgres_seed:
+    container_name: postgres_seed
+    build:
+     context: ./
+     dockerfile: ./ddl/Dockerfile
+    networks:
+        - compose
+    depends_on:
+        - conduit_postgres
 networks:
   compose:
     name: conduit-compose

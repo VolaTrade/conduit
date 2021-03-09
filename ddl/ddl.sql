@@ -1,4 +1,4 @@
-CREATE TABLE order_books( 
+CREATE TABLE order_books(
 	id NUMERIC NOT NULL,
 	pair VARCHAR NOT NULL,
 	time_stamp VARCHAR NOT NULL,
