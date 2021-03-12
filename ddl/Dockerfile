@@ -1,9 +1,9 @@
 FROM python:3.8.7
 
+COPY config.env .
 COPY ddl/seed.py . 
 COPY ddl/ddl.sql .
-COPY ddl/requirements.txt .
-COPY config.env . 
+COPY ddl/requirements.txt . 
 
 RUN pip3 install -r requirements.txt
 

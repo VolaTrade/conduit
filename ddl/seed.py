@@ -8,7 +8,7 @@ PG_HOST: str = config("PG_HOST")
 PG_PORT: int = int(config("PG_PORT"))
 PG_DATABASE: str = config("PG_DATABASE")
 PG_USER: str = config("PG_USER")
-PG_PASSWORD: int = config("PG_PASSWORD")
+PG_PASSWORD: str = config("PG_PASSWORD")
 
 if __name__ == '__main__':
     conn = psycopg2.connect(
