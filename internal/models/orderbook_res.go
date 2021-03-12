@@ -9,7 +9,7 @@ type OrderBookRes struct {
 	Id           int        `json:"lastUpdateId" db:"id"`
 	Bids         [][]string `json:"bids" db:"bids"`
 	Asks         [][]string `json:"asks" db:"asks"`
-	CreationTime time.Time  `json:"time" db:"-"`
+	CreationTime time.Time  `json:"time"`
 	Timestamp    string     `json:"timestamp" db:"timestamp"`
 	Pair         string     `json:"pair" db:"pair"`
 }

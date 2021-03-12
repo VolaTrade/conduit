@@ -10,7 +10,7 @@ type OrderBookRow struct {
 	Id           int             `json:"lastUpdateId" db:"id"`
 	Bids         json.RawMessage `json:"bids" db:"bids"`
 	Asks         json.RawMessage `json:"asks" db:"asks"`
-	CreationTime time.Time       `json:"time" db:"-"`
+	CreationTime time.Time       `json:"time"`
 	Timestamp    string          `json:"timestamp" db:"timestamp"`
 	Pair         string          `json:"pair" db:"pair"`
 }
