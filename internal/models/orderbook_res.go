@@ -6,11 +6,12 @@ import (
 )
 
 type OrderBookRes struct {
-	Id        int        `json:"last_update_id" db:"id"`
-	Bids      [][]string `json:"bids" db:"bids"`
-	Asks      [][]string `json:"asks" db:"asks"`
-	Timestamp time.Time  `json:"timestamp" db:"timestamp"`
-	Pair      string     `json:"pair" db:"pair"`
+	Id           int        `json:"lastUpdateId" db:"id"`
+	Bids         [][]string `json:"bids" db:"bids"`
+	Asks         [][]string `json:"asks" db:"asks"`
+	CreationTime time.Time  `json:"time"`
+	Timestamp    string     `json:"timestamp" db:"timestamp"`
+	Pair         string     `json:"pair" db:"pair"`
 }
 
 func UnmarshalDBOrderBookRow(obRow *OrderBookRow) (*OrderBookRes, error) {
@@ -28,10 +29,11 @@ func UnmarshalDBOrderBookRow(obRow *OrderBookRow) (*OrderBookRes, error) {
 	}
 
 	return &OrderBookRes{
-		Id:        obRow.Id,
-		Bids:      obBids,
-		Asks:      obAsks,
-		Timestamp: obRow.Timestamp,
-		Pair:      obRow.Pair,
+		Id:           obRow.Id,
+		Bids:         obBids,
+		Asks:         obAsks,
+		CreationTime: obRow.CreationTime,
+		Timestamp:    obRow.Timestamp,
+		Pair:         obRow.Pair,
 	}, nil
 }

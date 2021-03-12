@@ -51,11 +51,11 @@ func NewConfig(fileName FilePath) *Config {
 
 	return &Config{
 		DbConfig: postgres.Config{
-			Host:     os.Getenv("HOST"),
-			Port:     os.Getenv("PORT"),
-			Database: os.Getenv("DATABASE"),
-			User:     os.Getenv("POSTGRES_USER"),
-			Password: os.Getenv("PASSWORD"),
+			Host:     os.Getenv("PG_HOST"),
+			Port:     os.Getenv("PG_PORT"),
+			Database: os.Getenv("PG_DATABASE"),
+			User:     os.Getenv("PG_USER"),
+			Password: os.Getenv("PG_PASSWORD"),
 		},
 		StatsConfig: stats.Config{
 			Host: os.Getenv("STATS_HOST"),
