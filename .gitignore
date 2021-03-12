@@ -3,5 +3,6 @@
 config.env
 /internal/*/*.swp
 start
+*.yaml
 config.env.dev
 .gitignore

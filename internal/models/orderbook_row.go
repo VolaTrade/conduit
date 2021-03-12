@@ -7,7 +7,7 @@ import (
 )
 
 type OrderBookRow struct {
-	Id           int             `json:"last_update_id" db:"id"`
+	Id           int             `json:"lastUpdateId" db:"id"`
 	Bids         json.RawMessage `json:"bids" db:"bids"`
 	Asks         json.RawMessage `json:"asks" db:"asks"`
 	CreationTime time.Time       `json:"time" db:"-"`
