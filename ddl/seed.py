@@ -1,14 +1,22 @@
 import psycopg2 
+from decouple import config, RepositoryEnv
+
 from time import sleep  
+
+PG_HOST: str = config("PG_HOST")
+PG_PORT: int = config("PG_PORT")
+PG_DATABASE: int = config("PG_DATABASE")
+PG_USER: str = config("PG_USER")
+PG_PASSWORD: int = config("PG_PASSWORD")
 
 if __name__ == '__main__':
     sleep(5)
     conn = psycopg2.connect(
-                            host="conduit_postgres", 
-                            dbname="postgres",
-                            user="conduiter", 
-                            password="password", 
-                            port=5432
+                            host=PG_HOST, 
+                            dbname=PG_PORT,
+                            user=PG_USER, 
+                            password=PG_PASSWORD, 
+                            port=PG_PORT
                         )
 
 

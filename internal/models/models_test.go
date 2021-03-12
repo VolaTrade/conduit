@@ -35,6 +35,9 @@ var socketTransaction = []byte(`{"e":"trade","E":1605862294342,"s":"BTCUSDT","t"
 func TestUnmarshalOrderBook(t *testing.T) {
 
 	rec, err := models.UnmarshalOrderBookJSON(socketMessage, "BTCUSDT")
+	fmt.Println(rec.CreationTime)
+	fmt.Println(rec.Timestamp)
+
 	if err != nil {
 		panic(err)
 	}
