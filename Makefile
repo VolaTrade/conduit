@@ -22,12 +22,9 @@ test-integration: docker-up
 docker-build:
 	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
 
-.PHONY: docker-up 
-docker-up:
-	docker-compose up -d 
-
+.PHONY: docker-run
 docker-run:
-	docker run --network=conduit-compose --log-opt max-size=10m --log-opt max-file=5 ${BIN_NAME}
+	docker run --name conduit --network=conduit-compose --log-opt max-size=10m --log-opt max-file=5 ${BIN_NAME}
 
 ecr-push-image:
 	docker push ${ECR_URI}/${BIN_NAME}
@@ -72,4 +69,6 @@ docker-dev-build: build-linux
 	@echo "\033[0;32m» Successfully Built Test Image :) \033[0;39m"
 
 docker-dev-down:
+	docker stop conduit
 	docker rm conduit
+
