@@ -7,12 +7,13 @@ import (
 )
 
 type OrderBookRow struct {
-	Id           int             `json:"lastUpdateId" db:"id"`
-	Bids         json.RawMessage `json:"bids" db:"bids"`
-	Asks         json.RawMessage `json:"asks" db:"asks"`
-	CreationTime time.Time       `json:"time"`
-	Timestamp    string          `json:"timestamp" db:"timestamp"`
-	Pair         string          `json:"pair" db:"pair"`
+	Id              int             `json:"lastUpdateId" db:"id"`
+	Bids            json.RawMessage `json:"bids" db:"bids"`
+	Asks            json.RawMessage `json:"asks" db:"asks"`
+	CreationTime    time.Time       `json:"time"`
+	TransitDuration time.Duration   `json:"duration"`
+	Timestamp       string          `json:"timestamp" db:"timestamp"`
+	Pair            string          `json:"pair" db:"pair"`
 }
 
 func NewDBOrderBookRow(jsonResponse *OrderBookRes, pair string) (*OrderBookRow, error) {
@@ -54,4 +55,10 @@ func UnmarshalOrderBookJSON(message []byte, pair string) (*OrderBookRow, error) 
 		return nil, err
 	}
 	return ob, nil
+}
+
+func (ob *OrderBookRow) UpdateTime(t time.Time) *OrderBookRow {
+	ob.TransitDuration = time.Since(ob.CreationTime)
+	ob.CreationTime = t
+	return ob
 }
