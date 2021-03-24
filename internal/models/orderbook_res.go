@@ -6,12 +6,13 @@ import (
 )
 
 type OrderBookRes struct {
-	Id           int        `json:"lastUpdateId" db:"id"`
-	Bids         [][]string `json:"bids" db:"bids"`
-	Asks         [][]string `json:"asks" db:"asks"`
-	CreationTime time.Time  `json:"time"`
-	Timestamp    string     `json:"timestamp" db:"timestamp"`
-	Pair         string     `json:"pair" db:"pair"`
+	Id              int           `json:"lastUpdateId" db:"id"`
+	Bids            [][]string    `json:"bids" db:"bids"`
+	Asks            [][]string    `json:"asks" db:"asks"`
+	CreationTime    time.Time     `json:"time"`
+	TransitDuration time.Duration `json:"duration"`
+	Timestamp       string        `json:"timestamp" db:"timestamp"`
+	Pair            string        `json:"pair" db:"pair"`
 }
 
 func UnmarshalDBOrderBookRow(obRow *OrderBookRow) (*OrderBookRes, error) {
@@ -36,4 +37,9 @@ func UnmarshalDBOrderBookRow(obRow *OrderBookRow) (*OrderBookRes, error) {
 		Timestamp:    obRow.Timestamp,
 		Pair:         obRow.Pair,
 	}, nil
+}
+
+func (ob *OrderBookRes) UpdateTime(t time.Time) {
+	ob.TransitDuration = time.Since(ob.CreationTime)
+	ob.CreationTime = t
 }

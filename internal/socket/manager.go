@@ -96,6 +96,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 	for {
 
 		csm.logger.Infow("Reading order book message", "pair", csm.entry.Pair)
+
 		message, err := csm.orderBookSocket.readMessage()
 
 		csm.logger.Infow("Message read.. checking for error", "pair", csm.entry.Pair)
@@ -126,6 +127,8 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
+
+			csm.kstats.TimingDuration("conduit.orderbook.transit_duration.unmarshal_socket_message", orderBookRow.UpdateTime(time.Now()).TransitDuration)
 			csm.logger.Infow("Sending orderbook data to channel", "pair", csm.entry.Pair, "type", "orderbook")
 			csm.obChannel <- orderBookRow
 			csm.logger.Infow("Data sent through channel", "pair", csm.entry.Pair, "type", "orderbook")

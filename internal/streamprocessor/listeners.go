@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-//ListenAndHandleDataChannel waits for transaction or orderbook to come in from their respective channel before invoking handler function
+//ListenAndHandleDataChannel waits for orderbook to come in from their respective channel before invoking handler function
 func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Context, index int) {
 
 	obChannel := csp.orderBookChannels[index]
@@ -14,6 +14,7 @@ func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Contex
 		select {
 
 		case orderBookRow := <-obChannel:
+			csp.kstats.TimingDuration("conduit.orderbook.transit_duration.received_through_channel", orderBookRow.UpdateTime(time.Now()).TransitDuration)
 			csp.handleOrderBookRow(orderBookRow, index)
 
 		case <-ctx.Done():

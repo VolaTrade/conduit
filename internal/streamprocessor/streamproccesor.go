@@ -91,8 +91,7 @@ func (csp *ConduitStreamProcessor) ProcessObRowsToCortex(ob *models.OrderBookRow
 		return err
 	}
 
-	start := time.Now()
-	defer csp.kstats.TimingDuration("conduit.sent_obrow.cortex.time_duration", time.Since(start))
+	defer csp.kstats.TimingDuration("conduit.orderbook.transit_duration.sent_to_cortex", ob.UpdateTime(time.Now()).TransitDuration)
 
 	if err := csp.cortexClient.SendOrderBookRows(obRows); err != nil {
 		csp.logger.Errorw(err.Error(), "error sending message")
@@ -106,7 +105,7 @@ func (csp *ConduitStreamProcessor) ProcessObRowsToCortex(ob *models.OrderBookRow
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
 func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, index int) {
 	start := time.Now()
-	defer csp.kstats.TimingDuration("conduit.orderbook_row_handling.time_duration", time.Since(start))
+	defer csp.kstats.TimingDuration("conduit.orderbook.transit_duration.row_handling", ob.UpdateTime(start).TransitDuration)
 	defer csp.logger.Infow("Orderbook handling logic TTL", "time", time.Since(start).String())
 
 	if csp.cache.RowValidForCortex(ob.Pair) {

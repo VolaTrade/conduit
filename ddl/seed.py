@@ -1,7 +1,7 @@
 import psycopg2 
 from decouple import Config, RepositoryEnv
 
-from time import sleep  
+from time import sleep 
 
 config = Config(RepositoryEnv("config.env"))
 PG_HOST: str = config("PG_HOST")
@@ -11,6 +11,7 @@ PG_USER: str = config("PG_USER")
 PG_PASSWORD: str = config("PG_PASSWORD")
 
 if __name__ == '__main__':
+    sleep(2)
     conn = psycopg2.connect(
                             host=PG_HOST, 
                             dbname=PG_DATABASE,
