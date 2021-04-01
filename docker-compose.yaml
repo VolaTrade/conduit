@@ -19,7 +19,7 @@ services:
     container_name: postgres_seed
     build:
      context: ./
-     dockerfile: ./ddl/Dockerfile/
+     dockerfile: ./ddl/Dockerfile
     networks:
         - compose
     depends_on:

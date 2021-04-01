@@ -12,6 +12,7 @@ var Module = wire.NewSet(
 )
 
 type Requests interface {
+	GetActiveOrderbookPairs() ([]string, error)
 }
 
 type ConduitRequests struct {
