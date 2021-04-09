@@ -5,3 +5,7 @@ type CacheEntry struct {
 	ObUrl string
 	Pair  string
 }
+
+type CortexEntry struct {
+	Url string
+}

@@ -36,7 +36,7 @@ func createTestSuite(t *testing.T) testSuite {
 	mockRequests := mocks.NewMockRequests(mockController)
 	mockSession := mocks.NewMockSession(mockController)
 
-	cortexClient, _, _ := cortex.New(&cortex.Config{Port: 0}, stats, logger.NewNoop()) //This should be mocked
+	cortexClient, _ := cortex.New(&cortex.Config{Port: 0}, stats, logger.NewNoop()) //This should be mocked
 
 	mockSession.EXPECT().GetConnectionCount().Return(0).Times(100)
 	svc, _ := service.New(mockConnections, cache, nil, mockSession, stats, nil, logger.NewNoop(), cortexClient)

@@ -3,13 +3,11 @@ package cortex
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/google/wire"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	conduitpb "github.com/volatrade/protobufs/cortex/conduit"
-	"google.golang.org/grpc"
 )
 
 var Module = wire.NewSet(
@@ -25,32 +23,21 @@ type (
 		Host string
 	}
 	CortexClient struct {
-		client conduitpb.ConduitServiceClient
-		conn   *grpc.ClientConn
+		//client conduitpb.ConduitServiceClient
+		//conn   *grpc.ClientConn
 		config *Config
 		kstats stats.Stats
 		logger *logger.Logger
 	}
 )
 
-func New(cfg *Config, kstats stats.Stats, logger *logger.Logger) (*CortexClient, func(), error) {
+func New(cfg *Config, kstats stats.Stats, logger *logger.Logger) (*CortexClient, error) {
 
-	log.Println("creating client connection to cortex -> port:", cfg.Port)
-	conn, err := grpc.Dial(fmt.Sprintf(":%d", cfg.Port), grpc.WithInsecure())
-	if err != nil {
-		log.Printf("did not connect: %s", err)
-		return nil, nil, err
-	}
-	client := conduitpb.NewConduitServiceClient(conn)
-	end := func() {
-		if conn != nil {
-			if err := conn.Close(); err != nil {
-				log.Printf("Error closing client connection to cortex: %v", err)
-			}
-			log.Println("Successful Shutdown of client connection to cortex")
-		}
-	}
-	return &CortexClient{client: client, conn: conn, config: cfg, kstats: kstats, logger: logger}, end, nil
+	return &CortexClient{config: cfg, kstats: kstats, logger: logger}, nil
+}
+
+func (cc *CortexClient) GetCortexUrlString() string {
+	
 }
 
 func (cc *CortexClient) SendOrderBookRows(obRows []string) error {
