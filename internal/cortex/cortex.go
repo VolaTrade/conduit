@@ -23,7 +23,7 @@ const (
 
 type (
 	Cortex interface {
-		SendFullCacheUpdate() error
+		SendFullCacheUpdate(string) error
 	}
 	Config struct {
 		Port int
@@ -51,10 +51,10 @@ func New(cfg *Config, kstats stats.Stats, logger *logger.Logger) (*CortexConnect
 // 	return updateUrl.String()
 // }
 
-func (cc *CortexConnection) SendFullCacheUpdate() error {
+func (cc *CortexConnection) SendFullCacheUpdate(pair string) error {
 
 	var message models.CortexRequest
-	message.Data = "Redis cache length is >= 30"
+	message.Pair = pair
 	jsonData, err := json.Marshal(message)
 	if err != nil {
 		return err

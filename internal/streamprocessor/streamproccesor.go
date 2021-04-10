@@ -92,7 +92,7 @@ func (csp *ConduitStreamProcessor) ProcessObRowsToCortex(ob *models.OrderBookRow
 	start := time.Now()
 	defer csp.kstats.TimingDuration("conduit.full_cache_update.cortex.time_duration", time.Since(start))
 
-	if err := csp.cortexConnection.SendFullCacheUpdate(); err != nil {
+	if err := csp.cortexConnection.SendFullCacheUpdate(ob.Pair); err != nil {
 		csp.logger.Errorw(err.Error(), "error sending full cache update to cortex")
 		csp.kstats.Increment("conduit.full_cache_update.cortex.error", 1.0)
 		return err

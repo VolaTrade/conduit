@@ -11,5 +11,5 @@ type CortexEntry struct {
 }
 
 type CortexRequest struct {
-	Data string `json:"data"`
+	Pair string `json:"pair"`
 }
