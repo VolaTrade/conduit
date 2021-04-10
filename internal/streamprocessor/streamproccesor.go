@@ -43,7 +43,7 @@ type (
 		slack             slack.Slack
 		session           session.Session
 		kstats            stats.Stats
-		cortexClient      cortex.Cortex
+		cortexConnection  cortex.Cortex
 		orderBookChannels []chan *models.OrderBookRow
 		writeToDB         bool
 	}
@@ -51,18 +51,18 @@ type (
 
 //New constructor
 func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session,
-	stats stats.Stats, slackz slack.Slack, logger *logger.Logger, cortexClient cortex.Cortex) (*ConduitStreamProcessor, func()) {
+	stats stats.Stats, slackz slack.Slack, logger *logger.Logger, cortexConnection cortex.Cortex) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
-		logger:       logger,
-		cache:        ch,
-		dbStreams:    conns,
-		requests:     cl,
-		kstats:       stats,
-		writeToDB:    false,
-		slack:        slackz,
-		session:      session,
-		cortexClient: cortexClient,
+		logger:           logger,
+		cache:            ch,
+		dbStreams:        conns,
+		requests:         cl,
+		kstats:           stats,
+		writeToDB:        false,
+		slack:            slackz,
+		session:          session,
+		cortexConnection: cortexConnection,
 	}
 
 	sp.BuildOrderBookChannels(session.GetConnectionCount())
@@ -84,22 +84,21 @@ func (csp *ConduitStreamProcessor) ProcessObRowsToCortex(ob *models.OrderBookRow
 		return err
 	}
 
-	obRows, err := csp.cache.GetOrderBookRowsFromRedis(ob.Pair)
-
-	if err != nil {
-		csp.kstats.Increment("conduit.sent_obrow.cortex.error", 1.0)
+	if err := csp.cache.IsRedisCacheFull(ob.Pair); err != nil {
+		csp.kstats.Increment("conduit.full_cache_update.cortex.error", 1.0)
 		return err
 	}
 
 	start := time.Now()
-	defer csp.kstats.TimingDuration("conduit.sent_obrow.cortex.time_duration", time.Since(start))
+	defer csp.kstats.TimingDuration("conduit.full_cache_update.cortex.time_duration", time.Since(start))
 
-	if err := csp.cortexClient.SendOrderBookRows(obRows); err != nil {
-		csp.logger.Errorw(err.Error(), "error sending message")
-		csp.kstats.Increment("conduit.sent_obrow.cortex.error", 1.0)
+	if err := csp.cortexConnection.SendFullCacheUpdate(); err != nil {
+		csp.logger.Errorw(err.Error(), "error sending full cache update to cortex")
+		csp.kstats.Increment("conduit.full_cache_update.cortex.error", 1.0)
 		return err
 	}
 
+	csp.kstats.Increment("conduit.full_cache_update.cortex.success", 1.0)
 	return nil
 }
 

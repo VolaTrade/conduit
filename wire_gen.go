@@ -52,7 +52,7 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
 	cortexConfig := config.NewCortexConfig(configConfig)
-	cortexClient, err := cortex.New(cortexConfig, statsStats, loggerLogger)
+	cortexConnection, err := cortex.New(cortexConfig, statsStats, loggerLogger)
 	if err != nil {
 		cleanup4()
 		cleanup3()
@@ -60,7 +60,7 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 		cleanup()
 		return nil, nil, err
 	}
-	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexClient)
+	conduitStreamProcessor, cleanup5 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger, cortexConnection)
 	return conduitStreamProcessor, func() {
 		cleanup5()
 		cleanup4()
@@ -73,7 +73,7 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 // wire.go:
 
 //cortexModule binds Cortex interface with ConduitCortex struct from session package
-var cortexModule = wire.NewSet(cortex.Module, wire.Bind(new(cortex.Cortex), new(*cortex.CortexClient)))
+var cortexModule = wire.NewSet(cortex.Module, wire.Bind(new(cortex.Cortex), new(*cortex.CortexConnection)))
 
 //sessionModule binds Session interface with ConduitSession struct from session package
 var sessionModule = wire.NewSet(session.Module, wire.Bind(new(session.Session), new(*session.ConduitSession)))

@@ -9,3 +9,7 @@ type CacheEntry struct {
 type CortexEntry struct {
 	Url string
 }
+
+type CortexRequest struct {
+	Data string `json:"data"`
+}

@@ -23,6 +23,15 @@ type (
 	}
 )
 
+// type (
+// 	CortexSocketManager struct {
+// 		logger         *logger.Logger
+// 		cortexEntry    *models.CortexEntry
+// 		pedersonSocket *ConduitSocket
+// 		kstats         stats.Stats
+// 	}
+// )
+
 //TODO add async startup for me
 // TODO add health check functionality to me
 //TODO add unit tests to me
@@ -147,3 +156,15 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 	}
 
 }
+
+// func NewPedersonSocketManager(entry *models.CortexEntry, statz stats.Stats, logger *logger.Logger) *CortexSocketManager {
+
+// 	manager := &CortexSocketManager{
+// 		logger:         logger,
+// 		cortexEntry:    entry,
+// 		pedersonSocket: nil,
+// 		kstats:         statz,
+// 	}
+
+// 	return manager
+// }

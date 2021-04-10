@@ -21,7 +21,7 @@ import (
 //cortexModule binds Cortex interface with ConduitCortex struct from session package
 var cortexModule = wire.NewSet(
 	cortex.Module,
-	wire.Bind(new(cortex.Cortex), new(*cortex.CortexClient)),
+	wire.Bind(new(cortex.Cortex), new(*cortex.CortexConnection)),
 )
 
 //sessionModule binds Session interface with ConduitSession struct from session package

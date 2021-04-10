@@ -37,7 +37,8 @@ type (
 		PurgeOrderBookRows()
 		RowValidForCortex(pair string) bool
 		InsertOrderBookRowToRedis(ob *models.OrderBookRow) error
-		GetOrderBookRowsFromRedis(key string) ([]string, error)
+		IsRedisCacheFull(key string) error
+		// GetOrderBookRowsFromRedis(key string) ([]string, error)
 	}
 
 	ConduitCache struct {
@@ -60,7 +61,6 @@ func New(logger *log.Logger, aredis redis.Redis) *ConduitCache {
 		orderBookData: make([]*models.OrderBookRow, 0),
 		cortexObPairs: &models.OrderBookPairs{Map: make(map[string]bool, 0)},
 	}
-
 }
 
 //getOrderBookUrlString builds orderbook websocket url from pair
@@ -164,25 +164,45 @@ func (cc *ConduitCache) InsertOrderBookRowToRedis(ob *models.OrderBookRow) error
 	return nil
 }
 
-func (cc *ConduitCache) GetOrderBookRowsFromRedis(key string) ([]string, error) {
+func (cc *ConduitCache) IsRedisCacheFull(key string) error {
 	obRows, err := cc.aredis.LRange(context.Background(), key, 0, -1)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if len(obRows) < 30 {
 		cc.logger.Infow("Redis orderbook list not long enough yet", "pair", key, "length", len(obRows))
-		return nil, errors.New("List length in redis not long enough yet")
+		return errors.New("List length in redis not long enough yet")
 	}
 
-	poppedVal, err := cc.aredis.LPop(context.Background(), key)
+	// poppedVal, err := cc.aredis.LPop(context.Background(), key)
 
-	if err != nil {
-		return nil, err
-	}
-
-	cc.logger.Infow("Popped value from redis list", "value", poppedVal, "pair", key)
-	return obRows[1:len(obRows)], nil
+	cc.logger.Infow("Redis orderbook list is >= 30", "pair", key)
+	return nil
 
 }
+
+//currently deprecated
+// func (cc *ConduitCache) GetOrderBookRowsFromRedis(key string) ([]string, error) {
+// 	obRows, err := cc.aredis.LRange(context.Background(), key, 0, -1)
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	if len(obRows) < 30 {
+// 		cc.logger.Infow("Redis orderbook list not long enough yet", "pair", key, "length", len(obRows))
+// 		return nil, errors.New("List length in redis not long enough yet")
+// 	}
+
+// 	poppedVal, err := cc.aredis.LPop(context.Background(), key)
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	cc.logger.Infow("Popped value from redis list", "value", poppedVal, "pair", key)
+// 	return obRows[1:len(obRows)], nil
+
+// }

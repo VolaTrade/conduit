@@ -1,7 +1,6 @@
 package test_redis
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -40,13 +39,13 @@ func TestRollingCache(t *testing.T) {
 		}
 	}
 
-	rowsInRedis, err := ts.cache.GetOrderBookRowsFromRedis("btcusdt")
+	// rowsInRedis, err := ts.cache.GetOrderBookRowsFromRedis("btcusdt")
 
-	assert.NoError(t, err)
+	// assert.NoError(t, err)
 
-	for _, strRow := range rowsInRedis {
+	// for _, strRow := range rowsInRedis {
 
-		assert.False(t, strings.Contains(strRow, "\"last_update_id\":1,"))
-	}
+	// 	assert.False(t, strings.Contains(strRow, "\"last_update_id\":1,"))
+	// }
 
 }

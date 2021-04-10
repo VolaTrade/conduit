@@ -62,21 +62,6 @@ func (mr *MockCacheMockRecorder) GetEntries() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntries", reflect.TypeOf((*MockCache)(nil).GetEntries))
 }
 
-// GetOrderBookRowsFromRedis mocks base method.
-func (m *MockCache) GetOrderBookRowsFromRedis(arg0 string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrderBookRowsFromRedis", arg0)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOrderBookRowsFromRedis indicates an expected call of GetOrderBookRowsFromRedis.
-func (mr *MockCacheMockRecorder) GetOrderBookRowsFromRedis(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrderBookRowsFromRedis", reflect.TypeOf((*MockCache)(nil).GetOrderBookRowsFromRedis), arg0)
-}
-
 // InsertEntry mocks base method.
 func (m *MockCache) InsertEntry(arg0 string) {
 	m.ctrl.T.Helper()
@@ -113,6 +98,20 @@ func (m *MockCache) InsertOrderBookRowToRedis(arg0 *models.OrderBookRow) error {
 func (mr *MockCacheMockRecorder) InsertOrderBookRowToRedis(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOrderBookRowToRedis", reflect.TypeOf((*MockCache)(nil).InsertOrderBookRowToRedis), arg0)
+}
+
+// IsRedisCacheFull mocks base method.
+func (m *MockCache) IsRedisCacheFull(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsRedisCacheFull", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IsRedisCacheFull indicates an expected call of IsRedisCacheFull.
+func (mr *MockCacheMockRecorder) IsRedisCacheFull(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRedisCacheFull", reflect.TypeOf((*MockCache)(nil).IsRedisCacheFull), arg0)
 }
 
 // OrderBookRowsLength mocks base method.

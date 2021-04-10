@@ -1,52 +1,72 @@
 package cortex
 
 import (
-	"context"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/google/wire"
+	"github.com/volatrade/conduit/internal/models"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
-	conduitpb "github.com/volatrade/protobufs/cortex/conduit"
 )
 
 var Module = wire.NewSet(
 	New,
 )
 
+const (
+	CORTEX_PEDERSON_URL string = "/v1/pederson"
+)
+
 type (
 	Cortex interface {
-		SendOrderBookRows(obs []string) error
+		SendFullCacheUpdate() error
 	}
 	Config struct {
 		Port int
 		Host string
 	}
-	CortexClient struct {
-		//client conduitpb.ConduitServiceClient
-		//conn   *grpc.ClientConn
+	CortexConnection struct {
 		config *Config
 		kstats stats.Stats
 		logger *logger.Logger
+		url    string
 	}
 )
 
-func New(cfg *Config, kstats stats.Stats, logger *logger.Logger) (*CortexClient, error) {
+func New(cfg *Config, kstats stats.Stats, logger *logger.Logger) (*CortexConnection, error) {
 
-	return &CortexClient{config: cfg, kstats: kstats, logger: logger}, nil
+	cortexUpdateUrl := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	innerPath := fmt.Sprintf("%s", CORTEX_PEDERSON_URL)
+	pedersonUrl := url.URL{Scheme: "http", Host: cortexUpdateUrl, Path: innerPath}
+	return &CortexConnection{url: pedersonUrl.String(), config: cfg, kstats: kstats, logger: logger}, nil
 }
 
-func (cc *CortexClient) GetCortexUrlString() string {
-	
-}
+// func (cc *CortexConnection) GetCortexUrlString() string {
 
-func (cc *CortexClient) SendOrderBookRows(obRows []string) error {
+// 	// log.Printf("%s", updateUrl.String())
+// 	return updateUrl.String()
+// }
 
-	res, err := cc.client.HandleOrderBookRow(context.Background(), &conduitpb.OrderBookRowRequest{Data: obRows})
+func (cc *CortexConnection) SendFullCacheUpdate() error {
+
+	var message models.CortexRequest
+	message.Data = "Redis cache length is >= 30"
+	jsonData, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Post(cc.url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		cc.kstats.Increment("cortex.errors", 1)
-		return fmt.Errorf("response: %+v, error: %s", res, err)
+		return fmt.Errorf("response: %+v, error: %s", resp.Status, err)
 	}
+
+	cc.logger.Infow(fmt.Sprintf("Cortex request success, response: %s", resp.Header))
 	cc.kstats.Increment("cortex_requests", 1.0)
 	return nil
 }
