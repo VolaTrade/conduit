@@ -41,7 +41,7 @@ alias:
   - &build_container
     run:
       name: Building docker container
-      command: make docker-build
+      command: make docker-build-ci
 
   - &ecr_login
     run:

@@ -63,3 +63,6 @@ docker-down:
 
 docker-compose-build:
 	docker-compose -f $(COMPOSE) build 
+
+docker-build-ci:
+	docker build -t ${BIN_NAME} -f .docker/Dockerfile.prd . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
