@@ -29,17 +29,6 @@ func NewConfig(fileName FilePath) *Config {
 		log.Fatal(err)
 	}
 
-	port, err := strconv.Atoi(os.Getenv("STATS_PORT"))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	connCount, err := strconv.Atoi(os.Getenv("STORAGE_CONNECTION_COUNT"))
-
-	if err != nil {
-		log.Fatal(err)
-	}
 	env := os.Getenv("ENV")
 
 	if env != "DEV" && env != "PRD" && env != "INTEG" {
@@ -49,15 +38,15 @@ func NewConfig(fileName FilePath) *Config {
 
 	return &Config{
 		DbConfig: postgres.Config{
-			Host:     os.Getenv("HOST"),
-			Port:     os.Getenv("PORT"),
-			Database: os.Getenv("DATABASE"),
-			User:     os.Getenv("POSTGRES_USER"),
-			Password: os.Getenv("PASSWORD"),
+			Host:     os.Getenv("PG_HOST"),
+			Port:     os.Getenv("PG_PORT"),
+			Database: os.Getenv("PG_DATABASE"),
+			User:     os.Getenv("PG_USER"),
+			Password: os.Getenv("PG_PASSWORD"),
 		},
 		StatsConfig: stats.Config{
 			Host: os.Getenv("STATS_HOST"),
-			Port: port,
+			Port: convertToInt(os.Getenv("STATS_PORT")),
 			Env:  env,
 		},
 		SlackConfig: slack.Config{
@@ -66,7 +55,7 @@ func NewConfig(fileName FilePath) *Config {
 			Env:      env,
 		},
 		SessionConfig: session.Config{
-			StorageConnections: connCount,
+			StorageConnections: convertToInt(os.Getenv("STORAGE_CONNECTION_COUNT")),
 			Env:                env,
 		},
 	}
@@ -94,4 +83,14 @@ func NewLoggerConfig(cfg *Config) *logger.Config {
 
 func NewSessionConfig(cfg *Config) *session.Config {
 	return &cfg.SessionConfig
+}
+
+func convertToInt(str string) int {
+	intRep, err := strconv.Atoi(str)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return intRep
 }
