@@ -1,7 +1,7 @@
 BIN_NAME=conduit
-GOMOCK := $(shell command -v mockgen 2> /dev/null)
+COMPOSE=./.docker/docker-compose.yaml
 
-.PHONY: build 
+GOMOCK := $(shell command -v mockgen 2> /dev/null)
 build:
 	@echo building binary...
 	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/${BIN_NAME}
@@ -14,17 +14,23 @@ deps:
 test:
 	cd internal && go test -cover ./...
 
-test-integration: docker-up
-	cd integration_tests && go test -cover ./... 
-	docker-compose down 
+.PHONY: build-linux
+build-linux:
+	@echo "\033[0;34m» Building Conduit Linux Binary\033[0;39m"
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo -o bin/$(BIN_NAM)
+	@echo "\033[0;32m» Successfully Built Binary :) \033[0;39m"
 
-.PHONY: docker-build 
-docker-build:
-	docker build -t ${BIN_NAME} . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
+docker-build: build-linux
+	docker build -t ${BIN_NAME} -f .docker/Dockerfile . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
 
-.PHONY: docker-run
+start-dev:
+	docker compose -f .docker/docker-compose-dev.yaml up
+
+start-prod:
+	docker-compose -f .docker/docker-compose-prod.yaml up
+
 docker-run:
-	docker run --name conduit --network=conduit-compose --log-opt max-size=10m --log-opt max-file=5 ${BIN_NAME}
+	docker run --network=conduit-compose --log-opt max-size=10m --log-opt max-file=5 ${BIN_NAME}
 
 ecr-push-image:
 	docker push ${ECR_URI}/${BIN_NAME}
@@ -51,24 +57,14 @@ go-gen-mocks:
 	@echo "generating go mocks..."
 	@GO111MODULE=on go generate --run "mockgen*" ./...
 
-.PHONY: build-linux
-build-linux:
-	@echo "\033[0;34m» Building Conduit Linux Binary\033[0;39m"
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo -o bin/$(BIN_NAM)
-	@echo "\033[0;32m» Successfully Built Binary :) \033[0;39m"
-
-.PHONY: docker-up
 docker-up:
-	@echo "\033[0;34m» Creating Conduit Service Dependencies \033[0;39m"
-	docker-compose up -d
+	docker-compose -f $(COMPOSE) up --remove-orphans -d 
 
-.PHONY: docker-dev-build
-docker-dev-build: build-linux
-	@echo "\033[0;34m» Building Conduit Image \033[0;39m"
-	@docker build -t ${BIN_NAME} -f Dockerfile.dev .  
-	@echo "\033[0;32m» Successfully Built Test Image :) \033[0;39m"
+docker-down:
+	docker-compose -f $(COMPOSE) down 
 
-docker-dev-down:
-	docker stop conduit
-	docker rm conduit
+docker-compose-build:
+	docker-compose -f $(COMPOSE) build 
 
+docker-build-ci:
+	docker build -t ${BIN_NAME} -f .docker/Dockerfile.prd . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}

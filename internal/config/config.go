@@ -26,15 +26,6 @@ type Config struct {
 
 type FilePath string
 
-func convertToInt(str string) int {
-	intRep, err := strconv.Atoi(str)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return intRep
-}
 func NewConfig(fileName FilePath) *Config {
 
 	if err := godotenv.Load(string(fileName)); err != nil {
@@ -110,6 +101,12 @@ func NewSessionConfig(cfg *Config) *session.Config {
 	return &cfg.SessionConfig
 }
 
-func NewCortexConfig(cfg *Config) *cortex.Config {
-	return &cfg.CortexConfig
+func convertToInt(str string) int {
+	intRep, err := strconv.Atoi(str)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return intRep
 }
