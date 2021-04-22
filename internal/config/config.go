@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store/postgres"
 	logger "github.com/volatrade/currie-logs"
@@ -14,10 +15,11 @@ import (
 )
 
 type Config struct {
-	DbConfig      postgres.Config
-	StatsConfig   stats.Config
-	SlackConfig   slack.Config
-	SessionConfig session.Config
+	DbConfig       postgres.Config
+	StatsConfig    stats.Config
+	SlackConfig    slack.Config
+	SessionConfig  session.Config
+	RequestsConfig requests.Config
 }
 
 type FilePath string
@@ -58,7 +60,15 @@ func NewConfig(fileName FilePath) *Config {
 			StorageConnections: convertToInt(os.Getenv("STORAGE_CONNECTION_COUNT")),
 			Env:                env,
 		},
+		RequestsConfig: requests.Config{
+			GatekeeperUrl: os.Getenv("GATEKEEPER_URL"),
+		},
 	}
+}
+
+func NewRequestsConfig(cfg *Config) *requests.Config {
+	log.Println("Requests config ---> ", cfg.RequestsConfig)
+	return &cfg.RequestsConfig
 }
 
 func NewDBConfig(cfg *Config) *postgres.Config {

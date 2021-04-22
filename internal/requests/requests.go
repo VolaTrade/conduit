@@ -4,7 +4,6 @@ package requests
 
 import (
 	"github.com/google/wire"
-	stats "github.com/volatrade/k-stats"
 )
 
 var Module = wire.NewSet(
@@ -12,13 +11,17 @@ var Module = wire.NewSet(
 )
 
 type Requests interface {
-	GetActiveBinanceExchangePairs() ([]string, error)
+	GetActiveOrderbookPairs() ([]string, error)
+}
+
+type Config struct {
+	GatekeeperUrl string
 }
 
 type ConduitRequests struct {
-	kstats *stats.Stats
+	cfg *Config
 }
 
-func New(stats *stats.Stats) *ConduitRequests {
-	return &ConduitRequests{kstats: stats}
+func New(cfg *Config) *ConduitRequests {
+	return &ConduitRequests{cfg: cfg}
 }

@@ -34,15 +34,15 @@ type (
 	}
 
 	ConduitStreamProcessor struct {
-		logger              *logger.Logger
-		cache               cache.Cache
-		dbStreams           store.StorageConnections
-		requests            requests.Requests
-		slack               slack.Slack
-		session             session.Session
-		kstats              *stats.Stats
-		orderBookChannels   []chan *models.OrderBookRow
-		writeToDB           bool
+		logger            *logger.Logger
+		cache             cache.Cache
+		dbStreams         store.StorageConnections
+		requests          requests.Requests
+		slack             slack.Slack
+		session           session.Session
+		kstats            *stats.Stats
+		orderBookChannels []chan *models.OrderBookRow
+		writeToDB         bool
 	}
 )
 
@@ -73,7 +73,6 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 	return sp, shutdown
 }
 
-
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
 func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if csp.writeToDB {
@@ -90,14 +89,15 @@ func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, i
 //InsertPairsFromBinanceToCache reads all trading pairs from Binance and then proceeds to store them as keys in cache
 func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
 
-	// tradingPairs, err := csp.requests.GetActiveBinanceExchangePairs()
+	tradingPairs, err := csp.requests.GetActiveOrderbookPairs()
 
-	// if err != nil {
-	// 	csp.logger.Errorw(err.Error())
-	// 	return err
-	// }
+	if err != nil {
+		csp.logger.Errorw("Failed getting orderbook pairs from gatekeeper api, using default values")
+		tradingPairs = []string{"btcusdt", "ethusdt", "xrpusdt", "ltcusdt"}
+		return err
+	}
 
-	tradingPairs := []string{"btcusdt", "ethusdt", "xrpusdt", "ltcusdt"}
+	csp.logger.Infow("Fetching orderbook data for: ", "pairs", tradingPairs)
 
 	for _, pair := range tradingPairs {
 		csp.cache.InsertEntry(pair)
