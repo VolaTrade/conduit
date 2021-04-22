@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	redis "github.com/volatrade/a-redis"
 	"github.com/volatrade/conduit/internal/cortex"
+	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/store/postgres"
 	logger "github.com/volatrade/currie-logs"
@@ -22,6 +23,7 @@ type Config struct {
 	SlackConfig   slack.Config
 	SessionConfig session.Config
 	CortexConfig  cortex.Config
+	RequestConfig requests.Config
 }
 
 type FilePath string
@@ -74,12 +76,18 @@ func NewConfig(fileName FilePath) *Config {
 			Host: os.Getenv("CORTEX_HOST"),
 			Port: convertToInt(os.Getenv("CORTEX_PORT")),
 		},
+		RequestConfig: requests.Config{
+			GatekeeperUrl: os.Getenv("GATEKEEPER_URL"),
+		},
 	}
+}
+
+func NewCortexConfig(cfg *Config) *cortex.Config {
+	return &cfg.CortexConfig
 }
 
 func NewDBConfig(cfg *Config) *postgres.Config {
 	return &cfg.DbConfig
-
 }
 
 func NewStatsConfig(cfg *Config) *stats.Config {
@@ -109,4 +117,8 @@ func convertToInt(str string) int {
 	}
 
 	return intRep
+}
+
+func NewRequestConfig(cfg *Config) *requests.Config {
+	return &cfg.RequestConfig
 }

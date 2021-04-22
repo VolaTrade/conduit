@@ -128,11 +128,15 @@ func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, i
 }
 
 //InsertPairsFromBinanceToCache reads all trading pairs from Binance and then proceeds to store them as keys in cache
+// Will use a default if there is a problem getting pairs from gatekeeper api
 func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
 
 	tradingPairs, err := csp.requests.GetActiveOrderbookPairs()
 	if err != nil {
-		return err
+		if err != nil {
+			csp.logger.Infow("Failed getting orderbook pairs from API, using defaults pairs")
+			tradingPairs = []string{"btcusdt", "ethusdt", "xrpusdt", "ltcusdt"}
+		}
 	}
 
 	csp.logger.Infow("Collecting orderbook data for", "pairs", tradingPairs)

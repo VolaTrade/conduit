@@ -15,10 +15,15 @@ type Requests interface {
 	GetActiveOrderbookPairs() ([]string, error)
 }
 
-type ConduitRequests struct {
-	kstats stats.Stats
+type Config struct {
+	GatekeeperUrl string
 }
 
-func New(stats stats.Stats) *ConduitRequests {
-	return &ConduitRequests{kstats: stats}
+type ConduitRequests struct {
+	kstats stats.Stats
+	cfg    *Config
+}
+
+func New(stats stats.Stats, cfg *Config) *ConduitRequests {
+	return &ConduitRequests{kstats: stats, cfg: cfg}
 }

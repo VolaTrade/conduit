@@ -107,7 +107,6 @@ func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 
 func (cc *ConduitCache) RowValidForCortex(pair string) bool {
 
-	
 	println("Validating for", pair)
 	if _, exists := cc.cortexObPairs.Map[pair]; !exists {
 		cc.logger.Errorw(fmt.Sprintf("%s does not exist in OrderBookRows within memory cache", pair))

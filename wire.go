@@ -72,6 +72,7 @@ func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 			config.NewSlackConfig,
 			config.NewLoggerConfig,
 			config.NewCortexConfig,
+			config.NewRequestConfig,
 			logger.New,
 			redis.New,
 			stats.New,

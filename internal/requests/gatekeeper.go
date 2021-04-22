@@ -12,15 +12,14 @@ type CollectionPairsResponse struct {
 }
 
 // GetActiveOrderbookPairs gets a list of all the pairs we want to collect data for
-func (ac *ConduitRequests) GetActiveOrderbookPairs() ([]string, error) {
-	resp, err := http.Get(VT_COLLECTION_PAIRS_URL + "transaction=false&orderbook=true")
+func (cr *ConduitRequests) GetActiveOrderbookPairs() ([]string, error) {
+	resp, err := http.Get(cr.cfg.GatekeeperUrl + "/collection-pairs?transaction=false&orderbook=true")
 	if err != nil {
 		return nil, err
 	}
 
 	var result CollectionPairsResponse
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
 

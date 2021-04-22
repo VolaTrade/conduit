@@ -6,27 +6,43 @@ package mocks
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
-// MockRequests is a mock of Requests interface.
+// MockRequests is a mock of Requests interface
 type MockRequests struct {
 	ctrl     *gomock.Controller
 	recorder *MockRequestsMockRecorder
 }
 
-// MockRequestsMockRecorder is the mock recorder for MockRequests.
+// MockRequestsMockRecorder is the mock recorder for MockRequests
 type MockRequestsMockRecorder struct {
 	mock *MockRequests
 }
 
-// NewMockRequests creates a new mock instance.
+// NewMockRequests creates a new mock instance
 func NewMockRequests(ctrl *gomock.Controller) *MockRequests {
 	mock := &MockRequests{ctrl: ctrl}
 	mock.recorder = &MockRequestsMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockRequests) EXPECT() *MockRequestsMockRecorder {
 	return m.recorder
+}
+
+// GetActiveOrderbookPairs mocks base method
+func (m *MockRequests) GetActiveOrderbookPairs() ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveOrderbookPairs")
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveOrderbookPairs indicates an expected call of GetActiveOrderbookPairs
+func (mr *MockRequestsMockRecorder) GetActiveOrderbookPairs() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveOrderbookPairs", reflect.TypeOf((*MockRequests)(nil).GetActiveOrderbookPairs))
 }

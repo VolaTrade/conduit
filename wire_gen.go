@@ -48,7 +48,8 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 		return nil, nil, err
 	}
 	conduitCache := cache.New(loggerLogger, redis)
-	conduitRequests := requests.New(statsStats)
+	requestsConfig := config.NewRequestConfig(configConfig)
+	conduitRequests := requests.New(statsStats, requestsConfig)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
 	cortexConfig := config.NewCortexConfig(configConfig)

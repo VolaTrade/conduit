@@ -3,3 +3,9 @@ services:
   conduit:
     image: conduit:latest
     restart: always
+    networks: 
+      - conduit-compose
+
+networks: 
+  compose: 
+    name: conduit-compose

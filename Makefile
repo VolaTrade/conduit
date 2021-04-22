@@ -17,7 +17,7 @@ test:
 .PHONY: build-linux
 build-linux:
 	@echo "\033[0;34m» Building Conduit Linux Binary\033[0;39m"
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo -o bin/$(BIN_NAM)
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo -o bin/$(BIN_NAME)
 	@echo "\033[0;32m» Successfully Built Binary :) \033[0;39m"
 
 docker-build: build-linux
