@@ -3,7 +3,10 @@
 package requests
 
 import (
+	"time"
+
 	"github.com/google/wire"
+	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 )
 
@@ -12,13 +15,20 @@ var Module = wire.NewSet(
 )
 
 type Requests interface {
-	GetActiveBinanceExchangePairs() ([]string, error)
+	GetActiveOrderbookPairs(retry int) ([]string, error)
+}
+
+type Config struct {
+	GatekeeperUrl  string
+	RequestTimeout time.Duration
 }
 
 type ConduitRequests struct {
-	kstats *stats.Stats
+	cfg    *Config
+	statz  *stats.Stats
+	logger *logger.Logger
 }
 
-func New(stats *stats.Stats) *ConduitRequests {
-	return &ConduitRequests{kstats: stats}
+func New(cfg *Config, statz *stats.Stats, logger *logger.Logger) *ConduitRequests {
+	return &ConduitRequests{cfg: cfg, statz: statz, logger: logger}
 }
