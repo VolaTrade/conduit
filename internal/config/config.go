@@ -63,7 +63,7 @@ func NewConfig(fileName FilePath) *Config {
 		},
 		RequestsConfig: requests.Config{
 			GatekeeperUrl:  os.Getenv("GATEKEEPER_URL"),
-			RequestTimeout: 3 * time.Second,
+			RequestTimeout: time.Duration(convertToInt(os.Getenv("REQUEST_TIMEOUT"))) * time.Second,
 		},
 	}
 }
