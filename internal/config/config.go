@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/volatrade/conduit/internal/requests"
@@ -61,7 +62,8 @@ func NewConfig(fileName FilePath) *Config {
 			Env:                env,
 		},
 		RequestsConfig: requests.Config{
-			GatekeeperUrl: os.Getenv("GATEKEEPER_URL"),
+			GatekeeperUrl:  os.Getenv("GATEKEEPER_URL"),
+			RequestTimeout: 3 * time.Second,
 		},
 	}
 }

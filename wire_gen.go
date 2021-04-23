@@ -38,7 +38,7 @@ func InitializeAndRun(cfg config.FilePath) (streamprocessor.StreamProcessor, fun
 	conduitStorageConnections, cleanup2 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
 	conduitCache := cache.New(loggerLogger)
 	requestsConfig := config.NewRequestsConfig(configConfig)
-	conduitRequests := requests.New(requestsConfig)
+	conduitRequests := requests.New(requestsConfig, statsStats, loggerLogger)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
 	conduitStreamProcessor, cleanup3 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
