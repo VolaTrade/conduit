@@ -10,17 +10,13 @@ import (
 )
 
 const (
-	CORTEX_PEDERSON_URL string = "/v1/pederson"
-)
-
-const (
 	pedersonURL = "/v1/update/pederson"
 )
 
 //PostOrderbookRow sends a POST request to Cortex to update it with the most recent orderbook data
 func (cr *ConduitRequests) PostOrderbookRowToCortex(orderbookRow *models.OrderBookRow) error {
 
-	postUrl := fmt.Sprintf("%s:%d/%s", cr.cfg.CortexUrl, cr.cfg.CortexPort, "/v1/update/pederson")
+	postUrl := fmt.Sprintf("%s:%d/%s", cr.cfg.CortexUrl, cr.cfg.CortexPort, pedersonURL)
 
 	data, err := json.Marshal(orderbookRow)
 	if err != nil {
