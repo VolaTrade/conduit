@@ -77,6 +77,11 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if csp.writeToDB {
 		csp.dbStreams.InsertOrderBookRowToDataBase(tx, index)
+
+		if err := csp.requests.PostOrderbookRow(tx); err != nil {
+			csp.logger.Errorw("Error sending orderbook row to cortex: ", "error", err.Error())
+		}
+
 		csp.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
 
 	} else {

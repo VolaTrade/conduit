@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/wire"
+	"github.com/volatrade/conduit/internal/models"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 )
@@ -16,11 +17,14 @@ var Module = wire.NewSet(
 
 type Requests interface {
 	GetActiveOrderbookPairs(retry int) ([]string, error)
+	PostOrderbookRow(orderbookRow *models.OrderBookRow) error
 }
 
 type Config struct {
 	GatekeeperUrl  string
 	RequestTimeout time.Duration
+	CortexUrl      string
+	CortexPort     int
 }
 
 type ConduitRequests struct {
