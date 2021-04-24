@@ -78,7 +78,7 @@ func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, i
 	if csp.writeToDB {
 		csp.dbStreams.InsertOrderBookRowToDataBase(tx, index)
 
-		if err := csp.requests.PostOrderbookRow(tx); err != nil {
+		if err := csp.requests.PostOrderbookRowToCortex(tx); err != nil {
 			csp.logger.Errorw("Error sending orderbook row to cortex: ", "error", err.Error())
 		}
 

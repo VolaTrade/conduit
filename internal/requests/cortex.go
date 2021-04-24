@@ -18,9 +18,9 @@ const (
 )
 
 //PostOrderbookRow sends a POST request to Cortex to update it with the most recent orderbook data
-func (cr *ConduitRequests) PostOrderbookRow(orderbookRow *models.OrderBookRow) error {
+func (cr *ConduitRequests) PostOrderbookRowToCortex(orderbookRow *models.OrderBookRow) error {
 
-	postUrl := fmt.Sprintf("%s:%d/%s", cr.cfg.CortexUrl, cr.cfg.CortexPort, pedersonURL)
+	postUrl := fmt.Sprintf("%s:%d/%s", cr.cfg.CortexUrl, cr.cfg.CortexPort, "/v1/update/pederson")
 
 	data, err := json.Marshal(orderbookRow)
 	if err != nil {
@@ -33,11 +33,9 @@ func (cr *ConduitRequests) PostOrderbookRow(orderbookRow *models.OrderBookRow) e
 		return fmt.Errorf("response: %+v, error: %s", resp.Status, err)
 	}
 
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			cr.logger.Errorw("Error closing response: ", "error", err)
-		}
-	}()
+	if err := resp.Body.Close(); err != nil {
+		cr.logger.Errorw("Error closing response: ", "error", err)
+	}
 
 	cr.logger.Infow(fmt.Sprintf("Cortex request success, response: %s", resp.Header))
 	cr.statz.Increment("cortex_requests", 1.0)

@@ -17,7 +17,7 @@ var Module = wire.NewSet(
 
 type Requests interface {
 	GetActiveOrderbookPairs(retry int) ([]string, error)
-	PostOrderbookRow(orderbookRow *models.OrderBookRow) error
+	PostOrderbookRowToCortex(orderbookRow *models.OrderBookRow) error
 }
 
 type Config struct {
