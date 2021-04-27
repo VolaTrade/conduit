@@ -40,14 +40,14 @@ type (
 		requests          requests.Requests
 		slack             slack.Slack
 		session           session.Session
-		kstats            *stats.Stats
+		kstats            stats.Stats
 		orderBookChannels []chan *models.OrderBookRow
 		writeToDB         bool
 	}
 )
 
 //New constructor
-func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats *stats.Stats, slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
+func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats stats.Stats, slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
 		logger:    logger,
@@ -76,12 +76,12 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
 func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
 	if csp.writeToDB {
-		csp.dbStreams.InsertOrderBookRowToDataBase(tx, index)
-
 		if err := csp.requests.PostOrderbookRowToCortex(tx); err != nil {
-			csp.logger.Errorw("Error sending orderbook row to cortex: ", "error", err.Error())
+			csp.logger.Errorw("Error sending orderbook row to cortex", "error", err.Error())
 		}
-
+		if err := csp.dbStreams.InsertOrderBookRowToDataBase(tx, index); err != nil {
+			csp.logger.Errorw("Error inserting orderbook row to postgres", "error", err.Error())
+		}
 		csp.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
 
 	} else {

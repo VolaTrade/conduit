@@ -26,10 +26,8 @@ func main() {
 
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
-
-		select {
-
-		case <-c:
+		for range c {
+			println("CANCEL SIG")
 			cancel()
 			time.Sleep(time.Duration(2 * time.Second))
 			os.Exit(1)
@@ -37,7 +35,7 @@ func main() {
 	}()
 
 	if err := dataStreamer.InsertPairsFromBinanceToCache(); err != nil {
-		
+
 		panic(err)
 	}
 	dataStreamer.GenerateSocketListeningRoutines(ctx)

@@ -26,7 +26,7 @@ func createTestSuite(t *testing.T) testSuite {
 
 	cache := cache.New(logger.NewNoop())
 
-	stats, _ := stats.New(&stats.Config{Env: "DEV"})
+	stats, _, _ := stats.NewNoop()
 
 	mockConnections := mocks.NewMockStorageConnections(mockController)
 
@@ -42,6 +42,7 @@ func createTestSuite(t *testing.T) testSuite {
 		mockConnections: mockConnections,
 		cache:           cache,
 		mockRequests:    mockRequests,
+		mockSession:     mockSession,
 	}
 
 }

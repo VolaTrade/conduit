@@ -29,10 +29,10 @@ type Config struct {
 
 type ConduitRequests struct {
 	cfg    *Config
-	statz  *stats.Stats
+	statz  stats.Stats
 	logger *logger.Logger
 }
 
-func New(cfg *Config, statz *stats.Stats, logger *logger.Logger) *ConduitRequests {
+func New(cfg *Config, statz stats.Stats, logger *logger.Logger) *ConduitRequests {
 	return &ConduitRequests{cfg: cfg, statz: statz, logger: logger}
 }

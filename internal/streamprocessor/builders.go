@@ -7,13 +7,12 @@ import (
 	"github.com/volatrade/conduit/internal/socket"
 )
 
-
 //BuildOrderBookChannels makes a slice of orderbook struct channels
 func (csp *ConduitStreamProcessor) BuildOrderBookChannels(size int) {
 	queues := make([]chan *models.OrderBookRow, size)
 
 	for i := 0; i < size; i++ {
-		queue := make(chan *models.OrderBookRow, 0)
+		queue := make(chan *models.OrderBookRow)
 		queues[i] = queue
 	}
 
