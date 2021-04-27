@@ -112,6 +112,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 			// -------------
 			continue
 		}
+		csm.kstats.Increment("conduit.socket_reads.ob", 1.0)
 
 		var orderBookRow *models.OrderBookRow
 
