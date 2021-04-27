@@ -27,10 +27,9 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		for range c {
-			println("CANCEL SIG")
 			cancel()
 			time.Sleep(time.Duration(2 * time.Second))
-			os.Exit(1)
+			os.Exit(0)
 		}
 	}()
 

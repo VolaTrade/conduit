@@ -83,7 +83,7 @@ func (csp *ConduitStreamProcessor) ListenForExit(exit func()) {
 		}
 
 		for range ticker.C {
-			continue
+			break
 		}
 	}
 }
