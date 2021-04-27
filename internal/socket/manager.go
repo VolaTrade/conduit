@@ -12,14 +12,14 @@ import (
 
 type (
 	ConduitSocketManager struct {
-		logger                    *logger.Logger
-		entry                     *models.CacheEntry
-		obChannel                 chan *models.OrderBookRow
-		obFailSafeChan            chan bool
-		obSocketChan              chan bool
-		orderBookFailSafeSocket   *ConduitSocket
-		orderBookSocket           *ConduitSocket
-		kstats                    *stats.Stats
+		logger                  *logger.Logger
+		entry                   *models.CacheEntry
+		obChannel               chan *models.OrderBookRow
+		obFailSafeChan          chan bool
+		obSocketChan            chan bool
+		orderBookFailSafeSocket *ConduitSocket
+		orderBookSocket         *ConduitSocket
+		kstats                  *stats.Stats
 	}
 )
 
@@ -30,14 +30,14 @@ type (
 func NewSocketManager(entry *models.CacheEntry, obChannel chan *models.OrderBookRow, statz *stats.Stats, logger *logger.Logger) *ConduitSocketManager {
 
 	manager := &ConduitSocketManager{
-		logger:                    logger,
-		entry:                     entry,
-		orderBookSocket:           nil,
-		obSocketChan:              make(chan bool),
-		orderBookFailSafeSocket:   nil,
-		obFailSafeChan:            make(chan bool),
-		obChannel:                 obChannel,
-		kstats:                    statz,
+		logger:                  logger,
+		entry:                   entry,
+		orderBookSocket:         nil,
+		obSocketChan:            make(chan bool),
+		orderBookFailSafeSocket: nil,
+		obFailSafeChan:          make(chan bool),
+		obChannel:               obChannel,
+		kstats:                  statz,
 	}
 
 	return manager
@@ -52,7 +52,6 @@ func (csm *ConduitSocketManager) Run(ctx context.Context) {
 
 }
 func (csm *ConduitSocketManager) establishConnections(ctx context.Context) error {
-
 
 	obSocket, err := NewSocket(ctx, csm.entry.ObUrl, csm.logger, csm.obSocketChan)
 
@@ -74,7 +73,6 @@ func (csm *ConduitSocketManager) establishConnections(ctx context.Context) error
 	return nil
 }
 
-
 func minuteTicker() *time.Ticker {
 	c := make(chan time.Time, 1)
 	t := &time.Ticker{C: c}
@@ -92,7 +90,7 @@ func minuteTicker() *time.Ticker {
 }
 
 func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Context) {
-	csm.logger.Infow("Consuming and transferring orderbook message")
+	csm.logger.Infow("Consuming and transferring orderbook message", "pair", csm.entry.Pair)
 	mt := minuteTicker()
 	defer mt.Stop()
 	for {
@@ -100,7 +98,6 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 		csm.logger.Infow("Reading order book message", "pair", csm.entry.Pair)
 		message, err := csm.orderBookSocket.readMessage()
 
-		csm.logger.Infow("Message read.. checking for error", "pair", csm.entry.Pair)
 		if err != nil {
 			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "orderbook")
 			csm.kstats.Increment("conduit.errors.socket_read.ob", 1.0)
@@ -116,11 +113,6 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 			continue
 		}
 
-		timeNow := time.Now()
-		csm.logger.Infow("Incrementing", "pair", csm.entry.Pair)
-		csm.kstats.Increment("conduit.socket_reads.ob", 1.0)
-		csm.logger.Infow("Increment complete", "time", time.Since(timeNow).String())
-
 		var orderBookRow *models.OrderBookRow
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, csm.entry.Pair); err != nil {
@@ -128,18 +120,14 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
 
 		} else {
-			csm.logger.Infow("Sending orderbook data to channel", "pair", csm.entry.Pair, "type", "orderbook")
 			csm.obChannel <- orderBookRow
-			csm.logger.Infow("Data sent through channel", "pair", csm.entry.Pair, "type", "orderbook")
 		}
 
 		time.Sleep(time.Second * 2)
 
-		csm.logger.Infow("Going into select", "pair", csm.entry.Pair, "type", "orderbook")
 		select {
 
 		case <-mt.C:
-			csm.logger.Infow("Got ticker signal for orderbook data", "pair", csm.entry.Pair)
 			continue
 
 		case <-ctx.Done():

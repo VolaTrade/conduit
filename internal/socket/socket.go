@@ -46,10 +46,10 @@ func NewSocket(ctx context.Context, url string, logger *logger.Logger, channel c
 }
 
 func (cs *ConduitSocket) readMessage() ([]byte, error) {
-	start := time.Now()
+	// start := time.Now()
 	cs.mux.Lock()
-
-	defer cs.logger.Infow("read message complete", "time", time.Since(start), "url", cs.url)
+	//TODO make this grafana panel
+	// defer cs.stas.Infow("read message complete", "time", time.Since(start), "url", cs.url)
 	defer cs.mux.Unlock()
 
 	cs.conn.SetReadDeadline(time.Now().Add(TIMEOUT))
@@ -67,8 +67,7 @@ func (cs *ConduitSocket) runKeepAlive() {
 	defer ticker.Stop()
 	for {
 
-		cs.logger.Infow("Writing message to stay alive", "pair", cs.url)
-		start := time.Now()
+		// start := time.Now()
 		if err := cs.conn.WriteMessage(websocket.PongMessage, []byte("")); err != nil || !cs.healthy {
 			cs.healthy = false
 			cs.logger.Errorw(err.Error(), "url", cs.url)
@@ -76,7 +75,8 @@ func (cs *ConduitSocket) runKeepAlive() {
 			return
 		}
 
-		cs.logger.Infow("write message complete", "time", time.Since(start), "url", cs.url)
+		// TODO make this a grafana metric
+		// cs.logger.Infow("write message complete", "time", time.Since(start), "url", cs.url)
 		select {
 
 		case <-cs.parentChannel:

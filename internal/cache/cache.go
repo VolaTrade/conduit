@@ -77,13 +77,13 @@ func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 		return
 	}
 
-	cc.logger.Infow("cache insertion", "type", "orderbook snapshot", "cache length", cc.OrderBookRowsLength())
+	cc.logger.Infow("cache insertion", "pair", obRow.Pair,
+		"type", "orderbook snapshot", "cache length", cc.OrderBookRowsLength())
 	cc.obMux.Lock()
 	defer cc.obMux.Unlock()
 	cc.orderBookData = append(cc.orderBookData, obRow)
 
 }
-
 
 func (cc *ConduitCache) PurgeOrderBookRows() {
 	cc.orderBookData = nil
@@ -94,7 +94,6 @@ func (cc *ConduitCache) PurgeOrderBookRows() {
 func (cc *ConduitCache) GetEntries() []*models.CacheEntry {
 	return cc.entries
 }
-
 
 //OrderBookRowsLength used for testing && debuging
 func (tc *ConduitCache) OrderBookRowsLength() int {
