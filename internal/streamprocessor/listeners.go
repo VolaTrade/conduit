@@ -9,7 +9,7 @@ import (
 //ListenAndHandleDataChannel waits for transaction or orderbook to come in from their respective channel before invoking handler function
 func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Context, index int) {
 
-	obChannel :=  csp.orderBookChannels[index]
+	obChannel := csp.orderBookChannels[index]
 	for {
 		select {
 
@@ -82,9 +82,8 @@ func (csp *ConduitStreamProcessor) ListenForExit(exit func()) {
 			return
 		}
 
-		select {
-		case <-ticker.C:
-			continue
+		for range ticker.C {
+			break
 		}
 	}
 }

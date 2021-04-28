@@ -52,7 +52,9 @@ func (cs *ConduitSocket) readMessage() ([]byte, error) {
 	// defer cs.stas.Infow("read message complete", "time", time.Since(start), "url", cs.url)
 	defer cs.mux.Unlock()
 
-	cs.conn.SetReadDeadline(time.Now().Add(TIMEOUT))
+	if err := cs.conn.SetReadDeadline(time.Now().Add(TIMEOUT)); err != nil {
+		return []byte{}, err
+	}
 
 	_, message, err := cs.conn.ReadMessage()
 

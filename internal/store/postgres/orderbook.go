@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/volatrade/conduit/internal/models"
 )
 
@@ -33,6 +34,13 @@ func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow
 
 	tx := postgres.DB.MustBegin()
 
+	rollBack := func(tx *sqlx.Tx) {
+
+		if err := tx.Rollback(); err != nil {
+			postgres.logger.Errorw("Could not rollback pg transaction", "error", err.Error())
+		}
+	}
+
 	stmt, err := tx.PrepareNamed(DEPTH_INSERTION_QUERY)
 
 	if err != nil {
@@ -52,7 +60,7 @@ func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow
 
 		if err != nil {
 			postgres.logger.Errorw(err.Error(), "description", "executing query")
-			tx.Rollback()
+			rollBack(tx)
 			return err
 		}
 
@@ -60,7 +68,7 @@ func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow
 			postgres.kstats.Increment(fmt.Sprintf("conduit.duplicate_inserts.ob.%s", orderBookRow.Pair), 1.0)
 		}
 		if err != nil {
-			tx.Rollback()
+			rollBack(tx)
 			return err
 		}
 

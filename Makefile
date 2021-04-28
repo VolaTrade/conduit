@@ -6,6 +6,13 @@ build:
 	@echo building binary...
 	@GOPRIVATE=github.com/volatrade CGO_ENABLED=0 go build -a -tags netgo -o bin/${BIN_NAME}
 
+
+.PHONY: lint
+lint:
+	@echo "\033[0;32m» Linting Go code...\033[0;39m"
+	@tempdir=$(mktemp -d);cd $(tempdir); GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.21.0 2> /dev/null;rm -rf $(tempdir)
+	@golangci-lint run
+
 deps:
 	git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/volatrade/".insteadOf "https://github.com/volatrade/" && go mod download
 

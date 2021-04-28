@@ -22,8 +22,6 @@ var idealOBRow = &models.OrderBookRow{
 	Pair: "BTCUSDT",
 }
 
-var socketTransaction = []byte(`{"e":"trade","E":1605862294342,"s":"BTCUSDT","t":473476704,"p":"18251.11000000","q":"0.08256400","b":3662513230,"a":3662513203,"T":1605862294341,"m":false,"M":true}`)
-
 func TestUnmarshalOrderBook(t *testing.T) {
 
 	rec, err := models.UnmarshalOrderBookJSON(socketMessage, "BTCUSDT")

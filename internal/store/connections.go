@@ -32,7 +32,7 @@ type (
 	}
 )
 
-func New(cfg *postgres.Config, kstats *stats.Stats, logger *logger.Logger, sess session.Session) (*ConduitStorageConnections, func()) {
+func New(cfg *postgres.Config, kstats stats.Stats, logger *logger.Logger, sess session.Session) (*ConduitStorageConnections, func()) {
 	arr := make([]*postgres.DB, sess.GetConnectionCount())
 
 	for i := 0; i < sess.GetConnectionCount(); i++ {
@@ -74,7 +74,6 @@ func (ca *ConduitStorageConnections) MakeConnections() error {
 	}
 	return nil
 }
-
 
 func (csc *ConduitStorageConnections) TransferOrderBookCache(cacheData []*models.OrderBookRow) error {
 
