@@ -98,12 +98,9 @@ func NewSlackConfig(cfg *Config) *slack.Config {
 func NewLoggerConfig(cfg *Config) *logger.Config {
 	return nil
 }
+
 func NewConveyorConfig(cfg *Config) *conveyor.Config {
 	return &cfg.ConveyorConfig
-}
-
-func NewLoggerOptions(cfg *Config) []logger.Option {
-	return []logger.Option{func(l *logger.Logger) {}}
 }
 
 func NewLoggerOptions(cfg *Config) []logger.Option {
