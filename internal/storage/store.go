@@ -25,6 +25,7 @@ type (
 	}
 
 	ConduitStorage struct {
+		kstats             stats.Stats
 		session            session.Session
 		postgresConnection *postgres.DB
 	}
@@ -40,6 +41,7 @@ func New(cfg *postgres.Config, kstats stats.Stats, logger *logger.Logger, sess s
 	}
 	pg.DB = conn
 	cs := &ConduitStorage{
+		kstats:             kstats,
 		session:            sess,
 		postgresConnection: pg,
 	}
@@ -65,5 +67,6 @@ func (cs *ConduitStorage) TransferOrderBookCache(cacheData []*models.OrderBookRo
 	if err := cs.postgresConnection.BulkInsertOrderBookRows(cacheData); err != nil {
 		return err
 	}
+	cs.kstats.Increment(".conduit.postgres_transit", 1)
 	return nil
 }

@@ -26,13 +26,13 @@ func (cr *ConduitRequests) PostOrderbookRowToCortex(orderbookRow *models.OrderBo
 
 	resp, err := http.Post(postUrl, "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		cr.statz.Increment("cortex.errors", 1)
+		cr.statz.Increment(".cortex.errors", 1)
 		return fmt.Errorf("response error: %s", err.Error())
 	}
 
 	cr.closeResponseBody(resp)
 	cr.logger.Infow(fmt.Sprintf("Cortex request success, response: %s", resp.Header))
-	cr.statz.Increment("cortex_requests", 1.0)
+	cr.statz.Increment(".cortex_requests", 1.0)
 
 	return nil
 }

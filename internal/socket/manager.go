@@ -100,7 +100,7 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 
 		if err != nil {
 			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "orderbook")
-			csm.kstats.Increment("conduit.errors.socket_read.ob", 1.0)
+			csm.kstats.Increment(".conduit.errors.socket_read.ob", 1.0)
 
 			//---- tell socket to try reconnecting ---
 			csm.obSocketChan <- false
@@ -112,13 +112,13 @@ func (csm *ConduitSocketManager) consumeTransferOrderBookMessage(ctx context.Con
 			// -------------
 			continue
 		}
-		csm.kstats.Increment("conduit.socket_reads.ob", 1.0)
+		csm.kstats.Increment(".conduit.socket_reads.ob", 1.0)
 
 		var orderBookRow *models.OrderBookRow
 
 		if orderBookRow, err = models.UnmarshalOrderBookJSON(message, csm.entry.Pair); err != nil {
 			csm.logger.Errorw(err.Error(), "pair", csm.entry.Pair, "type", "orderbook")
-			csm.kstats.Increment("conduit.errors.json_unmarshal", 1.0)
+			csm.kstats.Increment(".conduit.errors.json_unmarshal", 1.0)
 
 		} else {
 			csm.obChannel <- orderBookRow
