@@ -11,15 +11,14 @@ import (
 
 func main() {
 
-	dataStreamer, shutdown, err := InitializeAndRun("config.env")
+	ctx, cancel := context.WithCancel(context.Background())
+	dataStreamer, shutdown, err := InitializeAndRun(ctx, "config.env")
 
 	if err != nil {
 		fmt.Println(err)
 		shutdown()
 		os.Exit(2)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
 
 	defer shutdown()
 	c := make(chan os.Signal)
@@ -33,14 +32,11 @@ func main() {
 		}
 	}()
 
-	if err := dataStreamer.InsertPairsFromBinanceToCache(); err != nil {
+	dataStreamer.GetProcessCollectionState()
+	dataStreamer.GenerateSocketListeningRoutines()
 
-		panic(err)
-	}
-	dataStreamer.GenerateSocketListeningRoutines(ctx)
-
-	go dataStreamer.ListenForDatabasePriveleges(ctx)
-	go dataStreamer.RunSocketRoutines(ctx)
+	go dataStreamer.ListenForDatabasePriveleges()
+	go dataStreamer.RunSocketRoutines()
 	go dataStreamer.ListenForExit(cancel)
 
 	select {

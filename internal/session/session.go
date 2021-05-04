@@ -19,13 +19,11 @@ var (
 
 type (
 	Session interface {
-		GetConnectionCount() int
 		ReportRunning(ctx context.Context)
 	}
 
 	Config struct {
-		StorageConnections int
-		Env                string
+		Env string
 	}
 	ConduitSession struct {
 		id     string
@@ -53,8 +51,4 @@ func (cs *ConduitSession) ReportRunning(ctx context.Context) {
 
 		return
 	}
-}
-
-func (cs *ConduitSession) GetConnectionCount() int {
-	return cs.cfg.StorageConnections
 }

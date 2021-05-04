@@ -1,59 +1,59 @@
 package streamprocessor_test
 
-import (
-	"os"
-	"testing"
+// import (
+// 	"os"
+// 	"testing"
 
-	"github.com/golang/mock/gomock"
-	"github.com/volatrade/conduit/internal/cache"
-	"github.com/volatrade/conduit/internal/mocks"
-	service "github.com/volatrade/conduit/internal/streamprocessor"
-	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
-)
+// 	"github.com/golang/mock/gomock"
+// 	"github.com/volatrade/conduit/internal/cache"
+// 	"github.com/volatrade/conduit/internal/mocks"
+// 	service "github.com/volatrade/conduit/internal/streamprocessor"
+// 	logger "github.com/volatrade/currie-logs"
+// 	stats "github.com/volatrade/k-stats"
+// )
 
-type testSuite struct {
-	mockController  *gomock.Controller
-	mockConnections *mocks.MockStorageConnections
-	service         *service.ConduitStreamProcessor
-	cache           cache.Cache
-	mockRequests    *mocks.MockRequests
-	mockSession     *mocks.MockSession
-}
+// type testSuite struct {
+// 	mockController  *gomock.Controller
+// 	mockConnections *mocks.MockStorageConnections
+// 	service         *service.ConduitStreamProcessor
+// 	cache           cache.Cache
+// 	mockRequests    *mocks.MockRequests
+// 	mockSession     *mocks.MockSession
+// }
 
-func createTestSuite(t *testing.T) testSuite {
-	mockController := gomock.NewController(t)
+// func createTestSuite(t *testing.T) testSuite {
+// 	mockController := gomock.NewController(t)
 
-	cache := cache.New(logger.NewNoop())
+// 	cache := cache.New(logger.NewNoop())
 
-	stats, _, _ := stats.NewNoop()
+// 	stats, _, _ := stats.NewNoop()
 
-	mockConnections := mocks.NewMockStorageConnections(mockController)
+// 	mockConnections := mocks.NewMockStorageConnections(mockController)
 
-	mockRequests := mocks.NewMockRequests(mockController)
-	mockSession := mocks.NewMockSession(mockController)
+// 	mockRequests := mocks.NewMockRequests(mockController)
+// 	mockSession := mocks.NewMockSession(mockController)
 
-	mockSession.EXPECT().GetConnectionCount().Return(0).Times(100)
-	svc, _ := service.New(mockConnections, cache, nil, mockSession, stats, nil, logger.NewNoop())
+// 	mockSession.EXPECT().GetConnectionCount().Return(0).Times(100)
+// 	svc, _ := service.New(cache, nil, mockSession, stats, nil, logger.NewNoop())
 
-	return testSuite{
-		mockController:  mockController,
-		service:         svc,
-		mockConnections: mockConnections,
-		cache:           cache,
-		mockRequests:    mockRequests,
-		mockSession:     mockSession,
-	}
+// 	return testSuite{
+// 		mockController:  mockController,
+// 		service:         svc,
+// 		mockConnections: mockConnections,
+// 		cache:           cache,
+// 		mockRequests:    mockRequests,
+// 		mockSession:     mockSession,
+// 	}
 
-}
+// }
 
-func TestMain(m *testing.M) {
+// func TestMain(m *testing.M) {
 
-	retCode := m.Run()
+// 	retCode := m.Run()
 
-	os.Exit(retCode)
+// 	os.Exit(retCode)
 
-}
+// }
 
 // //TODO remove return after stats updates
 // func TestTransactionChannelsToCache(t *testing.T) {
