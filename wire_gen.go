@@ -39,12 +39,16 @@ func InitializeAndRun(ctx context.Context, cfg config.FilePath) (streamprocessor
 	}
 	sessionConfig := config.NewSessionConfig(configConfig)
 	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
+<<<<<<< HEAD
 	conduitStorage, cleanup3, err := storage.New(postgresConfig, statsStats, loggerLogger, conduitSession)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
+=======
+	conduitStorageConnections, cleanup3 := store.New(postgresConfig, statsStats, loggerLogger, conduitSession)
+>>>>>>> 2b1759c4ea7d23d56560915c73a96ba735ec5c23
 	conduitCache := cache.New(loggerLogger)
 	conveyorConfig := config.NewConveyorConfig(configConfig)
 	conduitConveyor := conveyor.New(conveyorConfig, ctx, loggerLogger, conduitCache, conduitStorage)
@@ -52,7 +56,11 @@ func InitializeAndRun(ctx context.Context, cfg config.FilePath) (streamprocessor
 	conduitRequests := requests.New(requestsConfig, statsStats, loggerLogger)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
+<<<<<<< HEAD
 	conduitStreamProcessor, cleanup4 := streamprocessor.New(ctx, conduitStorage, conduitCache, conduitConveyor, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
+=======
+	conduitStreamProcessor, cleanup4 := streamprocessor.New(conduitStorageConnections, conduitCache, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
+>>>>>>> 2b1759c4ea7d23d56560915c73a96ba735ec5c23
 	return conduitStreamProcessor, func() {
 		cleanup4()
 		cleanup3()

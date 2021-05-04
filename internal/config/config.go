@@ -106,6 +106,10 @@ func NewLoggerOptions(cfg *Config) []logger.Option {
 	return []logger.Option{func(l *logger.Logger) {}}
 }
 
+func NewLoggerOptions(cfg *Config) []logger.Option {
+	return []logger.Option{func(l *logger.Logger) {}}
+}
+
 func NewSessionConfig(cfg *Config) *session.Config {
 	return &cfg.SessionConfig
 }
