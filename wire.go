@@ -3,23 +3,20 @@
 package main
 
 import (
+	"context"
+
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
 	"github.com/volatrade/conduit/internal/config"
+	"github.com/volatrade/conduit/internal/conveyor"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
 
-	"github.com/volatrade/conduit/internal/store"
+	"github.com/volatrade/conduit/internal/storage"
 	sp "github.com/volatrade/conduit/internal/streamprocessor"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
-)
-
-//sessionModule binds Session interface with ConduitSession struct from session package
-var sessionModule = wire.NewSet(
-	session.Module,
-	wire.Bind(new(session.Session), new(*session.ConduitSession)),
 )
 
 //cacheModule binds Cache interface with ConduitCache struct from Cache package
@@ -28,16 +25,10 @@ var cacheModule = wire.NewSet(
 	wire.Bind(new(cache.Cache), new(*cache.ConduitCache)),
 )
 
-//StreamModule binds StreamProcessor interface with ConduitStreamProcessor struct from StreamProcessor package
-var streamModule = wire.NewSet(
-	sp.Module,
-	wire.Bind(new(sp.StreamProcessor), new(*sp.ConduitStreamProcessor)),
-)
-
-//storageModule binds StorageConnections interface with ConduitStorageConnections struct from Store package
-var storageModule = wire.NewSet(
-	store.Module,
-	wire.Bind(new(store.StorageConnections), new(*store.ConduitStorageConnections)),
+//conveyorModule binds Conveyor interface with ConduitConveyor struct from conveyor package
+var conveyorModule = wire.NewSet(
+	conveyor.Module,
+	wire.Bind(new(conveyor.Conveyor), new(*conveyor.ConduitConveyor)),
 )
 
 //requestsModule module binds Requests interface with ConduitRequests struct from requests package
@@ -46,17 +37,36 @@ var requestsModule = wire.NewSet(
 	wire.Bind(new(requests.Requests), new(*requests.ConduitRequests)),
 )
 
+//sessionModule binds Session interface with ConduitSession struct from session package
+var sessionModule = wire.NewSet(
+	session.Module,
+	wire.Bind(new(session.Session), new(*session.ConduitSession)),
+)
+
 //slack module binds Slack interface with SlackLogger struct from github.com/volatrade/utilities package
 var slackModule = wire.NewSet(
 	slack.Module,
 	wire.Bind(new(slack.Slack), new(*slack.SlackLogger)),
 )
 
-func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
+//storageModule binds Store interface with ConduitStorage struct from Store package
+var storageModule = wire.NewSet(
+	storage.Module,
+	wire.Bind(new(storage.Store), new(*storage.ConduitStorage)),
+)
+
+//StreamModule binds StreamProcessor interface with ConduitStreamProcessor struct from StreamProcessor package
+var streamModule = wire.NewSet(
+	sp.Module,
+	wire.Bind(new(sp.StreamProcessor), new(*sp.ConduitStreamProcessor)),
+)
+
+func InitializeAndRun(ctx context.Context, cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 
 	panic(
 		wire.Build(
 			config.NewConfig,
+			config.NewConveyorConfig,
 			config.NewSessionConfig,
 			config.NewDBConfig,
 			config.NewStatsConfig,
@@ -71,6 +81,7 @@ func InitializeAndRun(cfg config.FilePath) (sp.StreamProcessor, func(), error) {
 			slackModule,
 			requestsModule,
 			cacheModule,
+			conveyorModule,
 			streamModule,
 		),
 	)

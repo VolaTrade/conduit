@@ -7,10 +7,11 @@ import (
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
+	"github.com/volatrade/conduit/internal/conveyor"
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
-	"github.com/volatrade/conduit/internal/store"
+	"github.com/volatrade/conduit/internal/storage"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
@@ -25,42 +26,44 @@ var (
 type (
 	StreamProcessor interface {
 		BuildOrderBookChannels(count int)
-		GenerateSocketListeningRoutines(ctx context.Context)
-		InsertPairsFromBinanceToCache() error
-		ListenForDatabasePriveleges(ctx context.Context)
+		GenerateSocketListeningRoutines()
+		GetProcessCollectionState() error
+		ListenForDatabasePriveleges()
 		ListenForExit(exit func())
-		ListenAndHandleDataChannel(ctx context.Context, index int)
-		RunSocketRoutines(ctx context.Context)
+		ListenAndHandleDataChannel(index int)
+		RunSocketRoutines()
 	}
 
 	ConduitStreamProcessor struct {
-		logger            *logger.Logger
+		active            bool
 		cache             cache.Cache
-		dbStreams         store.StorageConnections
+		conveyor          conveyor.Conveyor
+		ctx               context.Context
+		kstats            stats.Stats
+		logger            *logger.Logger
+		orderBookChannels []chan *models.OrderBookRow
 		requests          requests.Requests
 		slack             slack.Slack
 		session           session.Session
-		kstats            stats.Stats
-		orderBookChannels []chan *models.OrderBookRow
-		writeToDB         bool
 	}
 )
 
 //New constructor
-func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, session session.Session, stats stats.Stats, slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
+func New(ctx context.Context, conns storage.Store, ch cache.Cache, conveyor conveyor.Conveyor,
+	cl requests.Requests, session session.Session, stats stats.Stats,
+	slackz slack.Slack, logger *logger.Logger) (*ConduitStreamProcessor, func()) {
 
 	sp := &ConduitStreamProcessor{
-		logger:    logger,
-		cache:     ch,
-		dbStreams: conns,
-		requests:  cl,
-		kstats:    stats,
-		writeToDB: false,
-		slack:     slackz,
-		session:   session,
+		ctx:      ctx,
+		conveyor: conveyor,
+		logger:   logger,
+		cache:    ch,
+		requests: cl,
+		kstats:   stats,
+		active:   false,
+		slack:    slackz,
+		session:  session,
 	}
-
-	sp.BuildOrderBookChannels(session.GetConnectionCount())
 
 	shutdown := func() {
 		log.Println("Shutting down stream proccessing layer")
@@ -74,25 +77,18 @@ func New(conns store.StorageConnections, ch cache.Cache, cl requests.Requests, s
 }
 
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
-func (csp *ConduitStreamProcessor) handleOrderBookRow(tx *models.OrderBookRow, index int) {
-	if csp.writeToDB {
-		if err := csp.requests.PostOrderbookRowToCortex(tx); err != nil {
+func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, index int) {
+	if csp.active {
+		if err := csp.requests.PostOrderbookRowToCortex(ob); err != nil {
 			csp.logger.Errorw("Error sending orderbook row to cortex", "error", err.Error())
 		}
-		if err := csp.dbStreams.InsertOrderBookRowToDataBase(tx, index); err != nil {
-			csp.logger.Errorw("Error inserting orderbook row to postgres", "error", err.Error())
-		}
-		csp.kstats.Increment(".conduit.sqlinserts.ob", 1.0)
-
-	} else {
-		csp.cache.InsertOrderBookRow(tx)
-		csp.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
-
 	}
+	csp.cache.InsertOrderBookRow(ob)
+	csp.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
 }
 
-//InsertPairsFromBinanceToCache reads all trading pairs from Binance and then proceeds to store them as keys in cache
-func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
+//GetProcessCollectionState gathers the collection state for what pairs conduit should be collecting
+func (csp *ConduitStreamProcessor) GetProcessCollectionState() error {
 
 	tradingPairs, err := csp.requests.GetActiveOrderbookPairs(3)
 
@@ -100,8 +96,9 @@ func (csp *ConduitStreamProcessor) InsertPairsFromBinanceToCache() error {
 		csp.logger.Errorw("Failed getting orderbook pairs from gatekeeper api, using default values")
 		tradingPairs = []string{"btcusdt", "ethusdt", "xrpusdt", "ltcusdt"}
 	}
-
-	csp.logger.Infow("Fetching orderbook data for: ", "pairs", tradingPairs)
+	obChannelCount := int(len(tradingPairs) / 3)
+	csp.BuildOrderBookChannels(obChannelCount)
+	csp.logger.Infow("Fetching orderbook data", "pairs", tradingPairs, "channel count", obChannelCount)
 
 	for _, pair := range tradingPairs {
 		csp.cache.InsertEntry(pair)

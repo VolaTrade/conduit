@@ -1,8 +1,6 @@
 package streamprocessor
 
 import (
-	"context"
-
 	"github.com/volatrade/conduit/internal/models"
 	"github.com/volatrade/conduit/internal/socket"
 )
@@ -20,12 +18,12 @@ func (csp *ConduitStreamProcessor) BuildOrderBookChannels(size int) {
 }
 
 //TODO add waitgroup to me ....
-func (csp *ConduitStreamProcessor) RunSocketRoutines(ctx context.Context) { // --> SpawnSocketManagers
+func (csp *ConduitStreamProcessor) RunSocketRoutines() { // --> SpawnSocketManagers
 
 	shepards := make([]*socket.ConduitSocketManager, 0)
 	j := 0
-	connCount := csp.session.GetConnectionCount()
 	entries := csp.cache.GetEntries()
+	connCount := len(csp.orderBookChannels)
 	for _, entry := range entries {
 		if j >= connCount {
 			j = 0
@@ -39,6 +37,6 @@ func (csp *ConduitStreamProcessor) RunSocketRoutines(ctx context.Context) { // -
 	csp.logger.Infow("Built socket routines", "count", len(shepards))
 
 	for _, manager := range shepards {
-		go manager.Run(ctx)
+		go manager.Run(csp.ctx)
 	}
 }

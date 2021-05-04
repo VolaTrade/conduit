@@ -36,7 +36,7 @@ type (
 		logger        *log.Logger
 		entries       []*models.CacheEntry
 		orderBookData []*models.OrderBookRow
-		obMux         sync.Mutex
+		mux           *sync.RWMutex
 	}
 )
 
@@ -46,6 +46,7 @@ func New(logger *log.Logger) *ConduitCache {
 	return &ConduitCache{
 		logger:        logger,
 		entries:       make([]*models.CacheEntry, 0),
+		mux:           &sync.RWMutex{},
 		orderBookData: make([]*models.OrderBookRow, 0),
 	}
 
@@ -60,6 +61,8 @@ func getOrderBookUrlString(pair string) string {
 
 //GetAllOrderBookRows returns cache slice of OrderBookRow model struct
 func (cc *ConduitCache) GetAllOrderBookRows() []*models.OrderBookRow {
+	cc.mux.RLock()
+	defer cc.mux.RUnlock()
 	return cc.orderBookData
 }
 
@@ -76,13 +79,11 @@ func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
 		cc.logger.Infow("Nil value passed in")
 		return
 	}
-
 	cc.logger.Infow("cache insertion", "pair", obRow.Pair,
 		"type", "orderbook snapshot", "cache length", cc.OrderBookRowsLength())
-	cc.obMux.Lock()
-	defer cc.obMux.Unlock()
+	cc.mux.Lock()
 	cc.orderBookData = append(cc.orderBookData, obRow)
-
+	cc.mux.Unlock()
 }
 
 func (cc *ConduitCache) PurgeOrderBookRows() {
@@ -96,10 +97,12 @@ func (cc *ConduitCache) GetEntries() []*models.CacheEntry {
 }
 
 //OrderBookRowsLength used for testing && debuging
-func (tc *ConduitCache) OrderBookRowsLength() int {
+func (cc *ConduitCache) OrderBookRowsLength() int {
 
-	if tc.orderBookData != nil {
-		return len(tc.orderBookData)
+	cc.mux.RLock()
+	defer cc.mux.RUnlock()
+	if cc.orderBookData != nil {
+		return len(cc.orderBookData)
 	}
 	return 0
 }

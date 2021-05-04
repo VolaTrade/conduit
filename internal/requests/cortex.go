@@ -30,10 +30,7 @@ func (cr *ConduitRequests) PostOrderbookRowToCortex(orderbookRow *models.OrderBo
 		return fmt.Errorf("response error: %s", err.Error())
 	}
 
-	if err := resp.Body.Close(); err != nil {
-		cr.logger.Errorw("Error closing response: ", "error", err)
-	}
-
+	cr.closeResponseBody(resp)
 	cr.logger.Infow(fmt.Sprintf("Cortex request success, response: %s", resp.Header))
 	cr.statz.Increment("cortex_requests", 1.0)
 

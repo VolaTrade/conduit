@@ -12,6 +12,7 @@ require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/volatrade/currie-logs v1.1.1
