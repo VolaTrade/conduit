@@ -3,6 +3,7 @@
 package requests
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/google/wire"
@@ -21,6 +22,7 @@ type Requests interface {
 }
 
 type Config struct {
+	BinanceApiUrl  string
 	GatekeeperUrl  string
 	RequestTimeout time.Duration
 	CortexUrl      string
@@ -29,10 +31,17 @@ type Config struct {
 
 type ConduitRequests struct {
 	cfg    *Config
-	statz  *stats.Stats
+	statz  stats.Stats
 	logger *logger.Logger
 }
 
-func New(cfg *Config, statz *stats.Stats, logger *logger.Logger) *ConduitRequests {
+func New(cfg *Config, statz stats.Stats, logger *logger.Logger) *ConduitRequests {
 	return &ConduitRequests{cfg: cfg, statz: statz, logger: logger}
+}
+
+func (cr *ConduitRequests) closeResponseBody(resp *http.Response) {
+
+	if err := resp.Body.Close(); err != nil {
+		cr.logger.Errorw("Error closing response")
+	}
 }

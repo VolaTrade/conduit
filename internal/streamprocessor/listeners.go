@@ -1,22 +1,21 @@
 package streamprocessor
 
 import (
-	"context"
 	"os"
 	"time"
 )
 
 //ListenAndHandleDataChannel waits for transaction or orderbook to come in from their respective channel before invoking handler function
-func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Context, index int) {
+func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(index int) {
 
-	obChannel :=  csp.orderBookChannels[index]
+	obChannel := csp.orderBookChannels[index]
 	for {
 		select {
 
 		case orderBookRow := <-obChannel:
 			csp.handleOrderBookRow(orderBookRow, index)
 
-		case <-ctx.Done():
+		case <-csp.ctx.Done():
 			csp.logger.Infow("received finish signal")
 			return
 		}
@@ -25,7 +24,7 @@ func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(ctx context.Contex
 }
 
 //ListenForDatabasePriveleges checks every fifteen seconds for prevalance of touch file, signals database writing when found
-func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Context) {
+func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges() {
 
 	ticker := time.NewTicker(time.Duration(time.Second * 15))
 	defer ticker.Stop()
@@ -37,24 +36,11 @@ func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Conte
 			panic("FAILURE")
 		}
 
-		if _, writeToCache := os.Stat("start"); writeToCache == nil {
+		if _, startDetected := os.Stat("start"); startDetected == nil {
 
-			csp.logger.Infow("establishing database connections, moving cache to databse, and purging cache")
-
-			if err := csp.dbStreams.MakeConnections(); err != nil {
-				csp.logger.Errorw(err.Error(), "attempt", attempts)
-				attempts -= 1
-				continue
-			}
-
-			csp.writeToDB = true
-			if err := csp.dbStreams.TransferOrderBookCache(csp.cache.GetAllOrderBookRows()); err != nil {
-				csp.logger.Errorw(err.Error(), "attempt", attempts)
-				attempts -= 1
-				continue
-			}
-
-			csp.cache.PurgeOrderBookRows()
+			csp.logger.Infow("Dispatching conveyor")
+			csp.active = true
+			go csp.conveyor.Dispatch()
 			return
 		}
 
@@ -62,7 +48,7 @@ func (csp *ConduitStreamProcessor) ListenForDatabasePriveleges(ctx context.Conte
 		case <-ticker.C:
 			continue
 
-		case <-ctx.Done():
+		case <-csp.ctx.Done():
 			csp.logger.Infow("received finish signal")
 			return
 
@@ -82,15 +68,14 @@ func (csp *ConduitStreamProcessor) ListenForExit(exit func()) {
 			return
 		}
 
-		select {
-		case <-ticker.C:
-			continue
+		for range ticker.C {
+			break
 		}
 	}
 }
 
-func (csp *ConduitStreamProcessor) GenerateSocketListeningRoutines(ctx context.Context) {
-	for i := 0; i < csp.session.GetConnectionCount(); i++ {
-		go csp.ListenAndHandleDataChannel(ctx, i)
+func (csp *ConduitStreamProcessor) GenerateSocketListeningRoutines() {
+	for i := 0; i < len(csp.orderBookChannels); i++ {
+		go csp.ListenAndHandleDataChannel(i)
 	}
 }

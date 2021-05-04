@@ -11,7 +11,8 @@ import (
 
 func main() {
 
-	dataStreamer, shutdown, err := InitializeAndRun("config.env")
+	ctx, cancel := context.WithCancel(context.Background())
+	dataStreamer, shutdown, err := InitializeAndRun(ctx, "config.env")
 
 	if err != nil {
 		fmt.Println(err)
@@ -19,31 +20,23 @@ func main() {
 		os.Exit(2)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	defer shutdown()
 	c := make(chan os.Signal)
 
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
-
-		select {
-
-		case <-c:
+		for range c {
 			cancel()
 			time.Sleep(time.Duration(2 * time.Second))
-			os.Exit(1)
+			os.Exit(0)
 		}
 	}()
 
-	if err := dataStreamer.InsertPairsFromBinanceToCache(); err != nil {
-		
-		panic(err)
-	}
-	dataStreamer.GenerateSocketListeningRoutines(ctx)
+	dataStreamer.GetProcessCollectionState()
+	dataStreamer.GenerateSocketListeningRoutines()
 
-	go dataStreamer.ListenForDatabasePriveleges(ctx)
-	go dataStreamer.RunSocketRoutines(ctx)
+	go dataStreamer.ListenForDatabasePriveleges()
+	go dataStreamer.RunSocketRoutines()
 	go dataStreamer.ListenForExit(cancel)
 
 	select {

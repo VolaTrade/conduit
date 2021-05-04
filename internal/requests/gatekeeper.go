@@ -28,12 +28,7 @@ func (cr *ConduitRequests) GetActiveOrderbookPairs(retry int) ([]string, error) 
 		cr.logger.Infow("Failed getting orderbook pairs from gatekeeper, retrying", "retries_left", retry)
 		return cr.GetActiveOrderbookPairs(retry - 1)
 	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			cr.logger.Errorw("Error closing response")
-		}
-	}()
+	defer cr.closeResponseBody(resp)
 
 	var result CollectionPairsResponse
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {

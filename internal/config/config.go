@@ -7,15 +7,17 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/volatrade/conduit/internal/conveyor"
 	"github.com/volatrade/conduit/internal/requests"
 	"github.com/volatrade/conduit/internal/session"
-	"github.com/volatrade/conduit/internal/store/postgres"
+	"github.com/volatrade/conduit/internal/storage/postgres"
 	logger "github.com/volatrade/currie-logs"
 	stats "github.com/volatrade/k-stats"
 	"github.com/volatrade/utilities/slack"
 )
 
 type Config struct {
+	ConveyorConfig conveyor.Config
 	DbConfig       postgres.Config
 	StatsConfig    stats.Config
 	SlackConfig    slack.Config
@@ -40,6 +42,10 @@ func NewConfig(fileName FilePath) *Config {
 	}
 
 	return &Config{
+
+		ConveyorConfig: conveyor.Config{
+			ShiftInterval: convertToInt(os.Getenv("DISPATCH_INTERVAL")),
+		},
 		DbConfig: postgres.Config{
 			Host:     os.Getenv("PG_HOST"),
 			Port:     os.Getenv("PG_PORT"),
@@ -58,8 +64,7 @@ func NewConfig(fileName FilePath) *Config {
 			Env:      env,
 		},
 		SessionConfig: session.Config{
-			StorageConnections: convertToInt(os.Getenv("STORAGE_CONNECTION_COUNT")),
-			Env:                env,
+			Env: env,
 		},
 		RequestsConfig: requests.Config{
 			GatekeeperUrl:  os.Getenv("GATEKEEPER_URL"),
@@ -80,7 +85,6 @@ func NewDBConfig(cfg *Config) *postgres.Config {
 	return &cfg.DbConfig
 
 }
-
 func NewStatsConfig(cfg *Config) *stats.Config {
 	log.Println("Stats config --->", cfg.StatsConfig)
 	return &cfg.StatsConfig
@@ -93,6 +97,14 @@ func NewSlackConfig(cfg *Config) *slack.Config {
 
 func NewLoggerConfig(cfg *Config) *logger.Config {
 	return nil
+}
+
+func NewConveyorConfig(cfg *Config) *conveyor.Config {
+	return &cfg.ConveyorConfig
+}
+
+func NewLoggerOptions(cfg *Config) []logger.Option {
+	return []logger.Option{func(l *logger.Logger) {}}
 }
 
 func NewSessionConfig(cfg *Config) *session.Config {

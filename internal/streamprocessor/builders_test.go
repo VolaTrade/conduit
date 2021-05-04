@@ -1,18 +1,12 @@
 package streamprocessor_test
 
-import (
-	"testing"
+// func TestBuildOrderBookChannels(t *testing.T) {
 
-	"github.com/stretchr/testify/assert"
-)
-
-func TestBuildOrderBookChannels(t *testing.T) {
-
-	ts := createTestSuite(t)
-	ts.service.BuildOrderBookChannels(3)
-	c := ts.service.GetOrderBookChannel(2)
-	assert.True(t, c != nil)
-}
+// 	ts := createTestSuite(t)
+// 	ts.service.BuildOrderBookChannels(3)
+// 	c := ts.service.GetOrderBookChannel(2)
+// 	assert.True(t, c != nil)
+// }
 
 // func TestSpawnSocketRoutines(t *testing.T) {
 // 	ts := createTestSuite(t)
