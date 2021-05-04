@@ -46,7 +46,7 @@ func (postgres *DB) BulkInsertOrderBookRows(orderBookRows []*models.OrderBookRow
 		}
 
 		if rows, err := result.RowsAffected(); rows == 0 && err == nil {
-			postgres.kstats.Increment(fmt.Sprintf(".conduit.duplicate_inserts.ob.%s", orderBookRow.Pair), 1.0)
+			postgres.kstats.Increment(fmt.Sprintf("duplicate_inserts.ob.%s", orderBookRow.Pair), 1.0)
 		}
 		if err != nil {
 			rollBack(tx)
