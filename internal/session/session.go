@@ -43,11 +43,11 @@ func New(logger *logger.Logger, cfg *Config, kstats stats.Stats) *ConduitSession
 }
 
 func (cs *ConduitSession) ReportRunning(ctx context.Context) {
-	cs.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", cs.id), 1.0)
+	cs.kstats.Gauge(fmt.Sprintf("instances.%s", cs.id), 1.0)
 
 	for range ctx.Done() {
 		println("Reporting zero")
-		cs.kstats.Gauge(fmt.Sprintf("conduit.instances.%s", cs.id), 0.0)
+		cs.kstats.Gauge(fmt.Sprintf("instances.%s", cs.id), 0.0)
 
 		return
 	}

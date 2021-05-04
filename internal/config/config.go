@@ -54,9 +54,10 @@ func NewConfig(fileName FilePath) *Config {
 			Password: os.Getenv("PG_PASSWORD"),
 		},
 		StatsConfig: stats.Config{
-			Host: os.Getenv("STATS_HOST"),
-			Port: convertToInt(os.Getenv("STATS_PORT")),
-			Env:  env,
+			Host:    os.Getenv("STATS_HOST"),
+			Port:    convertToInt(os.Getenv("STATS_PORT")),
+			Env:     env,
+			Service: "conduit",
 		},
 		SlackConfig: slack.Config{
 			ApiKey:   os.Getenv("SLACK_API_KEY"),

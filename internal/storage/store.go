@@ -67,6 +67,6 @@ func (cs *ConduitStorage) TransferOrderBookCache(cacheData []*models.OrderBookRo
 	if err := cs.postgresConnection.BulkInsertOrderBookRows(cacheData); err != nil {
 		return err
 	}
-	cs.kstats.Increment(".conduit.postgres_transit", 1)
+	cs.kstats.Increment("postgres_transit", 1)
 	return nil
 }

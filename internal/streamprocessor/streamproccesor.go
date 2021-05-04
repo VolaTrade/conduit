@@ -84,7 +84,7 @@ func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, i
 		}
 	}
 	csp.cache.InsertOrderBookRow(ob)
-	csp.kstats.Increment(".conduit.cacheinserts.ob", 1.0)
+	csp.kstats.Increment("cacheinserts.ob", 1.0)
 }
 
 //GetProcessCollectionState gathers the collection state for what pairs conduit should be collecting
