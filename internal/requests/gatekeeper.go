@@ -11,7 +11,7 @@ type CollectionPairsResponse struct {
 }
 
 const (
-	orderbookURL = "/collection-pairs?transaction=true&orderbook=true"
+	orderbookURL = "/collection-pairs?candles=false&orderbooks=true"
 )
 
 // GetActiveOrderbookPairs gets a list of all the pairs we want to collect data for
