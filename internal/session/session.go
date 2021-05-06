@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/wire"
 	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
+	stats "github.com/volatrade/go-grafana-graphite-client"
 )
 
 var (

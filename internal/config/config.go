@@ -12,7 +12,7 @@ import (
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/storage/postgres"
 	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
+	stats "github.com/volatrade/go-grafana-graphite-client"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -54,10 +54,13 @@ func NewConfig(fileName FilePath) *Config {
 			Password: os.Getenv("PG_PASSWORD"),
 		},
 		StatsConfig: stats.Config{
-			Host:    os.Getenv("STATS_HOST"),
-			Port:    convertToInt(os.Getenv("STATS_PORT")),
-			Env:     env,
-			Service: "conduit",
+			ConveyorCount:  convertToInt(os.Getenv("CONVEYOR_COUNT")),
+			FlushTime:      convertToInt(os.Getenv("FLUSH_INTERVAL")),
+			Url:            os.Getenv("GRAPHITE_URL"),
+			ApiKey:         os.Getenv("GRAPHITE_API_KEY"),
+			RequestTimeout: convertToInt(os.Getenv("GRAPHITE_REQUEST_TIMEOUT")),
+			Env:            env,
+			Service:        os.Getenv("SERVICE_NAME"),
 		},
 		SlackConfig: slack.Config{
 			ApiKey:   os.Getenv("SLACK_API_KEY"),

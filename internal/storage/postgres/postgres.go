@@ -8,7 +8,7 @@ import (
 	_ "github.com/jackc/pgx/stdlib" //driver
 	"github.com/jmoiron/sqlx"
 	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
+	stats "github.com/volatrade/go-grafana-graphite-client"
 )
 
 var (
