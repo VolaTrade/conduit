@@ -16,7 +16,7 @@ import (
 	"github.com/volatrade/conduit/internal/storage"
 	"github.com/volatrade/conduit/internal/streamprocessor"
 	"github.com/volatrade/currie-logs"
-	"github.com/volatrade/k-stats"
+	"github.com/volatrade/go-grafana-graphite-client"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -25,21 +25,21 @@ import (
 func InitializeAndRun(ctx context.Context, cfg config.FilePath) (streamprocessor.StreamProcessor, func(), error) {
 	configConfig := config.NewConfig(cfg)
 	postgresConfig := config.NewDBConfig(configConfig)
-	statsConfig := config.NewStatsConfig(configConfig)
-	loggerConfig := config.NewLoggerConfig(configConfig)
-	v := config.NewLoggerOptions(configConfig)
-	loggerLogger, cleanup, err := logger.New(loggerConfig, v...)
+	graphiteConfig := config.NewStatsConfig(configConfig)
+	stats, cleanup, err := graphite.NewClient(graphiteConfig)
 	if err != nil {
 		return nil, nil, err
 	}
-	statsStats, cleanup2, err := stats.New(statsConfig, loggerLogger)
+	loggerConfig := config.NewLoggerConfig(configConfig)
+	v := config.NewLoggerOptions(configConfig)
+	loggerLogger, cleanup2, err := logger.New(loggerConfig, v...)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
 	sessionConfig := config.NewSessionConfig(configConfig)
-	conduitSession := session.New(loggerLogger, sessionConfig, statsStats)
-	conduitStorage, cleanup3, err := storage.New(postgresConfig, statsStats, loggerLogger, conduitSession)
+	conduitSession := session.New(loggerLogger, sessionConfig, stats)
+	conduitStorage, cleanup3, err := storage.New(postgresConfig, stats, loggerLogger, conduitSession)
 	if err != nil {
 		cleanup2()
 		cleanup()
@@ -49,10 +49,10 @@ func InitializeAndRun(ctx context.Context, cfg config.FilePath) (streamprocessor
 	conveyorConfig := config.NewConveyorConfig(configConfig)
 	conduitConveyor := conveyor.New(conveyorConfig, ctx, loggerLogger, conduitCache, conduitStorage)
 	requestsConfig := config.NewRequestsConfig(configConfig)
-	conduitRequests := requests.New(requestsConfig, statsStats, loggerLogger)
+	conduitRequests := requests.New(requestsConfig, stats, loggerLogger)
 	slackConfig := config.NewSlackConfig(configConfig)
 	slackLogger := slack.New(slackConfig)
-	conduitStreamProcessor, cleanup4 := streamprocessor.New(ctx, conduitStorage, conduitCache, conduitConveyor, conduitRequests, conduitSession, statsStats, slackLogger, loggerLogger)
+	conduitStreamProcessor, cleanup4 := streamprocessor.New(ctx, conduitStorage, conduitCache, conduitConveyor, conduitRequests, conduitSession, stats, slackLogger, loggerLogger)
 	return conduitStreamProcessor, func() {
 		cleanup4()
 		cleanup3()

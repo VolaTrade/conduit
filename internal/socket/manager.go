@@ -7,7 +7,7 @@ import (
 
 	"github.com/volatrade/conduit/internal/models"
 	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
+	stats "github.com/volatrade/go-grafana-graphite-client"
 )
 
 type (

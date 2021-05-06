@@ -10,7 +10,7 @@ import (
 	"github.com/volatrade/conduit/internal/session"
 	"github.com/volatrade/conduit/internal/storage/postgres"
 	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
+	stats "github.com/volatrade/go-grafana-graphite-client"
 )
 
 var (

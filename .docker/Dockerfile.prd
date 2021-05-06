@@ -1,4 +1,4 @@
-FROM golang:1.12-alpine3.10 AS base
+FROM golang:1.16.3-alpine3.13 AS base
 ARG GITHUB_TOKEN
 RUN apk add bash ca-certificates git gcc g++ libc-dev make git
 WORKDIR /go/src/github.com/volatrade/conduit

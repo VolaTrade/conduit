@@ -15,7 +15,7 @@ import (
 	"github.com/volatrade/conduit/internal/storage"
 	sp "github.com/volatrade/conduit/internal/streamprocessor"
 	logger "github.com/volatrade/currie-logs"
-	stats "github.com/volatrade/k-stats"
+	stats "github.com/volatrade/go-grafana-graphite-client"
 	"github.com/volatrade/utilities/slack"
 )
 
@@ -75,7 +75,7 @@ func InitializeAndRun(ctx context.Context, cfg config.FilePath) (sp.StreamProces
 			config.NewLoggerOptions,
 			config.NewRequestsConfig,
 			logger.New,
-			stats.New,
+			stats.NewClient,
 			sessionModule,
 			storageModule,
 			slackModule,

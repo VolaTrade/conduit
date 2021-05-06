@@ -1,6 +1,6 @@
 module github.com/volatrade/conduit
 
-go 1.14
+go 1.16
 
 require (
 	github.com/cockroachdb/apd v1.1.0 // indirect
@@ -15,7 +15,7 @@ require (
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/volatrade/currie-logs v1.1.1
-	github.com/volatrade/k-stats v1.0.0
+	github.com/volatrade/go-grafana-graphite-client v0.0.1
 	github.com/volatrade/utilities v0.0.0-20201113132849-48bf53bbb496
 	google.golang.org/appengine v1.6.7 // indirect
 )
