@@ -29,10 +29,10 @@ func (cr *ConduitRequests) PostOrderbookRowToCortex(orderbookRow *models.OrderBo
 		cr.statz.Increment("cortex.errors", 1)
 		return fmt.Errorf("response error: %s", err.Error())
 	}
+	cr.statz.Increment(fmt.Sprintf("cortex_requests.%d", resp.StatusCode), 1.0)
 
 	cr.closeResponseBody(resp)
 	cr.logger.Infow(fmt.Sprintf("Cortex request success, response: %s", resp.Header))
-	cr.statz.Increment("cortex_requests", 1.0)
 
 	return nil
 }
