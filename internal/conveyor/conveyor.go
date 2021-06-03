@@ -51,7 +51,7 @@ func (conv *ConduitConveyor) transitOrderBooksToStorage() {
 	time.Sleep(300 * time.Millisecond)
 
 	if len(cachedObs) != conv.cache.OrderBookRowsLength() { // checks to ensure this function isn't called amidst a cache update
-		conv.logger.Infow("Recursion")
+		conv.logger.Infow("Recursive case hit within transit function")
 		conv.transitOrderBooksToStorage()
 	} else {
 		conv.storage.TransferOrderBookCache(cachedObs)
@@ -63,7 +63,7 @@ func (conv *ConduitConveyor) transitOrderBooksToStorage() {
 func (conv *ConduitConveyor) Dispatch() {
 	ticker := time.NewTicker(time.Second * time.Duration(conv.cfg.ShiftInterval))
 	defer ticker.Stop()
-	conv.logger.Infow("Starting dispatch loop")
+	conv.logger.Infow("Starting dispatch loop for conveyor")
 	for {
 		select {
 		case <-ticker.C:

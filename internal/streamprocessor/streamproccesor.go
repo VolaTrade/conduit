@@ -4,6 +4,7 @@ package streamprocessor
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/google/wire"
 	"github.com/volatrade/conduit/internal/cache"
@@ -78,7 +79,7 @@ func New(ctx context.Context, conns storage.Store, ch cache.Cache, conveyor conv
 
 //handleOrderBookRow checks to see if orderbookrow is going to database or cache, then inserts accordingly
 func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, index int) {
-	if csp.active {
+	if csp.active && strings.ToLower(ob.Pair) == "btcusdt" {
 		if err := csp.requests.PostOrderbookRowToCortex(ob); err != nil {
 			csp.logger.Errorw("Error sending orderbook row to cortex", "error", err.Error())
 		}

@@ -36,7 +36,6 @@ func NewSocket(ctx context.Context, url string, logger *logger.Logger, channel c
 	if err != nil {
 		return nil, err
 	}
-
 	socket := &ConduitSocket{conn: conn, url: url, logger: logger, parentChannel: channel, healthy: true, mux: &sync.Mutex{}, ctx: ctx}
 
 	go socket.runKeepAlive()
