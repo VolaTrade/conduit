@@ -3,9 +3,6 @@
 package cache
 
 import (
-	"fmt"
-	"net/url"
-	"strings"
 	"sync"
 
 	"github.com/google/wire"
@@ -24,19 +21,24 @@ const (
 
 type (
 	Cache interface {
+		GetAllCandleStickRows() []*models.CandleStickRow
 		GetAllOrderBookRows() []*models.OrderBookRow
+		InsertCandleStickRow(cdRow *models.CandleStickRow)
 		InsertOrderBookRow(obRow *models.OrderBookRow)
-		InsertEntry(pair string)
+		InsertOrderBookEntry(pair string)
 		GetEntries() []*models.CacheEntry
+		CandleStickRowsLength() int
 		OrderBookRowsLength() int
 		PurgeOrderBookRows()
 	}
 
 	ConduitCache struct {
-		logger        *log.Logger
-		entries       []*models.CacheEntry
-		orderBookData []*models.OrderBookRow
-		mux           *sync.RWMutex
+		logger          *log.Logger
+		entries         []*models.CacheEntry
+		orderBookData   []*models.OrderBookRow
+		candleStickData []*models.CandleStickRow
+		obMux           *sync.RWMutex
+		cdMux           *sync.RWMutex
 	}
 )
 
@@ -44,65 +46,17 @@ type (
 func New(logger *log.Logger) *ConduitCache {
 
 	return &ConduitCache{
-		logger:        logger,
-		entries:       make([]*models.CacheEntry, 0),
-		mux:           &sync.RWMutex{},
-		orderBookData: make([]*models.OrderBookRow, 0),
+		logger:          logger,
+		entries:         make([]*models.CacheEntry, 0),
+		obMux:           &sync.RWMutex{},
+		cdMux:           &sync.RWMutex{},
+		orderBookData:   make([]*models.OrderBookRow, 0),
+		candleStickData: make([]*models.CandleStickRow, 0),
 	}
-
-}
-
-//getOrderBookUrlString builds orderbook websocket url from pair
-func getOrderBookUrlString(pair string) string {
-	innerPath := fmt.Sprintf("ws/" + strings.ToLower(pair) + "@depth10@1000ms")
-	socketUrl := url.URL{Scheme: "wss", Host: BASE_SOCKET_URL, Path: innerPath}
-	return socketUrl.String()
-}
-
-//GetAllOrderBookRows returns cache slice of OrderBookRow model struct
-func (cc *ConduitCache) GetAllOrderBookRows() []*models.OrderBookRow {
-	cc.mux.RLock()
-	defer cc.mux.RUnlock()
-	return cc.orderBookData
-}
-
-//InsertEntry takes pair, builds URLs, appends data to Entry model struct, then adds struct to cache
-func (cc *ConduitCache) InsertEntry(pair string) {
-
-	entry := &models.CacheEntry{Pair: pair, ObUrl: getOrderBookUrlString(pair)}
-	cc.entries = append(cc.entries, entry)
-}
-
-//InsertOrderBookRow inserts OrderBookRow model struct to cache
-func (cc *ConduitCache) InsertOrderBookRow(obRow *models.OrderBookRow) {
-	if obRow == nil {
-		cc.logger.Infow("Nil value passed in")
-		return
-	}
-	cc.logger.Infow("cache insertion", "pair", obRow.Pair,
-		"type", "orderbook snapshot", "cache length", cc.OrderBookRowsLength())
-	cc.mux.Lock()
-	cc.orderBookData = append(cc.orderBookData, obRow)
-	cc.mux.Unlock()
-}
-
-func (cc *ConduitCache) PurgeOrderBookRows() {
-	cc.orderBookData = nil
 
 }
 
 //GetEntries returns slice of CacheEntry struct
 func (cc *ConduitCache) GetEntries() []*models.CacheEntry {
 	return cc.entries
-}
-
-//OrderBookRowsLength used for testing && debuging
-func (cc *ConduitCache) OrderBookRowsLength() int {
-
-	cc.mux.RLock()
-	defer cc.mux.RUnlock()
-	if cc.orderBookData != nil {
-		return len(cc.orderBookData)
-	}
-	return 0
 }

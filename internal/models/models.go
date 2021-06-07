@@ -1,7 +1,7 @@
 package models
 
 type CacheEntry struct {
-	TxUrl string
+	CdUrl string
 	ObUrl string
 	Pair  string
 }

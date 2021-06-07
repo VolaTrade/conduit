@@ -102,7 +102,7 @@ func (csp *ConduitStreamProcessor) GetProcessCollectionState() error {
 	csp.logger.Infow("Fetching orderbook data", "pairs", tradingPairs, "channel count", obChannelCount)
 
 	for _, pair := range tradingPairs {
-		csp.cache.InsertEntry(pair)
+		csp.cache.InsertOrderBookEntry(pair)
 	}
 
 	return nil

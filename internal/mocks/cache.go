@@ -5,35 +5,64 @@
 package mocks
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	models "github.com/volatrade/conduit/internal/models"
-	reflect "reflect"
 )
 
-// MockCache is a mock of Cache interface
+// MockCache is a mock of Cache interface.
 type MockCache struct {
 	ctrl     *gomock.Controller
 	recorder *MockCacheMockRecorder
 }
 
-// MockCacheMockRecorder is the mock recorder for MockCache
+// MockCacheMockRecorder is the mock recorder for MockCache.
 type MockCacheMockRecorder struct {
 	mock *MockCache
 }
 
-// NewMockCache creates a new mock instance
+// NewMockCache creates a new mock instance.
 func NewMockCache(ctrl *gomock.Controller) *MockCache {
 	mock := &MockCache{ctrl: ctrl}
 	mock.recorder = &MockCacheMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCache) EXPECT() *MockCacheMockRecorder {
 	return m.recorder
 }
 
-// GetAllOrderBookRows mocks base method
+// CandleStickRowsLength mocks base method.
+func (m *MockCache) CandleStickRowsLength() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CandleStickRowsLength")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// CandleStickRowsLength indicates an expected call of CandleStickRowsLength.
+func (mr *MockCacheMockRecorder) CandleStickRowsLength() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CandleStickRowsLength", reflect.TypeOf((*MockCache)(nil).CandleStickRowsLength))
+}
+
+// GetAllCandleStickRows mocks base method.
+func (m *MockCache) GetAllCandleStickRows() []*models.CandleStickRow {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllCandleStickRows")
+	ret0, _ := ret[0].([]*models.CandleStickRow)
+	return ret0
+}
+
+// GetAllCandleStickRows indicates an expected call of GetAllCandleStickRows.
+func (mr *MockCacheMockRecorder) GetAllCandleStickRows() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllCandleStickRows", reflect.TypeOf((*MockCache)(nil).GetAllCandleStickRows))
+}
+
+// GetAllOrderBookRows mocks base method.
 func (m *MockCache) GetAllOrderBookRows() []*models.OrderBookRow {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllOrderBookRows")
@@ -41,13 +70,13 @@ func (m *MockCache) GetAllOrderBookRows() []*models.OrderBookRow {
 	return ret0
 }
 
-// GetAllOrderBookRows indicates an expected call of GetAllOrderBookRows
+// GetAllOrderBookRows indicates an expected call of GetAllOrderBookRows.
 func (mr *MockCacheMockRecorder) GetAllOrderBookRows() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllOrderBookRows", reflect.TypeOf((*MockCache)(nil).GetAllOrderBookRows))
 }
 
-// GetEntries mocks base method
+// GetEntries mocks base method.
 func (m *MockCache) GetEntries() []*models.CacheEntry {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEntries")
@@ -55,37 +84,49 @@ func (m *MockCache) GetEntries() []*models.CacheEntry {
 	return ret0
 }
 
-// GetEntries indicates an expected call of GetEntries
+// GetEntries indicates an expected call of GetEntries.
 func (mr *MockCacheMockRecorder) GetEntries() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntries", reflect.TypeOf((*MockCache)(nil).GetEntries))
 }
 
-// InsertEntry mocks base method
-func (m *MockCache) InsertEntry(arg0 string) {
+// InsertCandleStickRow mocks base method.
+func (m *MockCache) InsertCandleStickRow(arg0 *models.CandleStickRow) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "InsertEntry", arg0)
+	m.ctrl.Call(m, "InsertCandleStickRow", arg0)
 }
 
-// InsertEntry indicates an expected call of InsertEntry
-func (mr *MockCacheMockRecorder) InsertEntry(arg0 interface{}) *gomock.Call {
+// InsertCandleStickRow indicates an expected call of InsertCandleStickRow.
+func (mr *MockCacheMockRecorder) InsertCandleStickRow(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEntry", reflect.TypeOf((*MockCache)(nil).InsertEntry), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertCandleStickRow", reflect.TypeOf((*MockCache)(nil).InsertCandleStickRow), arg0)
 }
 
-// InsertOrderBookRow mocks base method
+// InsertOrderBookEntry mocks base method.
+func (m *MockCache) InsertOrderBookEntry(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "InsertOrderBookEntry", arg0)
+}
+
+// InsertOrderBookEntry indicates an expected call of InsertOrderBookEntry.
+func (mr *MockCacheMockRecorder) InsertOrderBookEntry(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOrderBookEntry", reflect.TypeOf((*MockCache)(nil).InsertOrderBookEntry), arg0)
+}
+
+// InsertOrderBookRow mocks base method.
 func (m *MockCache) InsertOrderBookRow(arg0 *models.OrderBookRow) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "InsertOrderBookRow", arg0)
 }
 
-// InsertOrderBookRow indicates an expected call of InsertOrderBookRow
+// InsertOrderBookRow indicates an expected call of InsertOrderBookRow.
 func (mr *MockCacheMockRecorder) InsertOrderBookRow(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOrderBookRow", reflect.TypeOf((*MockCache)(nil).InsertOrderBookRow), arg0)
 }
 
-// OrderBookRowsLength mocks base method
+// OrderBookRowsLength mocks base method.
 func (m *MockCache) OrderBookRowsLength() int {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "OrderBookRowsLength")
@@ -93,19 +134,19 @@ func (m *MockCache) OrderBookRowsLength() int {
 	return ret0
 }
 
-// OrderBookRowsLength indicates an expected call of OrderBookRowsLength
+// OrderBookRowsLength indicates an expected call of OrderBookRowsLength.
 func (mr *MockCacheMockRecorder) OrderBookRowsLength() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrderBookRowsLength", reflect.TypeOf((*MockCache)(nil).OrderBookRowsLength))
 }
 
-// PurgeOrderBookRows mocks base method
+// PurgeOrderBookRows mocks base method.
 func (m *MockCache) PurgeOrderBookRows() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PurgeOrderBookRows")
 }
 
-// PurgeOrderBookRows indicates an expected call of PurgeOrderBookRows
+// PurgeOrderBookRows indicates an expected call of PurgeOrderBookRows.
 func (mr *MockCacheMockRecorder) PurgeOrderBookRows() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PurgeOrderBookRows", reflect.TypeOf((*MockCache)(nil).PurgeOrderBookRows))
