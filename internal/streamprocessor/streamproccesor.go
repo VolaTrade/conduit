@@ -27,25 +27,28 @@ var (
 type (
 	StreamProcessor interface {
 		BuildOrderBookChannels(count int)
+		BuildCandlestickChannels(size int)
 		GenerateSocketListeningRoutines()
 		GetProcessCollectionState() error
 		ListenForDatabasePriveleges()
 		ListenForExit(exit func())
 		ListenAndHandleDataChannel(index int)
 		RunSocketRoutines()
+		RunCandleRequestRoutines()
 	}
 
 	ConduitStreamProcessor struct {
-		active            bool
-		cache             cache.Cache
-		conveyor          conveyor.Conveyor
-		ctx               context.Context
-		kstats            stats.Stats
-		logger            *logger.Logger
-		orderBookChannels []chan *models.OrderBookRow
-		requests          requests.Requests
-		slack             slack.Slack
-		session           session.Session
+		active              bool
+		cache               cache.Cache
+		conveyor            conveyor.Conveyor
+		ctx                 context.Context
+		kstats              stats.Stats
+		logger              *logger.Logger
+		orderBookChannels   []chan *models.OrderBookRow
+		candlestickChannels []chan *models.Kline
+		requests            requests.Requests
+		slack               slack.Slack
+		session             session.Session
 	}
 )
 
@@ -87,6 +90,17 @@ func (csp *ConduitStreamProcessor) handleOrderBookRow(ob *models.OrderBookRow, i
 	csp.cache.InsertOrderBookRow(ob)
 	csp.kstats.Increment("cacheinserts.ob", 1.0)
 }
+
+// //handleCandlestick checks to see if orderbookrow is going to database or cache, then inserts accordingly
+// func (csp *ConduitStreamProcessor) handleCandlestick(cd *models.Kline, index int) {
+// 	if csp.active && strings.ToLower(cd.Pair) == "btcusdt" {
+// 		if err := csp.requests.PostCandlestickToCortex(cd); err != nil {
+// 			csp.logger.Errorw("Error sending orderbook row to cortex", "error", err.Error())
+// 		}
+// 	}
+// 	csp.cache.InsertOrderBookRow(ob)
+// 	csp.kstats.Increment("cacheinserts.ob", 1.0)
+// }
 
 //GetProcessCollectionState gathers the collection state for what pairs conduit should be collecting
 func (csp *ConduitStreamProcessor) GetProcessCollectionState() error {

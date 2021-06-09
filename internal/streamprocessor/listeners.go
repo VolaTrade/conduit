@@ -11,7 +11,7 @@ func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(index int) {
 	obChannel := csp.orderBookChannels[index]
 	for {
 		select {
-
+			
 		case orderBookRow := <-obChannel:
 			csp.handleOrderBookRow(orderBookRow, index)
 
@@ -21,6 +21,10 @@ func (csp *ConduitStreamProcessor) ListenAndHandleDataChannel(index int) {
 		}
 
 	}
+}
+
+func (csp *ConduitStreamProcessor) ListenAndHandleCandleChannel(index int) {
+
 }
 
 //ListenForDatabasePriveleges checks every fifteen seconds for prevalance of touch file, signals database writing when found

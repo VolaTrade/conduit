@@ -58,7 +58,6 @@ func (cs *ConduitSocket) readMessage() ([]byte, error) {
 	_, message, err := cs.conn.ReadMessage()
 
 	return message, err
-
 }
 
 func (cs *ConduitSocket) runKeepAlive() {

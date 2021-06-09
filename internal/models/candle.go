@@ -13,12 +13,15 @@ type Kline struct {
 	Close     float64   `json:"close"`
 	Volume    float64   `json:"volume"`
 	Timestamp time.Time `json:"timestamp"`
+	Pair      string    `db:"pair"`
 }
 
-func UnmarshallBytesToLatestKline(bits []byte) (*Kline, error) {
+func UnmarshallBytesToLatestKline(bits []byte, pair string) (*Kline, error) {
 	var rawInterfaces [][]interface{}
 	var err error
 	var kline Kline
+
+	kline.Pair = pair
 
 	if err := json.Unmarshal(bits, &rawInterfaces); err != nil {
 		return nil, err

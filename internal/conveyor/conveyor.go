@@ -59,6 +59,21 @@ func (conv *ConduitConveyor) transitOrderBooksToStorage() {
 	}
 }
 
+func (conv *ConduitConveyor) transitCandlestickToStorage() {
+
+	conv.logger.Infow("Starting cache to postgres transit operation")
+	cachedCds := conv.cache.GetAllOrderBookRows() //GetAllCandlestickRows
+	time.Sleep(300 * time.Millisecond)
+
+	if len(cachedCds) != conv.cache.OrderBookRowsLength() { //CandleStickRowsLength // checks to ensure this function isn't called amidst a cache update
+		conv.logger.Infow("Recursive case hit within transit function")
+		conv.transitCandlestickToStorage()
+	} else {
+		conv.storage.TransferCandlestickCache(cachedCds) //make method
+		conv.cache.PurgeCandlestickRows()                //make method
+	}
+}
+
 //Dispatch routine to wait for time interval criteria to be met before attempting cache to db migration
 func (conv *ConduitConveyor) Dispatch() {
 	ticker := time.NewTicker(time.Second * time.Duration(conv.cfg.ShiftInterval))
