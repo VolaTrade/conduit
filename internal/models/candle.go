@@ -7,12 +7,12 @@ import (
 )
 
 type Kline struct {
-	Open      float64   `json:"open"`
-	High      float64   `json:"high"`
-	Low       float64   `json:"low"`
-	Close     float64   `json:"close"`
-	Volume    float64   `json:"volume"`
-	Timestamp time.Time `json:"timestamp"`
+	Open      float64   `json:"open" db:"open"`
+	High      float64   `json:"high" db:"high"`
+	Low       float64   `json:"low" db:"low"`
+	Close     float64   `json:"close" db:"close"`
+	Volume    float64   `json:"volume" db:"volume"`
+	Timestamp time.Time `json:"timestamp" db:"timestamp"`
 	Pair      string    `db:"pair"`
 }
 

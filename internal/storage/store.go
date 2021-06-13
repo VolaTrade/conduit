@@ -22,6 +22,7 @@ var (
 type (
 	Store interface {
 		TransferOrderBookCache(cacheData []*models.OrderBookRow) error
+		TransferCandlestick(candlestickData []*models.Kline) error
 	}
 
 	ConduitStorage struct {
@@ -65,6 +66,19 @@ func (cs *ConduitStorage) TransferOrderBookCache(cacheData []*models.OrderBookRo
 	}
 
 	if err := cs.postgresConnection.BulkInsertOrderBookRows(cacheData); err != nil {
+		return err
+	}
+	cs.kstats.Increment("postgres_transit", 1)
+	return nil
+}
+
+func (cs *ConduitStorage) TransferCandlestick(candlestickData []*models.Kline) error {
+
+	if candlestickData == nil {
+		return nil
+	}
+
+	if err := cs.postgresConnection.BulkInsertCandlestickRows(candlestickData); err != nil {
 		return err
 	}
 	cs.kstats.Increment("postgres_transit", 1)

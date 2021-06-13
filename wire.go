@@ -26,11 +26,10 @@ var cacheModule = wire.NewSet(
 )
 
 //cacheModule binds Cache interface with ConduitCache struct from Cache package
-var cacheModule = wire.NewSet(
+var candleRequestModule = wire.NewSet(
 	cache.Module,
 	wire.Bind(new(cache.Cache), new(*cache.ConduitCache)),
 )
-
 
 //conveyorModule binds Conveyor interface with ConduitConveyor struct from conveyor package
 var conveyorModule = wire.NewSet(
